@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Galería - ICE Asunción{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="section-title mb-4">Galería de Imágenes</h1>
+
+    <div class="row g-4">
+        {% for imagen in page_obj %}
+        <div class="col-sm-6 col-md-4 col-lg-3">
+            <div class="card h-100">
+                <img src="{{ imagen.imagen.url }}" class="card-img-top" alt="{{ imagen.titulo }}" style="height: 200px; object-fit: cover;" data-bs-toggle="modal" data-bs-target="#modal{{ imagen.id }}">
+                <div class="card-body p-2">
+                    <p class="mb-0 small text-center">{{ imagen.titulo }}</p>
+                </div>
+            </div>
+
+            <!-- Modal para imagen completa -->
+            <div class="modal fade" id="modal{{ imagen.id }}" tabindex="-1">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">{{ imagen.titulo }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <img src="{{ imagen.imagen.url }}" class="img-fluid" alt="{{ imagen.titulo }}">
+                            {% if imagen.descripcion %}
+                            <p class="mt-3">{{ imagen.descripcion }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">No hay imágenes disponibles.</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Paginación -->
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ tipo_display }} - ICE Asunción{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="section-title">{{ tipo_display }}</h1>
+
+            <!-- Filtros -->
+            <div class="btn-group mt-3" role="group">
+                <a href="?tipo=1" class="btn {% if tipo == '1' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    Noticias
+                </a>
+                <a href="?tipo=2" class="btn {% if tipo == '2' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    Boletines
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Noticias -->
+    <div class="row g-4">
+        {% for noticia in page_obj %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                {% if noticia.imagen_principal %}
+                <img src="{{ noticia.imagen_principal.url }}" class="card-img-top" alt="{{ noticia.titulo }}" style="height: 200px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <p class="text-muted small">
+                        <i class="bi bi-calendar3"></i> {{ noticia.fecha_publicacion|date:"d/m/Y" }}
+                    </p>
+                    <h5 class="card-title">{{ noticia.titulo }}</h5>
+                    <p class="card-text">{{ noticia.introduccion|truncatewords:20 }}</p>
+                    <a href="{% url 'noticia_detalle' noticia.id %}" class="btn btn-primary btn-sm">Leer más</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle me-2"></i>
+                No hay {{ tipo_display|lower }} disponibles en este momento.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Paginación -->
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?tipo={{ tipo }}&page={{ page_obj.previous_page_number }}">Anterior</a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item"><a class="page-link" href="?tipo={{ tipo }}&page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?tipo={{ tipo }}&page={{ page_obj.next_page_number }}">Siguiente</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

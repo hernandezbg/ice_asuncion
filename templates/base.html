@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_description %}Iglesia Cristiana Evangélica de Asunción{% endblock %}">
+    <title>{% block title %}ICE Asunción{% endblock %}</title>
+
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2c5f8d;
+            --secondary-color: #4a90c5;
+            --accent-color: #e67e22;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --bg-light: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* Navbar */
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem 0;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--primary-color) !important;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: var(--text-dark) !important;
+            transition: color 0.3s ease;
+            margin: 0 0.5rem;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-color) !important;
+        }
+
+        .nav-link.btn-primary {
+            border-radius: 25px;
+            margin-left: 1rem;
+        }
+
+        .nav-link.btn-primary:hover {
+            color: white !important;
+            background: var(--secondary-color) !important;
+            border-color: var(--secondary-color) !important;
+        }
+
+        @media (max-width: 991px) {
+            .nav-link.btn-primary {
+                margin-left: 0;
+                margin-top: 0.5rem;
+                display: inline-block;
+                text-align: center;
+            }
+        }
+
+        /* Dropdown menu styles */
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            margin-top: 0.5rem;
+        }
+
+        .dropdown-item {
+            color: var(--text-dark);
+            padding: 0.5rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-item:hover {
+            background-color: rgba(44, 95, 141, 0.1);
+            color: var(--primary-color);
+        }
+
+        /* Footer */
+        .footer {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1a3a52 100%);
+            color: white;
+            padding: 3rem 0 1rem;
+            margin-top: 4rem;
+        }
+
+        .footer a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: white;
+        }
+
+        .social-icons a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .social-icons a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-3px);
+        }
+
+        /* Utilities */
+        .section-title {
+            font-weight: 700;
+            margin-bottom: 2rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: var(--accent-color);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            font-weight: 500;
+            padding: 0.5rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            border-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <i class="bi bi-house-heart-fill me-2"></i>ICE Asunción
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Inicio</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Nosotros
+                        </a>
+                        <ul class="dropdown-menu">
+                            {% if paginas_menu %}
+                                {% for pagina in paginas_menu %}
+                                <li><a class="dropdown-item" href="{% url 'pagina_detalle' pagina.id %}">{{ pagina.titulo }}</a></li>
+                                {% endfor %}
+                            {% else %}
+                                <li><span class="dropdown-item text-muted">No hay páginas disponibles</span></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'noticias' %}">Noticias</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'mensajes' %}">Mensajes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'contacto' %}">Contacto</a>
+                    </li>
+                    <li class="nav-item">
+                        {% if user.is_authenticated %}
+                        <a class="nav-link btn btn-primary text-white px-3" href="{% url 'panel:dashboard' %}">
+                            <i class="bi bi-speedometer2"></i> Panel
+                        </a>
+                        {% else %}
+                        <a class="nav-link btn btn-primary text-white px-3" href="{% url 'panel:login' %}">
+                            <i class="bi bi-box-arrow-in-right"></i> Ingresar
+                        </a>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5 class="mb-3">ICE Asunción</h5>
+                    <p class="text-white-50">
+                        Iglesia Cristiana Evangélica comprometida con la comunidad y la palabra de Dios.
+                    </p>
+                </div>
+
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5 class="mb-3">Contacto</h5>
+                    <ul class="list-unstyled text-white-50">
+                        {% if datos_ice %}
+                        <li class="mb-2">
+                            <i class="bi bi-geo-alt-fill me-2"></i>{{ datos_ice.direccion }}
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-telephone-fill me-2"></i>{{ datos_ice.telefono }}
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-envelope-fill me-2"></i>{{ datos_ice.email }}
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <div class="col-lg-4">
+                    <h5 class="mb-3">Síguenos</h5>
+                    <div class="social-icons">
+                        {% if datos_ice %}
+                            {% if datos_ice.facebook %}
+                            <a href="{{ datos_ice.facebook }}" target="_blank" rel="noopener">
+                                <i class="bi bi-facebook"></i>
+                            </a>
+                            {% endif %}
+                            {% if datos_ice.twitter %}
+                            <a href="{{ datos_ice.twitter }}" target="_blank" rel="noopener">
+                                <i class="bi bi-twitter"></i>
+                            </a>
+                            {% endif %}
+                            {% if datos_ice.youtube %}
+                            <a href="{{ datos_ice.youtube }}" target="_blank" rel="noopener">
+                                <i class="bi bi-youtube"></i>
+                            </a>
+                            {% endif %}
+                            {% if datos_ice.instagram %}
+                            <a href="{{ datos_ice.instagram }}" target="_blank" rel="noopener">
+                                <i class="bi bi-instagram"></i>
+                            </a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4 bg-white opacity-25">
+
+            <div class="row">
+                <div class="col-12 text-center text-white-50">
+                    <p class="mb-0">&copy; {% now "Y" %} ICE Asunción. Todos los derechos reservados.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5.3 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

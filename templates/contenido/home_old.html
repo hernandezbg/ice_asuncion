@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inicio - ICE Asunción{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hero Slider */
+    .hero-slider {
+        height: 500px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    }
+
+    .carousel-item {
+        height: 500px;
+    }
+
+    .carousel-item img {
+        object-fit: cover;
+        height: 100%;
+        width: 100%;
+    }
+
+    .carousel-caption {
+        background: rgba(0,0,0,0.6);
+        padding: 2rem;
+        border-radius: 10px;
+        bottom: 3rem;
+    }
+
+    .carousel-caption h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    /* Breves Section */
+    .breves-section {
+        padding: 4rem 0;
+        background: var(--bg-light);
+    }
+
+    .breve-card {
+        height: 100%;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .breve-card:hover {
+        transform: translateY(-10px);
+    }
+
+    .breve-icon {
+        font-size: 3rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+
+    /* Noticias Section */
+    .noticias-section {
+        padding: 4rem 0;
+    }
+
+    .noticia-card img {
+        height: 200px;
+        object-fit: cover;
+    }
+
+    .noticia-fecha {
+        color: var(--text-light);
+        font-size: 0.9rem;
+    }
+
+    /* Videos Section */
+    .videos-section {
+        padding: 4rem 0;
+        background: var(--bg-light);
+    }
+
+    .video-card img {
+        height: 180px;
+        object-fit: cover;
+    }
+
+    @media (max-width: 768px) {
+        .hero-slider,
+        .carousel-item {
+            height: 350px;
+        }
+
+        .carousel-caption h2 {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Slider -->
+{% if sliders %}
+<div id="heroCarousel" class="carousel slide hero-slider" data-bs-ride="carousel">
+    <div class="carousel-indicators">
+        {% for slider in sliders %}
+        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ forloop.counter0 }}"
+                {% if forloop.first %}class="active"{% endif %}></button>
+        {% endfor %}
+    </div>
+
+    <div class="carousel-inner">
+        {% for slider in sliders %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+            {% if slider.imagen %}
+            <img src="{{ slider.imagen.url }}" class="d-block w-100" alt="{{ slider.titulo }}">
+            {% endif %}
+            <div class="carousel-caption d-md-block">
+                <h2>{{ slider.titulo }}</h2>
+                {% if slider.descripcion %}
+                <p>{{ slider.descripcion|safe|truncatewords:30 }}</p>
+                {% endif %}
+                {% if slider.enlace or slider.pagina %}
+                <a href="{{ slider.obtener_enlace }}" class="btn btn-primary mt-3">Leer más</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+    </button>
+</div>
+{% endif %}
+
+<!-- Breves Section -->
+{% if breves %}
+<section class="breves-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Nuestra Comunidad</h2>
+        </div>
+
+        <div class="row g-4">
+            {% for breve in breves %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card breve-card">
+                    <div class="card-body text-center p-4">
+                        {% if breve.icono %}
+                        <i class="{{ breve.icono }} breve-icon"></i>
+                        {% elif breve.imagen %}
+                        <img src="{{ breve.imagen.url }}" class="img-fluid mb-3" alt="{{ breve.titulo }}" style="max-height: 80px;">
+                        {% endif %}
+                        <h5 class="card-title mb-3">{{ breve.titulo }}</h5>
+                        <p class="card-text text-muted">{{ breve.descripcion|safe|truncatewords:20 }}</p>
+                        {% if breve.enlace %}
+                        <a href="{{ breve.enlace }}" class="btn btn-sm btn-outline-primary mt-2">Conocer más</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Noticias Recientes -->
+{% if noticias_recientes %}
+<section class="noticias-section">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-title">Últimas Noticias</h2>
+            <a href="{% url 'noticias' %}" class="btn btn-outline-primary">Ver todas</a>
+        </div>
+
+        <div class="row g-4">
+            {% for noticia in noticias_recientes %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card noticia-card h-100">
+                    {% if noticia.imagen_principal %}
+                    <img src="{{ noticia.imagen_principal.url }}" class="card-img-top" alt="{{ noticia.titulo }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <p class="noticia-fecha">
+                            <i class="bi bi-calendar3"></i> {{ noticia.fecha_publicacion|date:"d/m/Y" }}
+                        </p>
+                        <h5 class="card-title">{{ noticia.titulo }}</h5>
+                        <p class="card-text text-muted">{{ noticia.introduccion|truncatewords:15 }}</p>
+                        <a href="{% url 'noticia_detalle' noticia.id %}" class="btn btn-sm btn-primary">Leer más</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Videos Recientes -->
+{% if mensajes_recientes %}
+<section class="videos-section">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-title">Últimos Mensajes</h2>
+            <a href="{% url 'mensajes' %}" class="btn btn-outline-primary">Ver todos</a>
+        </div>
+
+        <div class="row g-4">
+            {% for mensaje in mensajes_recientes %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card video-card h-100">
+                    {% if mensaje.imagen %}
+                    <img src="{{ mensaje.imagen.url }}" class="card-img-top" alt="{{ mensaje.titulo }}">
+                    {% else %}
+                    <div class="card-img-top bg-primary d-flex align-items-center justify-content-center" style="height: 180px;">
+                        <i class="bi bi-play-circle text-white" style="font-size: 4rem;"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <p class="noticia-fecha">
+                            <i class="bi bi-person"></i> {{ mensaje.autor }}
+                        </p>
+                        <h5 class="card-title">{{ mensaje.titulo }}</h5>
+                        <a href="{% url 'mensaje_detalle' mensaje.id %}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-play-fill"></i> Ver mensaje
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Call to Action -->
+<section class="py-5" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);">
+    <div class="container text-center text-white">
+        <h2 class="mb-4">¿Quieres conocer más sobre nosotros?</h2>
+        <p class="lead mb-4">Te invitamos a ser parte de nuestra comunidad</p>
+        <a href="{% url 'contacto' %}" class="btn btn-light btn-lg">Contáctanos</a>
+    </div>
+</section>
+{% endblock %}

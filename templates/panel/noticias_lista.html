@@ -1,0 +1,329 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Noticias - Panel ICE{% endblock %}
+{% block page_title %}Noticias{% endblock %}
+{% block page_subtitle %}Gestiona las noticias y boletines{% endblock %}
+
+{% block extra_css %}
+<style>
+    .item-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+    }
+    .item-card:hover {
+        box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+        transform: translateY(-3px);
+    }
+    .item-card-header {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    .item-thumbnail {
+        width: 80px;
+        height: 80px;
+        border-radius: 12px;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+    .item-thumbnail-placeholder {
+        width: 80px;
+        height: 80px;
+        border-radius: 12px;
+        background: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: #adb5bd;
+        flex-shrink: 0;
+    }
+    .item-cards-container {
+        display: none;
+    }
+    @media (max-width: 768px) {
+        .table-responsive {
+            display: none;
+        }
+        .item-cards-container {
+            display: block;
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 text-end">
+        <button class="btn btn-primary btn-lg shadow-sm" data-bs-toggle="modal" data-bs-target="#modalForm" style="border-radius: 12px; padding: 0.75rem 1.5rem;">
+            <i class="bi bi-plus-circle-fill"></i> Nueva Noticia
+        </button>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-8"><input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ busqueda }}"></div>
+            <div class="col-md-2">
+                <select name="tipo" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="1">Noticias</option>
+                    <option value="2">Boletines</option>
+                </select>
+            </div>
+            <div class="col-md-2"><button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Buscar</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-white"><strong>{{ page_obj.paginator.count }}</strong> noticia(s)</div>
+
+    <!-- Table View (Desktop) -->
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light"><tr><th style="width:60px"></th><th>Título</th><th>Tipo</th><th>Fecha</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
+            <tbody>
+                {% for n in page_obj %}
+                <tr>
+                    <td>{% if n.imagen_principal %}<img src="{{n.imagen_principal.url}}" class="img-thumbnail" style="width:50px;height:50px;object-fit:cover">{% else %}<div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="width:50px;height:50px"><i class="bi bi-image"></i></div>{% endif %}</td>
+                    <td><strong>{{n.titulo|truncatewords:10}}</strong><br><small class="text-muted">{{n.introduccion|truncatewords:15}}</small></td>
+                    <td><span class="badge {% if n.tipo == 1 %}bg-info{% else %}bg-warning{% endif %}">{{n.get_tipo_display}}</span></td>
+                    <td>{{n.fecha_publicacion|date:"d/m/Y"}}</td>
+                    <td>{% if n.activo %}<span class="badge bg-success">Publicada</span>{% else %}<span class="badge bg-secondary">Borrador</span>{% endif %}</td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <a href="/noticia/{{n.id}}/" class="btn btn-outline-secondary" target="_blank" title="Ver"><i class="bi bi-eye-fill"></i></a>
+                            <button class="btn btn-outline-primary" onclick="editar({{n.id}})" title="Editar"><i class="bi bi-pencil-fill"></i></button>
+                            <a href="{% url 'panel:noticia_toggle' n.id %}" class="btn btn-outline-warning" title="Publicar/Ocultar"><i class="bi {% if n.activo %}bi-eye-slash-fill{% else %}bi-eye-fill{% endif %}"></i></a>
+                            <button class="btn btn-outline-danger" onclick="eliminar({{n.id}},'{{n.titulo|escapejs}}')" title="Eliminar"><i class="bi bi-trash-fill"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}<tr><td colspan="6" class="text-center text-muted py-5"><i class="bi bi-inbox" style="font-size: 3rem;"></i><p class="mt-2">No se encontraron noticias</p></td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Card View (Mobile) -->
+    <div class="item-cards-container">
+        {% for n in page_obj %}
+        <div class="item-card">
+            <div class="item-card-header">
+                {% if n.imagen_principal %}
+                <img src="{{n.imagen_principal.url}}" class="item-thumbnail" alt="{{n.titulo}}">
+                {% else %}
+                <div class="item-thumbnail-placeholder">
+                    <i class="bi bi-image"></i>
+                </div>
+                {% endif %}
+                <div class="flex-grow-1">
+                    <h6 class="mb-1 fw-bold">{{n.titulo|truncatewords:8}}</h6>
+                    <p class="text-muted small mb-2">{{n.introduccion|truncatewords:10}}</p>
+                    <div class="d-flex gap-2 align-items-center flex-wrap">
+                        <span class="badge {% if n.tipo == 1 %}bg-info{% else %}bg-warning{% endif %}">{{n.get_tipo_display}}</span>
+                        {% if n.activo %}
+                        <span class="badge bg-success">Publicada</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Borrador</span>
+                        {% endif %}
+                        <small class="text-muted"><i class="bi bi-calendar3"></i> {{n.fecha_publicacion|date:"d/m/Y"}}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/noticia/{{n.id}}/" class="btn btn-outline-secondary btn-sm flex-fill" target="_blank">
+                    <i class="bi bi-eye-fill"></i> Ver
+                </a>
+                <button class="btn btn-outline-primary btn-sm flex-fill" onclick="editar({{n.id}})">
+                    <i class="bi bi-pencil-fill"></i> Editar
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="eliminar({{n.id}},'{{n.titulo|escapejs}}')">
+                    <i class="bi bi-trash-fill"></i>
+                </button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+            <p class="mt-2">No se encontraron noticias</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}<div class="card-footer bg-white"><nav><ul class="pagination pagination-sm mb-0 justify-content-center">{% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page=1"><i class="bi bi-chevron-double-left"></i> Primera</a></li><li class="page-item"><a class="page-link" href="?page={{page_obj.previous_page_number}}"><i class="bi bi-chevron-left"></i> Anterior</a></li>{% endif %}<li class="page-item active"><span class="page-link">Página {{page_obj.number}} de {{page_obj.paginator.num_pages}}</span></li>{% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{page_obj.next_page_number}}">Siguiente <i class="bi bi-chevron-right"></i></a></li><li class="page-item"><a class="page-link" href="?page={{page_obj.paginator.num_pages}}">Última <i class="bi bi-chevron-double-right"></i></a></li>{% endif %}</ul></nav></div>{% endif %}
+</div>
+
+<div class="modal fade" id="modalForm" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" id="formPrincipal" action="{% url 'panel:noticia_crear' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header"><h5 class="modal-title" id="modalTitle"><i class="bi bi-plus-circle"></i> Nueva Noticia</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-12">{{form.titulo.label_tag}}{{form.titulo}}</div>
+                        <div class="col-md-12">{{form.introduccion.label_tag}}{{form.introduccion}}</div>
+                        <div class="col-md-12">{{form.contenido.label_tag}}{{form.contenido}}</div>
+                        <div class="col-md-6">{{form.tipo.label_tag}}{{form.tipo}}</div>
+                        <div class="col-md-6">{{form.fecha_publicacion.label_tag}}{{form.fecha_publicacion}}</div>
+
+                        <!-- Imagen Principal -->
+                        <div class="col-md-12">
+                            <label class="form-label">{{form.imagen_principal.label}}</label>
+                            <div id="preview_imagen_principal" class="mb-2" style="display:none;">
+                                <div class="position-relative d-inline-block">
+                                    <img id="img_principal_preview" src="" class="img-thumbnail" style="max-width: 200px; max-height: 150px;">
+                                    <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1" onclick="eliminarImagenPrincipal()" title="Eliminar imagen">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {{form.imagen_principal}}
+                            <small class="form-text text-muted">Opcional</small>
+                        </div>
+
+                        <!-- Imagen Secundaria -->
+                        <div class="col-md-12">
+                            <label class="form-label">{{form.imagen_secundaria.label}}</label>
+                            <div id="preview_imagen_secundaria" class="mb-2" style="display:none;">
+                                <div class="position-relative d-inline-block">
+                                    <img id="img_secundaria_preview" src="" class="img-thumbnail" style="max-width: 200px; max-height: 150px;">
+                                    <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1" onclick="eliminarImagenSecundaria()" title="Eliminar imagen">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {{form.imagen_secundaria}}
+                            <small class="form-text text-muted">Opcional</small>
+                        </div>
+
+                        <!-- Campos ocultos para eliminación (solo cuando se edita) -->
+                        <input type="hidden" id="eliminar_imagen_principal" name="eliminar_imagen_principal" value="">
+                        <input type="hidden" id="eliminar_imagen_secundaria" name="eliminar_imagen_secundaria" value="">
+
+                        <div class="col-md-12"><div class="form-check">{{form.activo}}<label class="form-check-label" for="{{form.activo.id_for_label}}">Publicada</label></div></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEliminar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" id="formEliminar">{% csrf_token %}
+                <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill"></i> Confirmar Eliminación</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body"><p>¿Eliminar "<strong id="nombreEliminar"></strong>"?</p><p class="text-danger mb-0"><small><i class="bi bi-exclamation-circle"></i> Esta acción no se puede deshacer.</small></p></div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-danger"><i class="bi bi-trash-fill"></i> Eliminar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#modalForm').on('shown.bs.modal', function () {
+        if (!$('#id_contenido').hasClass('summernote-initialized')) {
+            $('#id_contenido').summernote({
+                height: 400,
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'italic', 'underline', 'clear']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['table', ['table']],
+                    ['insert', ['link', 'picture']],
+                    ['view', ['fullscreen', 'codeview', 'help']]
+                ]
+            });
+            $('#id_contenido').addClass('summernote-initialized');
+        }
+    });
+});
+
+function editar(id){
+    fetch(`/panel/noticias/${id}/datos/`).then(r=>r.json()).then(d=>{
+        document.getElementById('formPrincipal').action=`/panel/noticias/${id}/editar/`;
+        document.getElementById('modalTitle').innerHTML='<i class="bi bi-pencil-square"></i> Editar Noticia';
+
+        // Resetear las imágenes de preview e inicializar campos de eliminación
+        document.getElementById('preview_imagen_principal').style.display = 'none';
+        document.getElementById('preview_imagen_secundaria').style.display = 'none';
+        document.getElementById('eliminar_imagen_principal').value = '';
+        document.getElementById('eliminar_imagen_secundaria').value = '';
+
+        Object.keys(d).forEach(k=>{
+            const el=document.getElementById(`id_${k}`);
+            if(el && k!='imagen_principal' && k!='imagen_secundaria'){
+                if(el.type=='checkbox') {
+                    el.checked=d[k];
+                } else if(k === 'contenido') {
+                    $('#id_contenido').summernote('code', d[k]||'');
+                } else {
+                    el.value=d[k]||'';
+                }
+            }
+        });
+
+        // Mostrar miniaturas de imágenes existentes
+        if(d.imagen_principal){
+            document.getElementById('img_principal_preview').src = d.imagen_principal;
+            document.getElementById('preview_imagen_principal').style.display = 'block';
+        }
+        if(d.imagen_secundaria){
+            document.getElementById('img_secundaria_preview').src = d.imagen_secundaria;
+            document.getElementById('preview_imagen_secundaria').style.display = 'block';
+        }
+
+        new bootstrap.Modal(document.getElementById('modalForm')).show();
+    });
+}
+
+function eliminarImagenPrincipal(){
+    if(confirm('¿Estás seguro de eliminar la imagen principal?')){
+        document.getElementById('preview_imagen_principal').style.display = 'none';
+        document.getElementById('eliminar_imagen_principal').value = '1';
+        document.getElementById('id_imagen_principal').value = '';
+    }
+}
+
+function eliminarImagenSecundaria(){
+    if(confirm('¿Estás seguro de eliminar la imagen secundaria?')){
+        document.getElementById('preview_imagen_secundaria').style.display = 'none';
+        document.getElementById('eliminar_imagen_secundaria').value = '1';
+        document.getElementById('id_imagen_secundaria').value = '';
+    }
+}
+
+function eliminar(id,titulo){
+    document.getElementById('formEliminar').action=`/panel/noticias/${id}/eliminar/`;
+    document.getElementById('nombreEliminar').textContent=titulo;
+    new bootstrap.Modal(document.getElementById('modalEliminar')).show();
+}
+
+document.getElementById('modalForm').addEventListener('hidden.bs.modal',function(){
+    document.getElementById('formPrincipal').action='{% url "panel:noticia_crear" %}';
+    document.getElementById('modalTitle').innerHTML='<i class="bi bi-plus-circle"></i> Nueva Noticia';
+    document.getElementById('formPrincipal').reset();
+    $('#id_contenido').summernote('code', '');
+    // Ocultar miniaturas
+    document.getElementById('preview_imagen_principal').style.display = 'none';
+    document.getElementById('preview_imagen_secundaria').style.display = 'none';
+    // Limpiar campos de eliminación (vacío para nueva noticia)
+    document.getElementById('eliminar_imagen_principal').value = '';
+    document.getElementById('eliminar_imagen_secundaria').value = '';
+});
+</script>
+{% endblock %}

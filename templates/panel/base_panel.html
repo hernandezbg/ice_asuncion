@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Panel - ICE Asunción{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f8f9fc;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Moderno */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 280px;
+            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+            padding: 0;
+            z-index: 1000;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: white;
+            text-decoration: none;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-logo:hover {
+            transform: translateX(5px);
+        }
+
+        .sidebar-logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar-logo-text h4 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .sidebar-logo-text p {
+            margin: 0;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .sidebar-nav {
+            padding: 1.5rem 0;
+        }
+
+        .nav-section-title {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 1rem;
+        }
+
+        .sidebar-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.875rem 1.5rem;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            margin: 0.25rem 0;
+        }
+
+        .sidebar-nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: #60a5fa;
+        }
+
+        .sidebar-nav-item.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-left-color: #60a5fa;
+            font-weight: 600;
+        }
+
+        .sidebar-nav-item i {
+            font-size: 1.25rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .sidebar-footer {
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-details h6 {
+            margin: 0;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .user-details p {
+            margin: 0;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .btn-logout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-logout:hover {
+            background: rgba(239, 68, 68, 0.3);
+            color: #fef2f2;
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .top-bar-left h5 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .top-bar-left p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .top-bar-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-top-action {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            background: white;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-top-action:hover {
+            background: #f8fafc;
+            color: #1e293b;
+            border-color: #cbd5e1;
+        }
+
+        .btn-top-action i {
+            font-size: 1rem;
+        }
+
+        /* Content Area */
+        .content-area {
+            padding: 2rem;
+        }
+
+        /* Messages/Alerts Moderno */
+        .alert {
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            border-left-color: #22c55e;
+            color: #166534;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border-left-color: #ef4444;
+            color: #991b1b;
+        }
+
+        .alert-warning {
+            background: #fffbeb;
+            border-left-color: #f59e0b;
+            color: #92400e;
+        }
+
+        .alert-info {
+            background: #eff6ff;
+            border-left-color: #3b82f6;
+            color: #1e40af;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .top-bar {
+                padding: 1rem;
+            }
+
+            .content-area {
+                padding: 1rem;
+            }
+        }
+
+        /* Overlay para mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
+
+        /* FAB Overlay (fondo oscuro cuando se abre) */
+        .fab-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1049;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .fab-overlay.show {
+            display: block;
+        }
+
+        /* FAB Flotante - Solo Mobile */
+        .fab-container {
+            display: none;
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            z-index: 1050;
+            cursor: move;
+            user-select: none;
+        }
+
+        .fab-container.dragging {
+            cursor: grabbing;
+        }
+
+        .fab-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            cursor: grab;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        .fab-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .fab-button.active {
+            transform: rotate(45deg);
+        }
+
+        .fab-container.dragging .fab-button {
+            cursor: grabbing;
+        }
+
+        /* Menú en formato Card/Modal */
+        .fab-menu-card {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            z-index: 1051;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .fab-menu-card.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        .fab-menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .fab-menu-header h5 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .fab-close-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #f1f5f9;
+            border-radius: 8px;
+            color: #64748b;
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fab-close-btn:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .fab-menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .fab-menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 1.25rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            border: 2px solid transparent;
+        }
+
+        .fab-menu-item:hover {
+            background: white;
+            border-color: #e2e8f0;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .fab-menu-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .fab-menu-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #1e293b;
+            text-align: center;
+        }
+
+        .fab-menu-icon.home { background: #6c757d; }
+        .fab-menu-icon.hermanos { background: #ffc107; }
+        .fab-menu-icon.noticias { background: #0dcaf0; }
+        .fab-menu-icon.mensajes { background: #198754; }
+        .fab-menu-icon.paginas { background: #dc3545; }
+        .fab-menu-icon.secciones { background: #6f42c1; }
+        .fab-menu-icon.sliders { background: #fd7e14; }
+        .fab-menu-icon.ofrendas { background: #20c997; }
+        .fab-menu-icon.configuracion { background: #495057; }
+        .fab-menu-icon.estadisticas { background: #0d6efd; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -40%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .fab-container {
+                display: block;
+            }
+
+            .fab-menu-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 480px) and (max-width: 768px) {
+            .fab-menu-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="{% url 'panel:dashboard' %}" class="sidebar-logo">
+                <div class="sidebar-logo-icon">
+                    <i class="bi bi-house-heart-fill"></i>
+                </div>
+                <div class="sidebar-logo-text">
+                    <h4>ICE Asunción</h4>
+                    <p>Panel de Control</p>
+                </div>
+            </a>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-title">Principal</div>
+            <a href="{% url 'panel:dashboard' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{% url 'panel:estadisticas' %}" class="sidebar-nav-item {% if 'estadisticas' in request.path %}active{% endif %}">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>Estadísticas</span>
+            </a>
+
+            <div class="nav-section-title">Gestión</div>
+            <a href="{% url 'panel:hermanos_lista' %}" class="sidebar-nav-item {% if 'hermanos' in request.path %}active{% endif %}">
+                <i class="bi bi-people-fill"></i>
+                <span>Hermanos</span>
+            </a>
+            <a href="{% url 'panel:noticias_lista' %}" class="sidebar-nav-item {% if 'noticias' in request.path %}active{% endif %}">
+                <i class="bi bi-newspaper"></i>
+                <span>Noticias</span>
+            </a>
+            <a href="{% url 'panel:mensajes_lista' %}" class="sidebar-nav-item {% if 'mensajes' in request.path %}active{% endif %}">
+                <i class="bi bi-mic-fill"></i>
+                <span>Mensajes</span>
+            </a>
+            <a href="{% url 'panel:paginas_lista' %}" class="sidebar-nav-item {% if 'paginas' in request.path %}active{% endif %}">
+                <i class="bi bi-file-text-fill"></i>
+                <span>Páginas</span>
+            </a>
+
+            <div class="nav-section-title">Contenido Web</div>
+            <a href="{% url 'panel:secciones_lista' %}" class="sidebar-nav-item {% if 'secciones' in request.path %}active{% endif %}">
+                <i class="bi bi-layout-text-sidebar"></i>
+                <span>Secciones Home</span>
+            </a>
+            <a href="{% url 'panel:sliders_lista' %}" class="sidebar-nav-item {% if 'sliders' in request.path %}active{% endif %}">
+                <i class="bi bi-images"></i>
+                <span>Slider Hero</span>
+            </a>
+            <a href="{% url 'panel:ofrendas_lista' %}" class="sidebar-nav-item {% if 'ofrendas' in request.path %}active{% endif %}">
+                <i class="bi bi-credit-card-fill"></i>
+                <span>Ofrendas</span>
+            </a>
+
+            <div class="nav-section-title">Sistema</div>
+            <a href="{% url 'panel:datosice_editar' %}" class="sidebar-nav-item {% if 'configuracion' in request.path %}active{% endif %}">
+                <i class="bi bi-gear-fill"></i>
+                <span>Configuración</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    {{ user.username|slice:":1"|upper }}
+                </div>
+                <div class="user-details">
+                    <h6>{{ user.username }}</h6>
+                    <p>Administrador</p>
+                </div>
+            </div>
+            <a href="{% url 'panel:logout' %}" class="btn-logout">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Cerrar Sesión</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Overlay para mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- FAB Overlay (fondo oscuro) -->
+    <div class="fab-overlay" id="fabOverlay"></div>
+
+    <!-- FAB Menu Card/Modal -->
+    <div class="fab-menu-card" id="fabMenuCard">
+        <div class="fab-menu-header">
+            <h5><i class="bi bi-grid-3x3-gap-fill me-2"></i>Menú de Navegación</h5>
+            <button class="fab-close-btn" id="fabCloseBtn">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="fab-menu-grid">
+            <a href="{% url 'panel:dashboard' %}" class="fab-menu-item">
+                <div class="fab-menu-icon home">
+                    <i class="bi bi-speedometer2"></i>
+                </div>
+                <span class="fab-menu-label">Dashboard</span>
+            </a>
+            <a href="{% url 'panel:hermanos_lista' %}" class="fab-menu-item">
+                <div class="fab-menu-icon hermanos">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <span class="fab-menu-label">Hermanos</span>
+            </a>
+            <a href="{% url 'panel:noticias_lista' %}" class="fab-menu-item">
+                <div class="fab-menu-icon noticias">
+                    <i class="bi bi-newspaper"></i>
+                </div>
+                <span class="fab-menu-label">Noticias</span>
+            </a>
+            <a href="{% url 'panel:mensajes_lista' %}" class="fab-menu-item">
+                <div class="fab-menu-icon mensajes">
+                    <i class="bi bi-mic-fill"></i>
+                </div>
+                <span class="fab-menu-label">Mensajes</span>
+            </a>
+            <a href="{% url 'panel:paginas_lista' %}" class="fab-menu-item">
+                <div class="fab-menu-icon paginas">
+                    <i class="bi bi-file-text-fill"></i>
+                </div>
+                <span class="fab-menu-label">Páginas</span>
+            </a>
+            <a href="{% url 'panel:secciones_lista' %}" class="fab-menu-item">
+                <div class="fab-menu-icon secciones">
+                    <i class="bi bi-layout-text-sidebar"></i>
+                </div>
+                <span class="fab-menu-label">Secciones</span>
+            </a>
+            <a href="{% url 'panel:sliders_lista' %}" class="fab-menu-item">
+                <div class="fab-menu-icon sliders">
+                    <i class="bi bi-images"></i>
+                </div>
+                <span class="fab-menu-label">Sliders</span>
+            </a>
+            <a href="{% url 'panel:ofrendas_lista' %}" class="fab-menu-item">
+                <div class="fab-menu-icon ofrendas">
+                    <i class="bi bi-credit-card-fill"></i>
+                </div>
+                <span class="fab-menu-label">Ofrendas</span>
+            </a>
+            <a href="{% url 'panel:datosice_editar' %}" class="fab-menu-item">
+                <div class="fab-menu-icon configuracion">
+                    <i class="bi bi-gear-fill"></i>
+                </div>
+                <span class="fab-menu-label">Configuración</span>
+            </a>
+            <a href="{% url 'panel:estadisticas' %}" class="fab-menu-item">
+                <div class="fab-menu-icon estadisticas">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <span class="fab-menu-label">Estadísticas</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- FAB Flotante (Solo Mobile) -->
+    <div class="fab-container">
+        <button class="fab-button" id="fabButton">
+            <i class="bi bi-plus"></i>
+        </button>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-bar-left">
+                <h5>{% block page_title %}Panel de Control{% endblock %}</h5>
+                <p>{% block page_subtitle %}Bienvenido al sistema de gestión{% endblock %}</p>
+            </div>
+            <div class="top-bar-actions">
+                <a href="/" target="_blank" class="btn-top-action">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                    <span>Ver Sitio</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="content-area">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <i class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}-fill me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Content -->
+        <div class="content-area">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
+    <script>
+        // Mobile Sidebar Toggle
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        sidebarOverlay.addEventListener('click', function() {
+            sidebar.classList.remove('show');
+            sidebarOverlay.classList.remove('show');
+        });
+
+        // Cerrar sidebar al hacer clic en un enlace (mobile)
+        if (window.innerWidth <= 768) {
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                });
+            });
+        }
+
+        // FAB Flotante (Solo Mobile)
+        if (window.innerWidth <= 768) {
+            const fabButton = document.getElementById('fabButton');
+            const fabMenuCard = document.getElementById('fabMenuCard');
+            const fabOverlay = document.getElementById('fabOverlay');
+            const fabCloseBtn = document.getElementById('fabCloseBtn');
+            const fabContainer = document.querySelector('.fab-container');
+
+            // Abrir/Cerrar menú
+            fabButton.addEventListener('click', function(e) {
+                if (!fabContainer.classList.contains('was-dragging')) {
+                    fabButton.classList.toggle('active');
+                    fabMenuCard.classList.toggle('show');
+                    fabOverlay.classList.toggle('show');
+                }
+                fabContainer.classList.remove('was-dragging');
+            });
+
+            // Cerrar con overlay
+            fabOverlay.addEventListener('click', function() {
+                fabButton.classList.remove('active');
+                fabMenuCard.classList.remove('show');
+                fabOverlay.classList.remove('show');
+            });
+
+            // Cerrar con botón X
+            fabCloseBtn.addEventListener('click', function() {
+                fabButton.classList.remove('active');
+                fabMenuCard.classList.remove('show');
+                fabOverlay.classList.remove('show');
+            });
+
+            // FAB Draggable - SOLO VERTICAL
+            let isDragging = false;
+            let hasMoved = false;
+            let initialY;
+            let startY;
+            let yOffset = 0;
+
+            const fabRect = fabContainer.getBoundingClientRect();
+            yOffset = fabRect.top;
+
+            fabContainer.addEventListener('mousedown', dragStart);
+            fabContainer.addEventListener('touchstart', dragStart);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag);
+            document.addEventListener('mouseup', dragEnd);
+            document.addEventListener('touchend', dragEnd);
+
+            function dragStart(e) {
+                if (e.type === 'touchstart') {
+                    startY = e.touches[0].clientY;
+                    initialY = e.touches[0].clientY - yOffset;
+                } else {
+                    startY = e.clientY;
+                    initialY = e.clientY - yOffset;
+                }
+
+                if (e.target === fabButton || e.target.closest('.fab-button')) {
+                    isDragging = true;
+                    hasMoved = false;
+                }
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    let clientY;
+
+                    if (e.type === 'touchmove') {
+                        clientY = e.touches[0].clientY;
+                    } else {
+                        clientY = e.clientY;
+                    }
+
+                    const deltaY = Math.abs(clientY - startY);
+
+                    // Solo mover si hay movimiento vertical significativo
+                    if (deltaY > 5) {
+                        hasMoved = true;
+                        fabContainer.classList.add('dragging');
+                        fabButton.classList.remove('active');
+                        fabMenuCard.classList.remove('show');
+                        fabOverlay.classList.remove('show');
+
+                        e.preventDefault();
+
+                        yOffset = clientY - initialY;
+
+                        // Límites verticales: solo permitir movimiento en 300px arriba/abajo
+                        const minY = 80; // No muy arriba
+                        const maxY = window.innerHeight - 150; // No muy abajo
+
+                        yOffset = Math.max(minY, Math.min(yOffset, maxY));
+
+                        fabContainer.style.top = yOffset + 'px';
+                        fabContainer.style.bottom = 'auto';
+                    }
+                }
+            }
+
+            function dragEnd(e) {
+                if (isDragging) {
+                    if (hasMoved) {
+                        fabContainer.classList.add('was-dragging');
+                        setTimeout(() => {
+                            fabContainer.classList.remove('was-dragging');
+                        }, 200);
+                    }
+                }
+                isDragging = false;
+                hasMoved = false;
+                fabContainer.classList.remove('dragging');
+            }
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

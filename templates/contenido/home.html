@@ -1,0 +1,834 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}ICE Asunción - Iglesia Cristiana Evangélica{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Hero Slider - Diseño Limpio y Simple */
+.hero-slider {
+    position: relative;
+    height: 600px;
+    background: #000;
+    overflow: hidden;
+}
+
+.hero-slider .carousel-inner {
+    height: 100%;
+}
+
+.hero-slider .carousel-item {
+    height: 600px;
+    position: relative;
+}
+
+.hero-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+}
+
+.hero-content-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 2;
+}
+
+.hero-card {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 3rem 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 900px;
+    width: 100%;
+}
+
+.hero-card h1 {
+    color: #2c3e50;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.hero-card .hero-description {
+    color: #555;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.hero-card .hero-description p {
+    margin-bottom: 0.5rem;
+}
+
+.hero-card .btn {
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+    border-radius: 50px;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+/* Controles del carousel */
+.hero-slider .carousel-control-prev,
+.hero-slider .carousel-control-next {
+    width: 60px;
+    height: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    opacity: 0.8;
+    transition: all 0.3s;
+}
+
+.hero-slider .carousel-control-prev {
+    left: 20px;
+}
+
+.hero-slider .carousel-control-next {
+    right: 20px;
+}
+
+.hero-slider .carousel-control-prev:hover,
+.hero-slider .carousel-control-next:hover {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.hero-slider .carousel-control-prev-icon,
+.hero-slider .carousel-control-next-icon {
+    filter: invert(1);
+    width: 24px;
+    height: 24px;
+}
+
+/* Indicadores */
+.hero-slider .carousel-indicators {
+    bottom: 30px;
+}
+
+.hero-slider .carousel-indicators button {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    background: transparent;
+    opacity: 0.7;
+    transition: all 0.3s;
+}
+
+.hero-slider .carousel-indicators button.active {
+    background: white;
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hero-slider,
+    .hero-slider .carousel-item {
+        height: 500px;
+    }
+
+    .hero-card {
+        padding: 2rem 1.5rem;
+    }
+
+    .hero-card h1 {
+        font-size: 1.8rem;
+    }
+
+    .hero-card .hero-description {
+        font-size: 1rem;
+    }
+
+    .hero-slider .carousel-control-prev,
+    .hero-slider .carousel-control-next {
+        width: 45px;
+        height: 45px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-slider,
+    .hero-slider .carousel-item {
+        height: 450px;
+    }
+
+    .hero-card {
+        padding: 1.5rem 1rem;
+    }
+
+    .hero-card h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Sections Styles */
+.section {
+    padding: 80px 0;
+}
+
+.section.bg-light {
+    background-color: #f8f9fa;
+}
+
+.section.bg-dark {
+    background-color: #343a40;
+    color: white;
+}
+
+.section.bg-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.section.bg-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    position: relative;
+    display: inline-block;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    border-radius: 2px;
+}
+
+/* Cards Styles */
+.card {
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+    height: 100%;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+.card-title {
+    font-weight: 600;
+    color: #333;
+}
+
+.badge-tipo {
+    font-size: 0.75rem;
+    padding: 0.5em 1em;
+}
+
+/* Ofrendas Styles */
+.ofrendas-section {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.ofrenda-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.ofrenda-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.ofrenda-card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    color: white;
+}
+
+.payment-icons {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.ofrenda-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: white;
+}
+
+.ofrenda-card-body {
+    padding: 2rem 1.5rem;
+    flex-grow: 1;
+}
+
+.ofrenda-description {
+    color: #555;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.ofrenda-description p {
+    margin-bottom: 0.5rem;
+}
+
+.ofrenda-details {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-item strong {
+    color: #495057;
+    font-size: 0.9rem;
+    min-width: 140px;
+}
+
+.detail-item span {
+    color: #212529;
+    font-weight: 500;
+    text-align: right;
+    flex: 1;
+}
+
+.cuenta-numero {
+    font-family: 'Courier New', monospace;
+    font-size: 0.95rem;
+    word-break: break-all;
+}
+
+.btn-ofrenda {
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    margin-top: 1.5rem;
+    border: none;
+}
+
+.btn-ofrenda:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.mp-alias {
+    background: #e7f3ff;
+    padding: 1rem;
+    border-radius: 10px;
+    text-align: center;
+    border: 2px dashed #667eea;
+}
+
+.mp-alias strong {
+    color: #667eea;
+}
+
+.ofrenda-card-footer {
+    padding: 1rem 1.5rem;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+
+.payment-methods {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.badge-payment {
+    background: #667eea;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.badge-payment i {
+    margin-right: 0.3rem;
+}
+
+/* Footer Styles */
+.footer {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    color: white;
+    padding: 60px 0 20px;
+}
+
+.footer a {
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.footer a:hover {
+    color: white;
+}
+
+.social-icons a {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 40px;
+    margin: 0 5px;
+    transition: all 0.3s;
+}
+
+.social-icons a:hover {
+    background: white;
+    color: #3498db;
+    transform: translateY(-5px);
+}
+
+/* Content Styles - Preserve Summernote formatting */
+.content {
+    line-height: 1.8;
+}
+
+.content p,
+.content div,
+.content h1,
+.content h2,
+.content h3,
+.content h4,
+.content h5,
+.content h6 {
+    margin-bottom: 1rem;
+}
+
+/* Reset text-align to allow inline styles to work */
+.content * {
+    text-align: initial;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-on-scroll {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.6s;
+}
+
+.animate-on-scroll.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Slider -->
+{% if sliders %}
+<div id="heroCarousel" class="carousel slide carousel-fade hero-slider" data-bs-ride="carousel" data-bs-interval="5000">
+    <!-- Indicadores -->
+    <div class="carousel-indicators">
+        {% for slider in sliders %}
+        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ forloop.counter0 }}"
+                {% if forloop.first %}class="active" aria-current="true"{% endif %}
+                aria-label="Slide {{ forloop.counter }}"></button>
+        {% endfor %}
+    </div>
+
+    <!-- Slides -->
+    <div class="carousel-inner">
+        {% for slider in sliders %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+            <div class="hero-slide" style="background-image: url('{{ slider.imagen.url }}');"></div>
+            <div class="hero-overlay"></div>
+
+            <!-- Tarjeta de contenido centrada -->
+            <div class="hero-content-wrapper">
+                <div class="hero-card">
+                    <h1>{{ slider.titulo }}</h1>
+                    <div class="hero-description">
+                        {{ slider.descripcion|safe }}
+                    </div>
+                    {% if slider.enlace %}
+                    <a href="{{ slider.enlace }}" class="btn btn-primary">
+                        Leer más <i class="bi bi-arrow-right ms-2"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Controles -->
+    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Anterior</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Siguiente</span>
+    </button>
+</div>
+{% endif %}
+
+<!-- Secciones Flexibles (Visión, Misión, etc.) -->
+{% for seccion in secciones %}
+<section class="section bg-{{ seccion.estilo }}">
+    <div class="container">
+        <div class="row {% if seccion.tipo == 'texto_imagen' %}align-items-center{% endif %}">
+            {% if seccion.tipo == 'texto' or seccion.tipo == 'texto_imagen' %}
+            <div class="col-lg-{% if seccion.imagen %}7{% else %}12{% endif %}">
+                <div class="{% if not seccion.imagen %}text-center{% endif %}">
+                    <h2 class="section-title">{{ seccion.titulo }}</h2>
+                    {% if seccion.subtitulo %}
+                    <p class="lead">{{ seccion.subtitulo }}</p>
+                    {% endif %}
+                </div>
+                <div class="content mt-4">
+                    {{ seccion.contenido|safe }}
+                </div>
+            </div>
+            {% if seccion.imagen %}
+            <div class="col-lg-5 mt-4 mt-lg-0">
+                <img src="{{ seccion.imagen.url }}" alt="{{ seccion.titulo }}" class="img-fluid rounded shadow">
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endfor %}
+
+<!-- Noticias Recientes -->
+{% if noticias_recientes %}
+<section class="section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Últimas Noticias</h2>
+            <p class="text-muted">Mantente informado de lo que está sucediendo en nuestra comunidad</p>
+        </div>
+        <div class="row g-4">
+            {% for noticia in noticias_recientes %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card shadow-sm">
+                    {% if noticia.imagen_principal %}
+                    <img src="{{ noticia.imagen_principal.url }}" class="card-img-top" alt="{{ noticia.titulo }}">
+                    {% else %}
+                    <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center">
+                        <i class="bi bi-newspaper text-white" style="font-size: 3rem;"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <span class="badge bg-info badge-tipo">{{ noticia.get_tipo_display }}</span>
+                        <h5 class="card-title mt-2">{{ noticia.titulo|truncatewords:8 }}</h5>
+                        <p class="card-text text-muted small">{{ noticia.introduccion|truncatewords:15 }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">{{ noticia.fecha_publicacion|date:"d/m/Y" }}</small>
+                            <a href="{% url 'noticia_detalle' noticia.id %}" class="btn btn-sm btn-outline-primary">Leer</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-5">
+            <a href="{% url 'noticias' %}" class="btn btn-primary btn-lg">Ver todas las noticias</a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Mensajes Recientes -->
+{% if mensajes_recientes %}
+<section class="section bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Mensajes Recientes</h2>
+            <p class="text-muted">Alimenta tu fe con nuestras predicaciones y estudios bíblicos</p>
+        </div>
+        <div class="row g-4">
+            {% for mensaje in mensajes_recientes %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card shadow-sm">
+                    {% if mensaje.imagen %}
+                    <img src="{{ mensaje.imagen.url }}" class="card-img-top" alt="{{ mensaje.titulo }}">
+                    {% else %}
+                    <div class="card-img-top bg-primary d-flex align-items-center justify-content-center">
+                        <i class="bi bi-mic text-white" style="font-size: 3rem;"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <span class="badge {% if mensaje.tipo == 1 %}bg-success{% else %}bg-danger{% endif %} badge-tipo">
+                            {{ mensaje.get_tipo_display }}
+                        </span>
+                        <h5 class="card-title mt-2">{{ mensaje.titulo|truncatewords:8 }}</h5>
+                        <p class="card-text text-muted small">
+                            <i class="bi bi-person"></i> {{ mensaje.autor }}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">{{ mensaje.fecha_publicacion|date:"d/m/Y" }}</small>
+                            <a href="{% url 'mensaje_detalle' mensaje.id %}" class="btn btn-sm btn-outline-primary">Ver</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-5">
+            <a href="{% url 'mensajes' %}" class="btn btn-primary btn-lg">Ver todos los mensajes</a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Ofrendas y Donaciones -->
+{% if ofrendas %}
+<section class="section ofrendas-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Ofrendas y Donaciones</h2>
+            <p class="lead text-muted mb-4">Dios nos permite sostener la obra a través de la generosidad de su pueblo.</p>
+            <p class="text-muted mx-auto" style="max-width: 800px;">
+                Usted puede ofrendar para el sostén de nuestros misioneros y pastores, y así seguir extendiendo
+                el evangelio en Tucumán y en otros países, por medio de las siguientes formas:
+            </p>
+        </div>
+
+        <div class="row g-4">
+            {% for ofrenda in ofrendas %}
+            <div class="col-md-6 col-lg-4">
+                <div class="ofrenda-card">
+                    <div class="ofrenda-card-header">
+                        {% if ofrenda.mercadopago_link %}
+                        <div class="payment-icons">
+                            <i class="bi bi-credit-card-2-front"></i>
+                        </div>
+                        {% elif ofrenda.banco %}
+                        <div class="payment-icons">
+                            <i class="bi bi-bank"></i>
+                        </div>
+                        {% endif %}
+                        <h4 class="ofrenda-title">{{ ofrenda.titulo }}</h4>
+                    </div>
+
+                    <div class="ofrenda-card-body">
+                        <div class="ofrenda-description">
+                            {{ ofrenda.descripcion|safe }}
+                        </div>
+
+                        {% if ofrenda.banco or ofrenda.cuenta %}
+                        <div class="ofrenda-details mt-3">
+                            {% if ofrenda.banco %}
+                            <div class="detail-item">
+                                <strong><i class="bi bi-building"></i> Banco:</strong>
+                                <span>{{ ofrenda.banco }}</span>
+                            </div>
+                            {% endif %}
+                            {% if ofrenda.cuenta %}
+                            <div class="detail-item">
+                                <strong><i class="bi bi-credit-card"></i> CVU/Cuenta:</strong>
+                                <span class="cuenta-numero">{{ ofrenda.cuenta }}</span>
+                            </div>
+                            {% endif %}
+                            {% if ofrenda.titular %}
+                            <div class="detail-item">
+                                <strong><i class="bi bi-person"></i> Titular:</strong>
+                                <span>{{ ofrenda.titular }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        {% if ofrenda.mercadopago_link %}
+                        <a href="{{ ofrenda.mercadopago_link }}" target="_blank" class="btn-ofrenda">
+                            <i class="bi bi-credit-card-fill me-2"></i>
+                            Donar Ahora
+                            <i class="bi bi-arrow-right ms-2"></i>
+                        </a>
+                        {% endif %}
+
+                        {% if ofrenda.mercadopago_alias and not ofrenda.mercadopago_link %}
+                        <div class="mp-alias mt-3">
+                            <strong>Alias:</strong> {{ ofrenda.mercadopago_alias }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="ofrenda-card-footer">
+                        <div class="payment-methods">
+                            {% if ofrenda.mercadopago_link %}
+                            <span class="badge badge-payment">
+                                <i class="bi bi-cash-coin"></i> Mercado Pago
+                            </span>
+                            <span class="badge badge-payment">
+                                <i class="bi bi-credit-card"></i> Tarjetas
+                            </span>
+                            {% elif ofrenda.banco %}
+                            <span class="badge badge-payment">
+                                <i class="bi bi-bank2"></i> Transferencia
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Contacto e Información -->
+{% if datos_ice %}
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="text-center">
+                    <i class="bi bi-geo-alt-fill text-primary" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Dirección</h5>
+                    <p class="text-muted">{{ datos_ice.direccion }}</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="text-center">
+                    <i class="bi bi-telephone-fill text-primary" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Teléfono</h5>
+                    <p class="text-muted">{{ datos_ice.telefono }}</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="text-center">
+                    <i class="bi bi-envelope-fill text-primary" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Email</h5>
+                    <p class="text-muted">{{ datos_ice.email }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4 social-icons">
+            {% if datos_ice.facebook %}
+            <a href="{{ datos_ice.facebook }}" target="_blank"><i class="bi bi-facebook"></i></a>
+            {% endif %}
+            {% if datos_ice.instagram %}
+            <a href="{{ datos_ice.instagram }}" target="_blank"><i class="bi bi-instagram"></i></a>
+            {% endif %}
+            {% if datos_ice.youtube %}
+            <a href="{{ datos_ice.youtube }}" target="_blank"><i class="bi bi-youtube"></i></a>
+            {% endif %}
+            {% if datos_ice.twitter %}
+            <a href="{{ datos_ice.twitter }}" target="_blank"><i class="bi bi-twitter"></i></a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Animación al hacer scroll (excluyendo el hero)
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -100px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+        }
+    });
+}, observerOptions);
+
+// Observar solo elementos con .animate-on-scroll que NO estén dentro del hero
+document.querySelectorAll('.animate-on-scroll').forEach(el => {
+    if (!el.closest('.hero-slider')) {
+        observer.observe(el);
+    }
+});
+</script>
+{% endblock %}

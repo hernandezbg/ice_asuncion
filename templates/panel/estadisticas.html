@@ -1,0 +1,379 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block title %}Estadísticas - Panel ICE{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h2><i class="bi bi-graph-up"></i> Estadísticas de Visitas</h2>
+    </div>
+    <div class="col-md-6 text-end">
+        <form method="get" class="d-inline-block">
+            <div class="input-group">
+                <label class="input-group-text">Últimos</label>
+                <select name="dias" class="form-select" onchange="this.form.submit()" style="max-width: 100px;">
+                    <option value="7" {% if dias == 7 %}selected{% endif %}>7 días</option>
+                    <option value="15" {% if dias == 15 %}selected{% endif %}>15 días</option>
+                    <option value="30" {% if dias == 30 %}selected{% endif %}>30 días</option>
+                    <option value="60" {% if dias == 60 %}selected{% endif %}>60 días</option>
+                    <option value="90" {% if dias == 90 %}selected{% endif %}>90 días</option>
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Resumen general -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="bi bi-eye text-primary" style="font-size: 2rem;"></i>
+                <h3 class="mt-2">{{ total_visitas }}</h3>
+                <small class="text-muted">Total Visitas</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card success">
+            <div class="card-body text-center">
+                <i class="bi bi-person-check text-success" style="font-size: 2rem;"></i>
+                <h3 class="mt-2">{{ visitas_unicas }}</h3>
+                <small class="text-muted">IPs Únicas</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card warning">
+            <div class="card-body text-center">
+                <i class="bi bi-calendar-day text-warning" style="font-size: 2rem;"></i>
+                <h3 class="mt-2">{{ promedio_dia|floatformat:1 }}</h3>
+                <small class="text-muted">Promedio/Día</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card info">
+            <div class="card-body text-center">
+                <i class="bi bi-calendar-range text-info" style="font-size: 2rem;"></i>
+                <h3 class="mt-2">{{ dias }}</h3>
+                <small class="text-muted">Días Analizados</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráfico de visitas por día -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Visitas por Día</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="visitasDiaChart" height="60"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Visitas por dispositivo -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-device-ssd"></i> Por Dispositivo</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="dispositivoChart" height="200"></canvas>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for item in por_dispositivo %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>
+                        {% if item.dispositivo == 'mobile' %}
+                            <i class="bi bi-phone text-primary"></i> Móvil
+                        {% elif item.dispositivo == 'tablet' %}
+                            <i class="bi bi-tablet text-success"></i> Tablet
+                        {% else %}
+                            <i class="bi bi-laptop text-info"></i> PC
+                        {% endif %}
+                    </span>
+                    <span class="badge bg-primary rounded-pill">{{ item.total }}</span>
+                </div>
+                {% empty %}
+                <div class="list-group-item text-muted">No hay datos</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Visitas por navegador -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-browser-chrome"></i> Por Navegador</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Navegador</th>
+                            <th class="text-end">Visitas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in por_navegador %}
+                        <tr>
+                            <td>{{ item.navegador|default:"Desconocido" }}</td>
+                            <td class="text-end"><strong>{{ item.total }}</strong></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-center text-muted">No hay datos</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visitas por sistema operativo -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-gear"></i> Por Sistema Operativo</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Sistema</th>
+                            <th class="text-end">Visitas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in por_sistema %}
+                        <tr>
+                            <td>{{ item.sistema_operativo|default:"Desconocido" }}</td>
+                            <td class="text-end"><strong>{{ item.total }}</strong></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-center text-muted">No hay datos</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Países y URLs más visitadas -->
+<div class="row mb-4">
+    <!-- Top países -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-globe"></i> Top 10 Países</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>País</th>
+                            <th class="text-end">Visitas</th>
+                            <th class="text-end">%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in por_pais %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <strong>{{ item.pais|default:"Desconocido" }}</strong>
+                            </td>
+                            <td class="text-end">{{ item.total }}</td>
+                            <td class="text-end">
+                                <span class="badge bg-info">
+                                    {% widthratio item.total total_visitas 100 %}%
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">No hay datos de país</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- URLs más visitadas -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-link-45deg"></i> Top 10 Páginas Más Visitadas</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>URL</th>
+                            <th class="text-end">Visitas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in por_url %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <code class="text-truncate d-inline-block" style="max-width: 300px;">
+                                    {{ item.url }}
+                                </code>
+                            </td>
+                            <td class="text-end"><strong>{{ item.total }}</strong></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">No hay datos</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Visitas recientes -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Últimas 50 Visitas</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Fecha/Hora</th>
+                            <th>IP</th>
+                            <th>País</th>
+                            <th>Dispositivo</th>
+                            <th>Navegador</th>
+                            <th>URL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for visita in ultimas_visitas %}
+                        <tr>
+                            <td>
+                                <small>{{ visita.fecha|date:"d/m/Y H:i:s" }}</small>
+                            </td>
+                            <td><code>{{ visita.ip }}</code></td>
+                            <td>{{ visita.pais|default:"-" }}</td>
+                            <td>
+                                {% if visita.dispositivo == 'mobile' %}
+                                    <i class="bi bi-phone"></i>
+                                {% elif visita.dispositivo == 'tablet' %}
+                                    <i class="bi bi-tablet"></i>
+                                {% else %}
+                                    <i class="bi bi-laptop"></i>
+                                {% endif %}
+                                {{ visita.dispositivo|default:"-" }}
+                            </td>
+                            <td>{{ visita.navegador|default:"-" }}</td>
+                            <td>
+                                <code class="text-truncate d-inline-block" style="max-width: 250px;">
+                                    {{ visita.url }}
+                                </code>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                No hay visitas registradas
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Gráfico de visitas por día
+const ctxDia = document.getElementById('visitasDiaChart').getContext('2d');
+new Chart(ctxDia, {
+    type: 'line',
+    data: {
+        labels: [{% for item in por_dia %}'{{ item.fecha|date:"d/m" }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Visitas',
+            data: [{% for item in por_dia %}{{ item.total }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: 'rgba(13, 110, 253, 0.2)',
+            borderColor: 'rgba(13, 110, 253, 1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+// Gráfico de dispositivos (dona)
+const ctxDispositivo = document.getElementById('dispositivoChart').getContext('2d');
+new Chart(ctxDispositivo, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for item in por_dispositivo %}'{% if item.dispositivo == "mobile" %}Móvil{% elif item.dispositivo == "tablet" %}Tablet{% else %}PC{% endif %}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for item in por_dispositivo %}{{ item.total }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: [
+                'rgba(13, 110, 253, 0.7)',
+                'rgba(25, 135, 84, 0.7)',
+                'rgba(13, 202, 240, 0.7)'
+            ],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

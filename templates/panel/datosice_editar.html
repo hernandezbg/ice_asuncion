@@ -1,0 +1,132 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Configuración - Panel ICE{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="bi bi-gear"></i> Configuración del Sitio</h2>
+        <p class="text-muted">Edita la información de contacto y redes sociales que aparecen en el sitio web</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-pencil-square"></i> Formulario de Edición
+            </div>
+            <div class="card-body">
+                <form method="post" action="">
+                    {% csrf_token %}
+
+                    <h5 class="mb-3"><i class="bi bi-envelope text-primary"></i> Información de Contacto</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-12">
+                            {{form.email.label_tag}}
+                            {{form.email}}
+                            <small class="form-text text-muted d-block">Email principal de contacto</small>
+                        </div>
+                        <div class="col-md-12">
+                            {{form.direccion.label_tag}}
+                            {{form.direccion}}
+                            <small class="form-text text-muted d-block">Dirección física de la iglesia</small>
+                        </div>
+                        <div class="col-md-12">
+                            {{form.telefono.label_tag}}
+                            {{form.telefono}}
+                            <small class="form-text text-muted d-block">Teléfono de contacto</small>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h5 class="mb-3"><i class="bi bi-share text-success"></i> Redes Sociales</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            {{form.facebook.label_tag}}
+                            {{form.facebook}}
+                            <small class="form-text text-muted d-block">URL completa de Facebook</small>
+                        </div>
+                        <div class="col-md-6">
+                            {{form.twitter.label_tag}}
+                            {{form.twitter}}
+                            <small class="form-text text-muted d-block">URL completa de Twitter/X</small>
+                        </div>
+                        <div class="col-md-6">
+                            {{form.youtube.label_tag}}
+                            {{form.youtube}}
+                            <small class="form-text text-muted d-block">URL del canal de YouTube</small>
+                        </div>
+                        <div class="col-md-6">
+                            {{form.instagram.label_tag}}
+                            {{form.instagram}}
+                            <small class="form-text text-muted d-block">URL completa de Instagram</small>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h5 class="mb-3"><i class="bi bi-broadcast text-danger"></i> Transmisiones en Vivo</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-12">
+                            {{form.stream_youtube.label_tag}}
+                            {{form.stream_youtube}}
+                            <small class="form-text text-muted d-block">URL del stream en vivo de YouTube (si está disponible)</small>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-check-circle"></i> Guardar Cambios
+                        </button>
+                        <a href="{% url 'panel:dashboard' %}" class="btn btn-secondary btn-lg">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <i class="bi bi-info-circle-fill"></i> Información
+            </div>
+            <div class="card-body">
+                <h6><i class="bi bi-lightbulb text-warning"></i> Consejos:</h6>
+                <ul class="small">
+                    <li>Verifica que los datos de <strong>contacto</strong> sean correctos</li>
+                    <li>Las URLs de redes sociales deben ser completas (incluir https://)</li>
+                    <li>Si no usa alguna red social, deje el campo vacío</li>
+                    <li>Estos datos aparecen en el footer del sitio web</li>
+                    <li>El stream de YouTube solo se muestra si está activo</li>
+                </ul>
+
+                <hr>
+
+                <h6><i class="bi bi-graph-up text-success"></i> Estado Actual:</h6>
+                <ul class="small mb-0">
+                    {% if datos_ice.facebook %}<li><i class="bi bi-check-circle text-success"></i> Facebook configurado</li>{% endif %}
+                    {% if datos_ice.twitter %}<li><i class="bi bi-check-circle text-success"></i> Twitter configurado</li>{% endif %}
+                    {% if datos_ice.youtube %}<li><i class="bi bi-check-circle text-success"></i> YouTube configurado</li>{% endif %}
+                    {% if datos_ice.instagram %}<li><i class="bi bi-check-circle text-success"></i> Instagram configurado</li>{% endif %}
+                    {% if datos_ice.stream_youtube %}<li><i class="bi bi-broadcast text-danger"></i> Stream en vivo activo</li>{% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header bg-warning text-dark">
+                <i class="bi bi-exclamation-triangle-fill"></i> Importante
+            </div>
+            <div class="card-body">
+                <p class="small mb-0">
+                    <strong>Esta es la configuración global del sitio.</strong> Los cambios que realice aquí se reflejarán inmediatamente en todo el sitio web público.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

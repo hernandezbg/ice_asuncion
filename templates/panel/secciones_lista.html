@@ -1,0 +1,244 @@
+{% extends 'panel/base_panel.html' %}
+{% load static %}
+{% block title %}Secciones - Panel ICE{% endblock %}
+{% block page_title %}Secciones{% endblock %}
+{% block page_subtitle %}Gestiona las secciones de la homepage{% endblock %}
+
+{% block extra_css %}
+<style>
+    .item-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+    }
+    .item-card:hover {
+        box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+        transform: translateY(-3px);
+    }
+    .item-card-header {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #f0f0f0;
+        align-items: start;
+    }
+    .item-cards-container {
+        display: none;
+    }
+    @media (max-width: 768px) {
+        .table-responsive {
+            display: none;
+        }
+        .item-cards-container {
+            display: block;
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6"><h2><i class="bi bi-layout-text-sidebar"></i> Secciones de la Homepage</h2></div>
+    <div class="col-md-6 text-end">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalForm">
+            <i class="bi bi-plus-circle"></i> Nueva Sección
+        </button>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-10">
+                <input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ busqueda }}">
+            </div>
+            <div class="col-md-2"><button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Buscar</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><strong>{{ page_obj.paginator.count }}</strong> sección(es)</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr><th>Título</th><th>Tipo</th><th>Estilo</th><th>Orden</th><th>En Home</th><th>Estado</th><th class="text-end">Acciones</th></tr>
+            </thead>
+            <tbody>
+                {% for s in page_obj %}
+                <tr>
+                    <td><strong>{{ s.titulo }}</strong>{% if s.subtitulo %}<br><small class="text-muted">{{ s.subtitulo|truncatechars:50 }}</small>{% endif %}</td>
+                    <td><span class="badge bg-info">{{ s.get_tipo_display }}</span></td>
+                    <td><span class="badge bg-{{ s.estilo }}">{{ s.get_estilo_display }}</span></td>
+                    <td>{{ s.orden }}</td>
+                    <td>{% if s.mostrar_en_home %}<i class="bi bi-check-circle text-success"></i>{% else %}<i class="bi bi-x-circle text-muted"></i>{% endif %}</td>
+                    <td>{% if s.activo %}<span class="badge bg-success">Activo</span>{% else %}<span class="badge bg-secondary">Inactivo</span>{% endif %}</td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="editar({{s.id}})"><i class="bi bi-pencil"></i></button>
+                            <a href="{% url 'panel:seccion_toggle_activo' s.id %}" class="btn btn-outline-warning" title="Activar/Desactivar"><i class="bi bi-eye{% if not s.activo %}-slash{% endif %}"></i></a>
+                            <button class="btn btn-outline-danger" onclick="eliminar({{s.id}},'{{s.titulo|escapejs}}')"><i class="bi bi-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}<tr><td colspan="7" class="text-center text-muted py-4">No se encontraron secciones</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Card View (Mobile) -->
+    <div class="item-cards-container">
+        {% for s in page_obj %}
+        <div class="item-card">
+            <div class="item-card-header">
+                <div class="flex-grow-1">
+                    <h6 class="mb-1 fw-bold">{{ s.titulo }}</h6>
+                    {% if s.subtitulo %}
+                    <p class="text-muted small mb-2">{{ s.subtitulo|truncatechars:50 }}</p>
+                    {% endif %}
+                    <div class="d-flex gap-2 align-items-center flex-wrap mb-2">
+                        <span class="badge bg-info">{{ s.get_tipo_display }}</span>
+                        <span class="badge bg-{{ s.estilo }}">{{ s.get_estilo_display }}</span>
+                        {% if s.activo %}
+                        <span class="badge bg-success">Activo</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inactivo</span>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex gap-3 text-muted small">
+                        <span><i class="bi bi-sort-numeric-down"></i> Orden: {{ s.orden }}</span>
+                        {% if s.mostrar_en_home %}
+                        <span><i class="bi bi-house-check text-success"></i> En Home</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary btn-sm flex-fill" onclick="editar({{s.id}})">
+                    <i class="bi bi-pencil-fill"></i> Editar
+                </button>
+                <a href="{% url 'panel:seccion_toggle_activo' s.id %}" class="btn btn-outline-warning btn-sm" title="Activar/Desactivar">
+                    <i class="bi bi-eye{% if not s.activo %}-slash{% endif %}"></i>
+                </a>
+                <button class="btn btn-outline-danger btn-sm" onclick="eliminar({{s.id}},'{{s.titulo|escapejs}}')">
+                    <i class="bi bi-trash-fill"></i>
+                </button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+            <p class="mt-2">No se encontraron secciones</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="card-footer">
+        <nav><ul class="pagination pagination-sm mb-0 justify-content-center">
+            {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page=1">Primera</a></li><li class="page-item"><a class="page-link" href="?page={{page_obj.previous_page_number}}">Anterior</a></li>{% endif %}
+            <li class="page-item active"><span class="page-link">Página {{page_obj.number}} de {{page_obj.paginator.num_pages}}</span></li>
+            {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{page_obj.next_page_number}}">Siguiente</a></li><li class="page-item"><a class="page-link" href="?page={{page_obj.paginator.num_pages}}">Última</a></li>{% endif %}
+        </ul></nav>
+    </div>
+    {% endif %}
+</div>
+
+<div class="modal fade" id="modalForm" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" id="formPrincipal" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header"><h5 class="modal-title" id="modalTitle"><i class="bi bi-plus-circle"></i> Nueva Sección</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">{{form.titulo.label_tag}}{{form.titulo}}</div>
+                        <div class="col-md-4">{{form.orden.label_tag}}{{form.orden}}</div>
+                        <div class="col-md-12">{{form.subtitulo.label_tag}}{{form.subtitulo}}</div>
+                        <div class="col-md-12">{{form.contenido.label_tag}}{{form.contenido}}</div>
+                        <div class="col-md-6">{{form.tipo.label_tag}}{{form.tipo}}</div>
+                        <div class="col-md-6">{{form.estilo.label_tag}}{{form.estilo}}</div>
+                        <div class="col-md-12">{{form.imagen.label_tag}}{{form.imagen}}<small class="form-text text-muted d-block">Opcional - Solo para tipo "Texto con Imagen"</small></div>
+                        <div class="col-md-6"><div class="form-check mt-4">{{form.mostrar_en_home}}<label class="form-check-label" for="{{form.mostrar_en_home.id_for_label}}">Mostrar en la página de inicio</label></div></div>
+                        <div class="col-md-6"><div class="form-check mt-4">{{form.activo}}<label class="form-check-label" for="{{form.activo.id_for_label}}">Sección activa</label></div></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEliminar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" id="formEliminar">{% csrf_token %}
+                <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Confirmar Eliminación</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body"><p>¿Eliminar la sección <strong id="nombreEliminar"></strong>?</p><p class="text-danger"><small>Esta acción no se puede deshacer.</small></p></div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Eliminar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Inicializar Summernote cuando se abre el modal
+    $('#modalForm').on('shown.bs.modal', function () {
+        if (!$('#id_contenido').hasClass('summernote-initialized')) {
+            $('#id_contenido').summernote({
+                height: 300,
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'italic', 'underline', 'clear']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['table', ['table']],
+                    ['insert', ['link']],
+                    ['view', ['codeview', 'help']]
+                ]
+            });
+            $('#id_contenido').addClass('summernote-initialized');
+        }
+    });
+});
+
+function editar(id){
+    fetch(`/panel/secciones/${id}/datos/`).then(r=>r.json()).then(d=>{
+        document.getElementById('formPrincipal').action=`/panel/secciones/${id}/editar/`;
+        document.getElementById('modalTitle').innerHTML='<i class="bi bi-pencil-square"></i> Editar Sección';
+        Object.keys(d).forEach(k=>{
+            const el=document.getElementById(`id_${k}`);
+            if(el){
+                if(el.type=='checkbox') {
+                    el.checked=d[k];
+                } else if(k === 'contenido') {
+                    $('#id_contenido').summernote('code', d[k]||'');
+                } else {
+                    el.value=d[k]||'';
+                }
+            }
+        });
+        new bootstrap.Modal(document.getElementById('modalForm')).show();
+    });
+}
+function eliminar(id,nombre){
+    document.getElementById('formEliminar').action=`/panel/secciones/${id}/eliminar/`;
+    document.getElementById('nombreEliminar').textContent=nombre;
+    new bootstrap.Modal(document.getElementById('modalEliminar')).show();
+}
+document.getElementById('modalForm').addEventListener('hidden.bs.modal',function(){
+    document.getElementById('formPrincipal').action='{% url "panel:seccion_crear" %}';
+    document.getElementById('modalTitle').innerHTML='<i class="bi bi-plus-circle"></i> Nueva Sección';
+    document.getElementById('formPrincipal').reset();
+    $('#id_contenido').summernote('code', '');
+});
+</script>
+{% endblock %}

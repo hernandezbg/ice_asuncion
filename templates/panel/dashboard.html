@@ -1,0 +1,235 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block title %}Dashboard - Panel ICE{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-speedometer2"></i> Dashboard</h2>
+    </div>
+</div>
+
+<!-- Estadísticas de Contenido -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Noticias</h6>
+                <h2 class="card-title">{{ total_noticias }}</h2>
+                <a href="{% url 'panel:noticias_lista' %}" class="btn btn-sm btn-primary">Ver todas</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card success">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Mensajes</h6>
+                <h2 class="card-title">{{ total_mensajes }}</h2>
+                <a href="{% url 'panel:mensajes_lista' %}" class="btn btn-sm btn-success">Ver todos</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card warning">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Hermanos Activos</h6>
+                <h2 class="card-title">{{ total_hermanos }}</h2>
+                <a href="{% url 'panel:hermanos_lista' %}" class="btn btn-sm btn-warning">Ver todos</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card info">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Páginas</h6>
+                <h2 class="card-title">{{ total_paginas }}</h2>
+                <a href="{% url 'panel:paginas_lista' %}" class="btn btn-sm btn-info">Ver todas</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas de Visitas -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-eye text-primary" style="font-size: 2rem;"></i>
+                <h3 class="mt-2">{{ visitas_hoy }}</h3>
+                <small class="text-muted">Visitas Hoy</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-calendar-week text-success" style="font-size: 2rem;"></i>
+                <h3 class="mt-2">{{ visitas_semana }}</h3>
+                <small class="text-muted">Última Semana</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-calendar-month text-warning" style="font-size: 2rem;"></i>
+                <h3 class="mt-2">{{ visitas_mes }}</h3>
+                <small class="text-muted">Último Mes</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-graph-up text-info" style="font-size: 2rem;"></i>
+                <h3 class="mt-2">{{ total_visitas }}</h3>
+                <small class="text-muted">Total de Visitas</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Gráfico de visitas -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Visitas últimos 7 días</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="visitasChart" height="80"></canvas>
+            </div>
+        </div>
+
+        <!-- Visitas por dispositivo -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-device-ssd"></i> Visitas por Dispositivo (último mes)</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Dispositivo</th>
+                            <th class="text-end">Visitas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in visitas_dispositivo %}
+                        <tr>
+                            <td>
+                                {% if item.dispositivo == 'mobile' %}
+                                    <i class="bi bi-phone"></i> Móvil
+                                {% elif item.dispositivo == 'tablet' %}
+                                    <i class="bi bi-tablet"></i> Tablet
+                                {% else %}
+                                    <i class="bi bi-laptop"></i> PC
+                                {% endif %}
+                            </td>
+                            <td class="text-end"><strong>{{ item.total }}</strong></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-center text-muted">No hay datos</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <!-- Últimas noticias -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-newspaper"></i> Últimas Noticias</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for noticia in ultimas_noticias %}
+                <a href="{% url 'panel:noticias_lista' %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ noticia.titulo|truncatewords:5 }}</h6>
+                        <small>{{ noticia.fecha_publicacion|date:"d/m" }}</small>
+                    </div>
+                    <small class="text-muted">{{ noticia.get_tipo_display }}</small>
+                </a>
+                {% empty %}
+                <div class="list-group-item text-muted">No hay noticias</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Cumpleaños del mes -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-cake"></i> Cumpleaños del Mes</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for hermano in cumpleaños_mes %}
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ hermano.apellidos }}, {{ hermano.nombres }}</h6>
+                        <small>{{ hermano.cumpleaños|date:"d/m" }}</small>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="list-group-item text-muted">No hay cumpleaños este mes</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Acceso rápido -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-lightning"></i> Acceso Rápido</h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'panel:noticias_lista' %}" class="btn btn-primary w-100 mb-2">
+                    <i class="bi bi-plus-circle"></i> Nueva Noticia
+                </a>
+                <a href="{% url 'panel:mensajes_lista' %}" class="btn btn-success w-100 mb-2">
+                    <i class="bi bi-plus-circle"></i> Nuevo Mensaje
+                </a>
+                <a href="{% url 'panel:hermanos_lista' %}" class="btn btn-warning w-100">
+                    <i class="bi bi-plus-circle"></i> Nuevo Hermano
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Gráfico de visitas por día
+const ctx = document.getElementById('visitasChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: [{% for item in visitas_por_dia %}'{{ item.fecha }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Visitas',
+            data: [{% for item in visitas_por_dia %}{{ item.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: 'rgba(13, 110, 253, 0.5)',
+            borderColor: 'rgba(13, 110, 253, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

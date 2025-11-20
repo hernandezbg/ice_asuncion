@@ -1,0 +1,736 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ noticia.titulo }} - ICE Asunción{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Header Section */
+    .noticia-header {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 5px 30px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+    .noticia-category-badge {
+        display: inline-block;
+        padding: 0.5rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 1rem;
+    }
+    .noticia-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #333;
+        line-height: 1.2;
+        margin-bottom: 1rem;
+    }
+    .noticia-meta {
+        color: #6c757d;
+        font-size: 1rem;
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    .noticia-meta i {
+        margin-right: 0.5rem;
+    }
+
+    /* Breadcrumb personalizado */
+    .custom-breadcrumb {
+        background: transparent;
+        padding: 1rem 0;
+        margin-bottom: 0;
+    }
+    .custom-breadcrumb .breadcrumb-item a {
+        color: #667eea;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+    .custom-breadcrumb .breadcrumb-item a:hover {
+        color: #764ba2;
+    }
+
+    /* Contenido */
+    .noticia-content {
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 5px 30px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+    .noticia-intro {
+        font-size: 1.25rem;
+        line-height: 1.8;
+        color: #495057;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-left: 4px solid #667eea;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    .noticia-body {
+        font-size: 1.1rem;
+        line-height: 1.9;
+        color: #333;
+    }
+    .noticia-body p {
+        margin-bottom: 1.5rem;
+    }
+    .noticia-body img {
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        margin: 2rem 0;
+    }
+
+    /* Botones de acción */
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin: 2rem 0;
+    }
+    .btn-share {
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.3s;
+        border: 2px solid;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-share i {
+        font-size: 1.1rem;
+    }
+    .btn-facebook {
+        background: #1877f2;
+        border-color: #1877f2;
+        color: white;
+    }
+    .btn-facebook:hover {
+        background: #145dbf;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(24, 119, 242, 0.3);
+    }
+    .btn-twitter {
+        background: #1da1f2;
+        border-color: #1da1f2;
+        color: white;
+    }
+    .btn-twitter:hover {
+        background: #1a8cd8;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(29, 161, 242, 0.3);
+    }
+    .btn-whatsapp {
+        background: #25d366;
+        border-color: #25d366;
+        color: white;
+    }
+    .btn-whatsapp:hover {
+        background: #1faa52;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+    }
+    .btn-print {
+        background: white;
+        border-color: #6c757d;
+        color: #6c757d;
+    }
+    .btn-print:hover {
+        background: #6c757d;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    /* Sidebar */
+    .sidebar-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 30px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+    .sidebar-card.sticky-card {
+        position: sticky;
+        top: 100px;
+        z-index: 1;
+    }
+    .sidebar-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 3px solid #667eea;
+    }
+    .related-item {
+        display: block;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        border-radius: 12px;
+        transition: all 0.3s;
+        text-decoration: none;
+        background: #f8f9fa;
+        border-left: 3px solid transparent;
+    }
+    .related-item:hover {
+        background: white;
+        transform: translateX(5px);
+        border-left-color: #667eea;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    }
+    .related-item h6 {
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+    .related-item small {
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+
+    /* Navegación anterior/siguiente */
+    .post-navigation {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 5px 30px rgba(0,0,0,0.08);
+        margin-top: 3rem;
+    }
+    .nav-link-post {
+        display: flex;
+        align-items: center;
+        padding: 1.5rem;
+        border-radius: 15px;
+        text-decoration: none;
+        transition: all 0.3s;
+        background: #f8f9fa;
+        color: #333;
+    }
+    .nav-link-post:hover {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+    }
+    .nav-link-post i {
+        font-size: 2rem;
+        margin: 0 1rem;
+    }
+
+    /* Reading Toolbar */
+    .reading-toolbar {
+        background: white;
+        border-radius: 20px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 5px 30px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .toolbar-section {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-toolbar {
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        background: white;
+        color: #495057;
+        font-weight: 600;
+        transition: all 0.3s;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+    .btn-toolbar:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+        transform: translateY(-2px);
+    }
+    .btn-toolbar.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    .btn-toolbar i {
+        margin-right: 0.25rem;
+    }
+    .view-counter {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #6c757d;
+        font-size: 0.95rem;
+    }
+    .view-counter i {
+        font-size: 1.2rem;
+    }
+
+    /* Dark Mode */
+    body.dark-mode {
+        background: #1a1a1a;
+        color: #e0e0e0;
+    }
+    body.dark-mode .noticia-header,
+    body.dark-mode .noticia-content,
+    body.dark-mode .sidebar-card,
+    body.dark-mode .reading-toolbar,
+    body.dark-mode .post-navigation {
+        background: #2d2d2d;
+        color: #e0e0e0;
+    }
+    body.dark-mode .noticia-title,
+    body.dark-mode .sidebar-title,
+    body.dark-mode h5, body.dark-mode h6 {
+        color: #ffffff;
+    }
+    body.dark-mode .noticia-intro {
+        background: #3a3a3a;
+        color: #e0e0e0;
+    }
+    body.dark-mode .noticia-body {
+        color: #e0e0e0;
+    }
+    body.dark-mode .related-item {
+        background: #3a3a3a;
+    }
+    body.dark-mode .related-item:hover {
+        background: #454545;
+    }
+    body.dark-mode .related-item h6 {
+        color: #ffffff;
+    }
+    body.dark-mode .nav-link-post {
+        background: #3a3a3a;
+        color: #e0e0e0;
+    }
+    body.dark-mode .btn-toolbar {
+        background: #3a3a3a;
+        color: #e0e0e0;
+        border-color: #4a4a4a;
+    }
+    body.dark-mode .btn-toolbar:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    body.dark-mode .breadcrumb-item,
+    body.dark-mode .breadcrumb-item.active {
+        color: #b0b0b0;
+    }
+    body.dark-mode .breadcrumb-item a {
+        color: #667eea;
+    }
+
+    /* Font Size Adjustments */
+    body.font-small .noticia-body {
+        font-size: 0.95rem;
+    }
+    body.font-medium .noticia-body {
+        font-size: 1.1rem;
+    }
+    body.font-large .noticia-body {
+        font-size: 1.3rem;
+    }
+    body.font-xlarge .noticia-body {
+        font-size: 1.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .noticia-header {
+            padding: 1.5rem;
+        }
+        .noticia-title {
+            font-size: 1.75rem;
+        }
+        .noticia-content {
+            padding: 1.5rem;
+        }
+        .sidebar-card {
+            position: relative !important;
+            top: 0 !important;
+        }
+        .reading-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .toolbar-section {
+            justify-content: center;
+        }
+    }
+
+    /* Print styles */
+    @media print {
+        .action-buttons, .post-navigation, .sidebar-card, .custom-breadcrumb, .btn {
+            display: none !important;
+        }
+        .noticia-hero {
+            height: auto;
+            border-radius: 0;
+        }
+        .noticia-content {
+            box-shadow: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="container mt-3">
+    <nav aria-label="breadcrumb" class="custom-breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="bi bi-house-door"></i> Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'noticias' %}?tipo={{ noticia.tipo }}">{{ noticia.get_tipo_display }}s</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ noticia.titulo|truncatewords:5 }}</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Contenido Principal -->
+<div class="container mb-5 mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Header de la noticia -->
+            <div class="noticia-header">
+                <span class="noticia-category-badge">
+                    <i class="bi bi-{% if noticia.tipo == 1 %}newspaper{% else %}megaphone{% endif %}"></i>
+                    {{ noticia.get_tipo_display }}
+                </span>
+                <h1 class="noticia-title">{{ noticia.titulo }}</h1>
+                <div class="noticia-meta">
+                    <span><i class="bi bi-calendar-event"></i> {{ noticia.fecha_publicacion|date:"d \d\e F \d\e Y" }}</span>
+                    <span><i class="bi bi-clock"></i> Lectura: <span id="reading-time">5</span> min</span>
+                    <span class="view-counter">
+                        <i class="bi bi-eye"></i>
+                        <span id="view-count">{{ noticia.vistas|default:0 }}</span> visitas
+                    </span>
+                </div>
+            </div>
+
+            <!-- Reading Toolbar -->
+            <div class="reading-toolbar">
+                <div class="toolbar-section">
+                    <button class="btn-toolbar" id="btn-dark-mode" title="Modo oscuro">
+                        <i class="bi bi-moon-stars"></i> Modo oscuro
+                    </button>
+                </div>
+                <div class="toolbar-section">
+                    <button class="btn-toolbar" onclick="adjustFontSize('decrease')" title="Reducir tamaño">
+                        <i class="bi bi-dash-circle"></i> A-
+                    </button>
+                    <button class="btn-toolbar active" id="font-normal" onclick="adjustFontSize('normal')" title="Tamaño normal">
+                        <i class="bi bi-circle"></i> A
+                    </button>
+                    <button class="btn-toolbar" onclick="adjustFontSize('increase')" title="Aumentar tamaño">
+                        <i class="bi bi-plus-circle"></i> A+
+                    </button>
+                </div>
+                <div class="toolbar-section">
+                    <button class="btn-toolbar" id="btn-copy-link" onclick="copyLink()" title="Copiar enlace">
+                        <i class="bi bi-link-45deg"></i> Copiar enlace
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contenido de la noticia -->
+            <article class="noticia-content">
+                <!-- Imagen Principal -->
+                {% if noticia.imagen_principal %}
+                <div class="text-center mb-4">
+                    <img src="{{ noticia.imagen_principal.url }}" class="img-fluid" alt="{{ noticia.titulo }}" style="width: 100%; height: auto; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.15);">
+                </div>
+                {% endif %}
+
+                <!-- Introducción -->
+                {% if noticia.introduccion %}
+                <div class="noticia-intro">
+                    {{ noticia.introduccion|safe }}
+                </div>
+                {% endif %}
+
+                <!-- Cuerpo -->
+                <div class="noticia-body">
+                    {{ noticia.contenido|safe }}
+                </div>
+
+                <!-- Imagen Secundaria -->
+                {% if noticia.imagen_secundaria %}
+                <div class="text-center my-4">
+                    <img src="{{ noticia.imagen_secundaria.url }}" class="img-fluid" alt="{{ noticia.titulo }}" style="max-width: 100%; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.15);">
+                </div>
+                {% endif %}
+
+                <!-- Botones de Compartir -->
+                <div class="action-buttons mt-5 pt-4 border-top">
+                    <h5 class="mb-3"><i class="bi bi-share"></i> Compartir:</h5>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" class="btn btn-share btn-facebook">
+                        <i class="bi bi-facebook"></i> Facebook
+                    </a>
+                    <a href="https://api.whatsapp.com/send?text={{ noticia.titulo }} {{ request.build_absolute_uri }}" target="_blank" class="btn btn-share btn-whatsapp">
+                        <i class="bi bi-whatsapp"></i> WhatsApp
+                    </a>
+                </div>
+            </article>
+
+            <!-- Navegación Anterior/Siguiente -->
+            {% if noticia_anterior or noticia_siguiente %}
+            <div class="post-navigation">
+                <div class="row">
+                    {% if noticia_anterior %}
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <a href="{% url 'noticia_detalle' noticia_anterior.id %}" class="nav-link-post">
+                            <i class="bi bi-chevron-left"></i>
+                            <div>
+                                <small class="text-muted d-block">Anterior</small>
+                                <strong>{{ noticia_anterior.titulo|truncatewords:8 }}</strong>
+                            </div>
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% if noticia_siguiente %}
+                    <div class="col-md-6">
+                        <a href="{% url 'noticia_detalle' noticia_siguiente.id %}" class="nav-link-post justify-content-end text-end">
+                            <div>
+                                <small class="text-muted d-block">Siguiente</small>
+                                <strong>{{ noticia_siguiente.titulo|truncatewords:8 }}</strong>
+                            </div>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Botón Volver -->
+            <div class="mt-4 text-center">
+                <a href="{% url 'noticias' %}?tipo={{ noticia.tipo }}" class="btn btn-outline-primary btn-lg" style="border-radius: 50px; padding: 1rem 2.5rem;">
+                    <i class="bi bi-arrow-left"></i> Volver a {{ noticia.get_tipo_display }}s
+                </a>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Información adicional -->
+            <div class="sidebar-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="sidebar-title" style="color: white; border-color: rgba(255,255,255,0.3);">
+                    <i class="bi bi-info-circle"></i> ¿Te gustó esta noticia?
+                </h5>
+                <p style="margin-bottom: 1.5rem;">Mantente informado con las últimas actualizaciones de nuestra iglesia.</p>
+                <a href="{% url 'noticias' %}" class="btn btn-light btn-block w-100" style="border-radius: 50px; font-weight: 600;">
+                    <i class="bi bi-newspaper"></i> Ver todas las noticias
+                </a>
+            </div>
+
+            {% if noticias_relacionadas %}
+            <div class="sidebar-card sticky-card">
+                <h5 class="sidebar-title">
+                    <i class="bi bi-collection"></i>
+                    {% if noticia.tipo == '1' %}Más Noticias{% else %}Más Boletines{% endif %}
+                </h5>
+                <div class="related-items">
+                    {% for relacionada in noticias_relacionadas %}
+                    <a href="{% url 'noticia_detalle' relacionada.id %}" class="related-item">
+                        <h6>{{ relacionada.titulo|truncatewords:10 }}</h6>
+                        <small><i class="bi bi-calendar3"></i> {{ relacionada.fecha_publicacion|date:"d/m/Y" }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+// Dark Mode Toggle
+document.getElementById('btn-dark-mode').addEventListener('click', function() {
+    document.body.classList.toggle('dark-mode');
+    this.classList.toggle('active');
+
+    // Save preference
+    if(document.body.classList.contains('dark-mode')) {
+        localStorage.setItem('darkMode', 'enabled');
+        this.innerHTML = '<i class="bi bi-sun"></i> Modo claro';
+    } else {
+        localStorage.setItem('darkMode', 'disabled');
+        this.innerHTML = '<i class="bi bi-moon-stars"></i> Modo oscuro';
+    }
+});
+
+// Load dark mode preference
+if(localStorage.getItem('darkMode') === 'enabled') {
+    document.body.classList.add('dark-mode');
+    document.getElementById('btn-dark-mode').classList.add('active');
+    document.getElementById('btn-dark-mode').innerHTML = '<i class="bi bi-sun"></i> Modo claro';
+}
+
+// Font Size Adjustment
+let currentFontSize = 'medium';
+
+function adjustFontSize(action) {
+    const sizes = ['small', 'medium', 'large', 'xlarge'];
+    let newIndex;
+
+    // Remove active class from all font buttons
+    document.querySelectorAll('.btn-toolbar').forEach(btn => {
+        if(btn.textContent.includes('A')) {
+            btn.classList.remove('active');
+        }
+    });
+
+    if(action === 'normal') {
+        currentFontSize = 'medium';
+        document.getElementById('font-normal').classList.add('active');
+    } else {
+        const currentIndex = sizes.indexOf(currentFontSize);
+        if(action === 'increase') {
+            newIndex = Math.min(currentIndex + 1, sizes.length - 1);
+        } else {
+            newIndex = Math.max(currentIndex - 1, 0);
+        }
+        currentFontSize = sizes[newIndex];
+
+        // Highlight appropriate button based on size
+        if(currentFontSize === 'medium') {
+            document.getElementById('font-normal').classList.add('active');
+        }
+    }
+
+    // Apply font size class
+    document.body.className = document.body.className.replace(/font-\w+/g, '');
+    if(document.body.classList.contains('dark-mode')) {
+        document.body.classList.add('dark-mode');
+    }
+    document.body.classList.add('font-' + currentFontSize);
+
+    // Save preference
+    localStorage.setItem('fontSize', currentFontSize);
+}
+
+// Load font size preference
+const savedFontSize = localStorage.getItem('fontSize');
+if(savedFontSize) {
+    currentFontSize = savedFontSize;
+    document.body.classList.add('font-' + currentFontSize);
+    if(currentFontSize !== 'medium') {
+        document.getElementById('font-normal').classList.remove('active');
+    }
+}
+
+// Copy Link Function
+function copyLink() {
+    const url = window.location.href;
+
+    if(navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function() {
+            const btn = document.getElementById('btn-copy-link');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check-circle"></i> ¡Copiado!';
+            btn.classList.add('active');
+
+            setTimeout(function() {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('active');
+            }, 2000);
+        }).catch(function(err) {
+            alert('Error al copiar el enlace');
+        });
+    } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+
+        try {
+            document.execCommand('copy');
+            const btn = document.getElementById('btn-copy-link');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check-circle"></i> ¡Copiado!';
+            btn.classList.add('active');
+
+            setTimeout(function() {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('active');
+            }, 2000);
+        } catch(err) {
+            alert('Error al copiar el enlace');
+        }
+
+        document.body.removeChild(textArea);
+    }
+}
+
+// Calculate Reading Time
+function calculateReadingTime() {
+    const content = document.querySelector('.noticia-body');
+    if(!content) return 5;
+
+    const text = content.innerText || content.textContent;
+    const wordCount = text.split(/\s+/).length;
+    const wordsPerMinute = 200; // Average reading speed
+    const readingTime = Math.ceil(wordCount / wordsPerMinute);
+
+    return readingTime > 0 ? readingTime : 1;
+}
+
+// Update reading time on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const readingTime = calculateReadingTime();
+    const readingTimeElement = document.getElementById('reading-time');
+    if(readingTimeElement) {
+        readingTimeElement.textContent = readingTime;
+    }
+});
+
+// Track View Counter (increment via AJAX)
+function incrementViewCounter() {
+    const noticiaId = {{ noticia.id }};
+    fetch(`/noticia/${noticiaId}/vista/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({})
+    }).then(response => response.json())
+      .then(data => {
+          if(data.vistas) {
+              document.getElementById('view-count').textContent = data.vistas;
+          }
+      }).catch(error => {
+          console.log('Error updating view count:', error);
+      });
+}
+
+// Increment view counter on page load (only once per session)
+if(!sessionStorage.getItem('viewed-{{ noticia.id }}')) {
+    incrementViewCounter();
+    sessionStorage.setItem('viewed-{{ noticia.id }}', 'true');
+}
+</script>
+{% endblock %}
+{% endblock %}

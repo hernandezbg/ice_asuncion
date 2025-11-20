@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load video_filters %}
+
+{% block title %}{{ mensaje.titulo }} - ICE Asunción{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <article>
+                <span class="badge bg-primary mb-3">{{ mensaje.get_tipo_display }}</span>
+                <h1 class="mb-3">{{ mensaje.titulo }}</h1>
+                <p class="text-muted">
+                    <i class="bi bi-person"></i> {{ mensaje.autor }}
+                    <span class="ms-3"><i class="bi bi-calendar3"></i> {{ mensaje.fecha_publicacion|date:"d/m/Y" }}</span>
+                </p>
+
+                <!-- Video -->
+                {% if mensaje.tipo == 2 and mensaje.enlace_video %}
+                <div class="ratio ratio-16x9 mb-4">
+                    <iframe src="{{ mensaje.enlace_video|youtube_embed_url }}"
+                            title="{{ mensaje.titulo }}"
+                            frameborder="0"
+                            allowfullscreen
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                </div>
+                <div class="mb-4 text-center">
+                    <a href="{{ mensaje.enlace_video|youtube_watch_url }}" target="_blank" class="btn btn-danger">
+                        <i class="bi bi-youtube"></i> Ver en YouTube
+                    </a>
+                    <small class="text-muted d-block mt-2">
+                        Si el video no se reproduce, haz clic en el botón de arriba
+                    </small>
+                </div>
+                {% elif mensaje.imagen %}
+                <img src="{{ mensaje.imagen.url }}" class="img-fluid rounded mb-4" alt="{{ mensaje.titulo }}">
+                {% endif %}
+
+                <div class="lead mb-4">{{ mensaje.introduccion|safe }}</div>
+
+                {% if mensaje.contenido %}
+                <div class="content">{{ mensaje.contenido|safe }}</div>
+                {% endif %}
+            </article>
+
+            <div class="mt-5">
+                <a href="{% url 'mensajes' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-left"></i> Volver a Mensajes
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            {% if mensajes_relacionados %}
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Más Mensajes</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for relacionado in mensajes_relacionados %}
+                    <a href="{% url 'mensaje_detalle' relacionado.id %}" class="list-group-item list-group-item-action">
+                        <h6 class="mb-1">{{ relacionado.titulo }}</h6>
+                        <small class="text-muted">{{ relacionado.autor }} - {{ relacionado.fecha_publicacion|date:"d/m/Y" }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Páginas - Panel ICE{% endblock %}
+{% block page_title %}Páginas{% endblock %}
+{% block page_subtitle %}Gestiona las páginas del sitio{% endblock %}
+
+{% block extra_css %}
+<style>
+    .item-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+    }
+    .item-card:hover {
+        box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+        transform: translateY(-3px);
+    }
+    .item-card-header {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #f0f0f0;
+        align-items: start;
+    }
+    .item-cards-container {
+        display: none;
+    }
+    @media (max-width: 768px) {
+        .table-responsive {
+            display: none;
+        }
+        .item-cards-container {
+            display: block;
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6"><h2><i class="bi bi-file-text"></i> Páginas</h2></div>
+    <div class="col-md-6 text-end"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalForm"><i class="bi bi-plus-circle"></i> Nueva</button></div>
+</div>
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-10"><input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ busqueda }}"></div>
+            <div class="col-md-2"><button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Buscar</button></div>
+        </form>
+    </div>
+</div>
+<div class="card">
+    <div class="card-header"><strong>{{ page_obj.paginator.count }}</strong> página(s)</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Título</th><th>Descripción</th><th>Orden</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
+            <tbody>
+                {% for p in page_obj %}
+                <tr>
+                    <td><strong>{{p.titulo}}</strong></td>
+                    <td><small class="text-muted">{{p.descripcion|truncatewords:15}}</small></td>
+                    <td><span class="badge bg-secondary">{{p.orden}}</span></td>
+                    <td>{% if p.activo %}<span class="badge bg-success">Publicada</span>{% else %}<span class="badge bg-secondary">Borrador</span>{% endif %}</td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <a href="/pagina/{{p.id}}/" class="btn btn-outline-secondary" target="_blank"><i class="bi bi-eye"></i></a>
+                            <button class="btn btn-outline-primary" onclick="editar({{p.id}})"><i class="bi bi-pencil"></i></button>
+                            <a href="{% url 'panel:pagina_toggle' p.id %}" class="btn btn-outline-warning"><i class="bi {% if p.activo %}bi-eye-slash{% else %}bi-eye{% endif %}"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}<tr><td colspan="5" class="text-center text-muted py-4">No se encontraron páginas</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Card View (Mobile) -->
+    <div class="item-cards-container">
+        {% for p in page_obj %}
+        <div class="item-card">
+            <div class="item-card-header">
+                <div class="flex-grow-1">
+                    <h6 class="mb-1 fw-bold">{{p.titulo}}</h6>
+                    {% if p.descripcion %}
+                    <p class="text-muted small mb-2">{{p.descripcion|truncatewords:15}}</p>
+                    {% endif %}
+                    <div class="d-flex gap-2 align-items-center flex-wrap mb-2">
+                        {% if p.activo %}
+                        <span class="badge bg-success">Publicada</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Borrador</span>
+                        {% endif %}
+                        <small class="text-muted"><i class="bi bi-sort-numeric-down"></i> Orden: {{p.orden}}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/pagina/{{p.id}}/" class="btn btn-outline-secondary btn-sm flex-fill" target="_blank">
+                    <i class="bi bi-eye-fill"></i> Ver
+                </a>
+                <button class="btn btn-outline-primary btn-sm flex-fill" onclick="editar({{p.id}})">
+                    <i class="bi bi-pencil-fill"></i> Editar
+                </button>
+                <a href="{% url 'panel:pagina_toggle' p.id %}" class="btn btn-outline-warning btn-sm">
+                    <i class="bi {% if p.activo %}bi-eye-slash{% else %}bi-eye{% endif %}"></i>
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+            <p class="mt-2">No se encontraron páginas</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}<div class="card-footer"><nav><ul class="pagination pagination-sm mb-0 justify-content-center">{% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page=1">Primera</a></li><li class="page-item"><a class="page-link" href="?page={{page_obj.previous_page_number}}">Anterior</a></li>{% endif %}<li class="page-item active"><span class="page-link">Página {{page_obj.number}} de {{page_obj.paginator.num_pages}}</span></li>{% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{page_obj.next_page_number}}">Siguiente</a></li><li class="page-item"><a class="page-link" href="?page={{page_obj.paginator.num_pages}}">Última</a></li>{% endif %}</ul></nav></div>{% endif %}
+</div>
+<div class="modal fade" id="modalForm" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" id="formPrincipal">{% csrf_token %}
+                <div class="modal-header"><h5 class="modal-title" id="modalTitle"><i class="bi bi-plus-circle"></i> Nueva Página</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">{{form.titulo.label_tag}}{{form.titulo}}</div>
+                        <div class="col-md-4">{{form.orden.label_tag}}{{form.orden}}</div>
+                        <div class="col-md-12">{{form.descripcion.label_tag}}{{form.descripcion}}</div>
+                        <div class="col-md-12">{{form.contenido.label_tag}}{{form.contenido}}</div>
+                        <div class="col-md-12"><div class="form-check">{{form.activo}}<label class="form-check-label" for="{{form.activo.id_for_label}}">Publicada</label></div></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Inicializar Summernote cuando se abre el modal
+    $('#modalForm').on('shown.bs.modal', function () {
+        if (!$('#id_contenido').hasClass('summernote-initialized')) {
+            $('#id_contenido').summernote({
+                height: 400,
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'italic', 'underline', 'clear']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['table', ['table']],
+                    ['insert', ['link', 'picture']],
+                    ['view', ['fullscreen', 'codeview', 'help']]
+                ]
+            });
+            $('#id_contenido').addClass('summernote-initialized');
+        }
+    });
+});
+
+function editar(id){
+    fetch(`/panel/paginas/${id}/datos/`).then(r=>r.json()).then(d=>{
+        document.getElementById('formPrincipal').action=`/panel/paginas/${id}/editar/`;
+        document.getElementById('modalTitle').innerHTML='<i class="bi bi-pencil-square"></i> Editar Página';
+        Object.keys(d).forEach(k=>{
+            const el=document.getElementById(`id_${k}`);
+            if(el){
+                if(el.type=='checkbox') {
+                    el.checked=d[k];
+                } else if(k === 'contenido') {
+                    $('#id_contenido').summernote('code', d[k]||'');
+                } else {
+                    el.value=d[k]||'';
+                }
+            }
+        });
+        new bootstrap.Modal(document.getElementById('modalForm')).show();
+    });
+}
+
+document.getElementById('modalForm').addEventListener('hidden.bs.modal',function(){
+    document.getElementById('formPrincipal').action='{% url "panel:pagina_crear" %}';
+    document.getElementById('modalTitle').innerHTML='<i class="bi bi-plus-circle"></i> Nueva Página';
+    document.getElementById('formPrincipal').reset();
+    $('#id_contenido').summernote('code', '');
+});
+</script>
+{% endblock %}

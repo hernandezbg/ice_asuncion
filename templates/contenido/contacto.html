@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Contacto - ICE Asunción{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-6">
+            <h1 class="section-title mb-4">Contáctanos</h1>
+
+            <!-- Mensajes -->
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Formulario -->
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label for="nombre" class="form-label">Nombre *</label>
+                    <input type="text" class="form-control" id="nombre" name="nombre" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email *</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="asunto" class="form-label">Asunto *</label>
+                    <input type="text" class="form-control" id="asunto" name="asunto" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="mensaje" class="form-label">Mensaje *</label>
+                    <textarea class="form-control" id="mensaje" name="mensaje" rows="5" required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-send"></i> Enviar Mensaje
+                </button>
+            </form>
+        </div>
+
+        <div class="col-lg-6">
+            <h2 class="mb-4">Información de Contacto</h2>
+
+            {% if datos_ice %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-geo-alt-fill text-primary"></i> Dirección</h5>
+                    <p class="card-text">{{ datos_ice.direccion }}</p>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-telephone-fill text-primary"></i> Teléfono</h5>
+                    <p class="card-text">{{ datos_ice.telefono }}</p>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-envelope-fill text-primary"></i> Email</h5>
+                    <p class="card-text">{{ datos_ice.email }}</p>
+                </div>
+            </div>
+
+            <h5 class="mt-4">Síguenos en Redes Sociales</h5>
+            <div class="d-flex gap-3 mt-3">
+                {% if datos_ice.facebook %}
+                <a href="{{ datos_ice.facebook }}" target="_blank" class="btn btn-outline-primary">
+                    <i class="bi bi-facebook"></i>
+                </a>
+                {% endif %}
+                {% if datos_ice.twitter %}
+                <a href="{{ datos_ice.twitter }}" target="_blank" class="btn btn-outline-primary">
+                    <i class="bi bi-twitter"></i>
+                </a>
+                {% endif %}
+                {% if datos_ice.youtube %}
+                <a href="{{ datos_ice.youtube }}" target="_blank" class="btn btn-outline-primary">
+                    <i class="bi bi-youtube"></i>
+                </a>
+                {% endif %}
+                {% if datos_ice.instagram %}
+                <a href="{{ datos_ice.instagram }}" target="_blank" class="btn btn-outline-primary">
+                    <i class="bi bi-instagram"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
