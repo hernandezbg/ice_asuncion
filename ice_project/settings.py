@@ -122,39 +122,56 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Google Cloud Storage para archivos MEDIA (opcional)
 GS_BUCKET_NAME = config('GS_BUCKET_NAME', default='')
 GS_PROJECT_ID = config('GS_PROJECT_ID', default='')
+# Credenciales pueden venir de archivo o de variable de entorno (JSON en base64)
 GS_CREDENTIALS_PATH = config('GS_CREDENTIALS_PATH', default='')
+GS_CREDENTIALS_JSON = config('GS_CREDENTIALS_JSON', default='')
 
 # Configuración de almacenamiento
 # Por defecto usa FileSystemStorage, solo usa GCS si está configurado
-if GS_BUCKET_NAME and GS_PROJECT_ID and GS_CREDENTIALS_PATH:
-    # Verificar que el archivo de credenciales existe
-    credentials_file = BASE_DIR / GS_CREDENTIALS_PATH
-    if credentials_file.exists():
-        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(credentials_file)
-        GS_DEFAULT_ACL = None
-        GS_FILE_OVERWRITE = False
-        GS_LOCATION = 'media'
-        GS_QUERYSTRING_AUTH = True
-        GS_EXPIRATION = 3600
+USE_GCS = False
 
-        STORAGES = {
-            "default": {
-                "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
-            },
-            "staticfiles": {
-                "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-            },
-        }
-    else:
-        # Credenciales no encontradas, usar almacenamiento local
-        STORAGES = {
-            "default": {
-                "BACKEND": "django.core.files.storage.FileSystemStorage",
-            },
-            "staticfiles": {
-                "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-            },
-        }
+if GS_BUCKET_NAME and GS_PROJECT_ID:
+    # Opción 1: Credenciales desde variable de entorno (JSON en base64) - para Railway
+    if GS_CREDENTIALS_JSON:
+        import base64
+        import json
+        import tempfile
+
+        try:
+            # Decodificar el JSON de base64
+            credentials_json = base64.b64decode(GS_CREDENTIALS_JSON).decode('utf-8')
+            # Crear archivo temporal con las credenciales
+            credentials_file = BASE_DIR / 'gcp-credentials-temp.json'
+            with open(credentials_file, 'w') as f:
+                f.write(credentials_json)
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(credentials_file)
+            USE_GCS = True
+        except Exception as e:
+            print(f"Error al cargar credenciales GCS desde variable de entorno: {e}")
+            USE_GCS = False
+
+    # Opción 2: Credenciales desde archivo local - para desarrollo
+    elif GS_CREDENTIALS_PATH:
+        credentials_file = BASE_DIR / GS_CREDENTIALS_PATH
+        if credentials_file.exists():
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(credentials_file)
+            USE_GCS = True
+
+if USE_GCS:
+    GS_DEFAULT_ACL = None
+    GS_FILE_OVERWRITE = False
+    GS_LOCATION = 'media'
+    GS_QUERYSTRING_AUTH = True
+    GS_EXPIRATION = 3600
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 else:
     # Sin GCS configurado, usar almacenamiento local
     STORAGES = {
