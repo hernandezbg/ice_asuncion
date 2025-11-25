@@ -169,9 +169,6 @@ if USE_GCS:
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
         },
     }
-    print("=== GCS CONFIGURADO ===")
-    print(f"Bucket: {GS_BUCKET_NAME}")
-    print(f"Location: {GS_LOCATION}")
 else:
     STORAGES = {
         "default": {
@@ -181,7 +178,6 @@ else:
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
         },
     }
-    print("=== USANDO FILESYSTEM LOCAL ===")
 
 
 # Crispy Forms - Bootstrap 5
