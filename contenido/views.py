@@ -16,6 +16,17 @@ def home(request):
     # Slider principal
     sliders = Slider.objects.filter(activo=True).order_by('orden')[:5]
 
+    # DEBUG: Verificar rutas de imágenes
+    print("=== DEBUG SLIDERS ===")
+    for slider in sliders:
+        print(f"Slider: {slider.titulo}")
+        print(f"  - imagen.name: {slider.imagen.name}")
+        try:
+            print(f"  - imagen.url: {slider.imagen.url}")
+        except Exception as e:
+            print(f"  - ERROR generando URL: {e}")
+    print("=== FIN DEBUG ===")
+
     # Secciones flexibles (Visión, Misión, etc.)
     secciones = Seccion.objects.filter(activo=True, mostrar_en_home=True).order_by('orden')
 
