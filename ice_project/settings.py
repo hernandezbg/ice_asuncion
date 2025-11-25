@@ -130,24 +130,36 @@ GS_CREDENTIALS_JSON = config('GS_CREDENTIALS_JSON', default='')
 # Por defecto usa FileSystemStorage, solo usa GCS si está configurado
 USE_GCS = False
 
+print(f"=== GCS Config Debug ===")
+print(f"GS_BUCKET_NAME: {GS_BUCKET_NAME}")
+print(f"GS_PROJECT_ID: {GS_PROJECT_ID}")
+print(f"GS_CREDENTIALS_JSON length: {len(GS_CREDENTIALS_JSON) if GS_CREDENTIALS_JSON else 0}")
+
 if GS_BUCKET_NAME and GS_PROJECT_ID:
     # Opción 1: Credenciales desde variable de entorno (JSON en base64) - para Railway
     if GS_CREDENTIALS_JSON:
         import base64
         import json
-        import tempfile
 
         try:
             # Decodificar el JSON de base64
             credentials_json = base64.b64decode(GS_CREDENTIALS_JSON).decode('utf-8')
-            # Crear archivo temporal con las credenciales
+            # Crear archivo con las credenciales
             credentials_file = BASE_DIR / 'gcp-credentials-temp.json'
             with open(credentials_file, 'w') as f:
                 f.write(credentials_json)
             os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(credentials_file)
-            USE_GCS = True
+
+            # Verificar que el archivo se creó correctamente
+            if credentials_file.exists():
+                print(f"Credenciales GCS guardadas en: {credentials_file}")
+                USE_GCS = True
+            else:
+                print("Error: No se pudo crear el archivo de credenciales")
         except Exception as e:
             print(f"Error al cargar credenciales GCS desde variable de entorno: {e}")
+            import traceback
+            traceback.print_exc()
             USE_GCS = False
 
     # Opción 2: Credenciales desde archivo local - para desarrollo
@@ -155,7 +167,12 @@ if GS_BUCKET_NAME and GS_PROJECT_ID:
         credentials_file = BASE_DIR / GS_CREDENTIALS_PATH
         if credentials_file.exists():
             os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(credentials_file)
+            print(f"Usando credenciales desde archivo: {credentials_file}")
             USE_GCS = True
+        else:
+            print(f"Archivo de credenciales no encontrado: {credentials_file}")
+
+print(f"USE_GCS: {USE_GCS}")
 
 if USE_GCS:
     GS_DEFAULT_ACL = None
@@ -172,6 +189,7 @@ if USE_GCS:
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
         },
     }
+    print("Storage configurado: GoogleCloudStorage")
 else:
     # Sin GCS configurado, usar almacenamiento local
     STORAGES = {
@@ -182,6 +200,10 @@ else:
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
         },
     }
+    print("Storage configurado: FileSystemStorage (local)")
+
+print(f"=== End GCS Config ===")
+
 
 # Crispy Forms - Bootstrap 5
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
