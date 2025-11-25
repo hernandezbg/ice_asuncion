@@ -115,37 +115,55 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
-# Configuración de Whitenoise para comprimir y cachear archivos estáticos
-STORAGES = {
-    "default": {
-        "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+# Media files configuration
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
-# Google Cloud Storage para archivos MEDIA
+# Google Cloud Storage para archivos MEDIA (opcional)
 GS_BUCKET_NAME = config('GS_BUCKET_NAME', default='')
 GS_PROJECT_ID = config('GS_PROJECT_ID', default='')
 GS_CREDENTIALS_PATH = config('GS_CREDENTIALS_PATH', default='')
 
-# Solo uso GCS si está configurado
-if GS_BUCKET_NAME and GS_PROJECT_ID:
-    # Configuración de GCS
-    import os
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(BASE_DIR / GS_CREDENTIALS_PATH)
-    GS_DEFAULT_ACL = None  # Uso permisos uniform bucket-level access
-    GS_FILE_OVERWRITE = False
-    GS_LOCATION = 'media'
-    GS_QUERYSTRING_AUTH = True  # URLs firmadas (más seguro, archivos privados)
-    GS_EXPIRATION = 3600  # URLs válidas por 1 hora
+# Configuración de almacenamiento
+# Por defecto usa FileSystemStorage, solo usa GCS si está configurado
+if GS_BUCKET_NAME and GS_PROJECT_ID and GS_CREDENTIALS_PATH:
+    # Verificar que el archivo de credenciales existe
+    credentials_file = BASE_DIR / GS_CREDENTIALS_PATH
+    if credentials_file.exists():
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(credentials_file)
+        GS_DEFAULT_ACL = None
+        GS_FILE_OVERWRITE = False
+        GS_LOCATION = 'media'
+        GS_QUERYSTRING_AUTH = True
+        GS_EXPIRATION = 3600
+
+        STORAGES = {
+            "default": {
+                "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+            },
+            "staticfiles": {
+                "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+            },
+        }
+    else:
+        # Credenciales no encontradas, usar almacenamiento local
+        STORAGES = {
+            "default": {
+                "BACKEND": "django.core.files.storage.FileSystemStorage",
+            },
+            "staticfiles": {
+                "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+            },
+        }
 else:
-    # Desarrollo local: usar archivos locales
-    MEDIA_URL = '/media/'
-    MEDIA_ROOT = BASE_DIR / 'media'
-    STORAGES["default"] = {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    # Sin GCS configurado, usar almacenamiento local
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
     }
 
 # Crispy Forms - Bootstrap 5
