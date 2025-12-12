@@ -213,14 +213,9 @@ def actualizar_datos_editar(request, hermano_id=None):
 
             # Manejar foto
             if 'foto' in request.FILES:
-                foto_file = request.FILES['foto']
-                print(f"[DEBUG] Foto recibida: {foto_file.name}, tamaño: {foto_file.size}")
-                hermano.foto = foto_file
-            else:
-                print("[DEBUG] No se recibió foto en request.FILES")
+                hermano.foto = request.FILES['foto']
 
             hermano.save()
-            print(f"[DEBUG] Hermano guardado. Foto: {hermano.foto}")
 
             # Asignar dones (ManyToMany requiere save primero)
             if dones_ids:
