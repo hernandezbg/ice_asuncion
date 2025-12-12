@@ -129,23 +129,43 @@
                 <!-- Formulario de busqueda -->
                 <form method="post" class="mb-4">
                     {% csrf_token %}
-                    <div class="input-group">
-                        <input type="text"
-                               class="form-control form-control-lg"
-                               name="busqueda"
-                               placeholder="Ingresa tu apellido o nombre..."
-                               value="{{ busqueda }}"
-                               required
-                               minlength="2"
-                               autofocus>
-                        <button type="submit" class="btn btn-primary px-4">
-                            <i class="bi bi-search me-1"></i>Buscar
-                        </button>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="apellido" class="form-label fw-semibold">Apellido <span class="text-danger">*</span></label>
+                            <input type="text"
+                                   class="form-control form-control-lg"
+                                   id="apellido"
+                                   name="apellido"
+                                   placeholder="Tu apellido..."
+                                   value="{{ apellido_buscar }}"
+                                   required
+                                   minlength="2"
+                                   autofocus>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="nombre" class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+                            <input type="text"
+                                   class="form-control form-control-lg"
+                                   id="nombre"
+                                   name="nombre"
+                                   placeholder="Tu nombre..."
+                                   value="{{ nombre_buscar }}"
+                                   required
+                                   minlength="2">
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <i class="bi bi-search me-1"></i>Buscar mi registro
+                            </button>
+                        </div>
                     </div>
-                    <small class="text-muted">Puedes buscar por apellido o por nombre (al menos 2 caracteres)</small>
+                    <small class="text-muted d-block mt-2">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Ingresa tu apellido y nombre. Si estas registrada con apellido de casada, te encontraremos por tu nombre.
+                    </small>
                 </form>
 
-                {% if resultados is not none %}
+                {% if busqueda_realizada %}
                     {% if resultados %}
                     <!-- Resultados encontrados -->
                     <form method="get" action="" id="formSeleccion">
@@ -180,7 +200,7 @@
                     <!-- Sin resultados -->
                     <div class="no-results">
                         <i class="bi bi-search"></i>
-                        <p class="mb-3">No encontramos registros con "<strong>{{ busqueda }}</strong>"</p>
+                        <p class="mb-3">No encontramos registros para "<strong>{{ apellido_buscar }}, {{ nombre_buscar }}</strong>"</p>
                         <a href="{% url 'miembros:nuevo' %}" class="btn btn-primary">
                             <i class="bi bi-plus-circle me-1"></i>Registrarme como nuevo miembro
                         </a>

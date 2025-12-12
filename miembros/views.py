@@ -77,32 +77,41 @@ def actualizar_datos_acceso(request):
 
 def actualizar_datos_buscar(request):
     """
-    Paso 2: Buscar por apellido o nombre (insensible a acentos)
+    Paso 2: Buscar por apellido Y nombre (insensible a acentos)
+    Busca coincidencias en cualquiera de los campos para encontrar registros
+    aunque estén con apellido de casada o variaciones.
     """
     # Verificar acceso
     if not request.session.get('acceso_miembros_verificado'):
         return redirect('miembros:acceso')
 
     resultados = None
-    busqueda = ''
+    apellido_buscar = ''
+    nombre_buscar = ''
+    busqueda_realizada = False
 
     if request.method == 'POST':
-        busqueda = request.POST.get('busqueda', '').strip()
+        apellido_buscar = request.POST.get('apellido', '').strip()
+        nombre_buscar = request.POST.get('nombre', '').strip()
 
-        if len(busqueda) >= 2:
-            busqueda_normalizada = quitar_acentos(busqueda)
+        if len(apellido_buscar) >= 2 and len(nombre_buscar) >= 2:
+            busqueda_realizada = True
+            apellido_norm = quitar_acentos(apellido_buscar)
+            nombre_norm = quitar_acentos(nombre_buscar)
 
-            # Buscar en Python para manejar acentos correctamente
+            # Buscar donde coincida apellido O nombre en cualquier campo
             todos_hermanos = Hermano.objects.filter(activo=True).order_by('apellidos', 'nombres')
             resultados = [
                 h for h in todos_hermanos
-                if busqueda_normalizada in quitar_acentos(h.apellidos)
-                or busqueda_normalizada in quitar_acentos(h.nombres)
+                if (apellido_norm in quitar_acentos(h.apellidos) or apellido_norm in quitar_acentos(h.nombres))
+                or (nombre_norm in quitar_acentos(h.nombres) or nombre_norm in quitar_acentos(h.apellidos))
             ][:20]
 
     context = {
         'resultados': resultados,
-        'busqueda': busqueda,
+        'apellido_buscar': apellido_buscar,
+        'nombre_buscar': nombre_buscar,
+        'busqueda_realizada': busqueda_realizada,
     }
     return render(request, 'miembros/actualizar_buscar.html', context)
 
