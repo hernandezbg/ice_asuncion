@@ -266,14 +266,10 @@ $(document).ready(function() {
         $('#btnGuardar .btn-loading').show();
         $('#btnCancelar').prop('disabled', true);
 
-        // Deshabilitar todos los campos del formulario
-        $('#formPrincipal input, #formPrincipal select, #formPrincipal textarea, #formPrincipal button').prop('disabled', true);
-        $('#btnGuardar').prop('disabled', false); // Mantener el botón visible pero deshabilitado visualmente
-
         // Deshabilitar summernote
         $('#id_contenido').summernote('disable');
 
-        // Agregar overlay al modal
+        // Agregar overlay al modal (sin deshabilitar campos para no perder CSRF)
         if (!$('#modalOverlay').length) {
             $('#modalForm .modal-content').css('position', 'relative');
             $('#modalForm .modal-content').append('<div id="modalOverlay" style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.7);z-index:1000;display:flex;align-items:center;justify-content:center;"><div class="text-center"><div class="spinner-border text-primary mb-2" style="width:3rem;height:3rem;"></div><div class="fw-bold">Publicando...</div></div></div>');
