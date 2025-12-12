@@ -221,6 +221,28 @@
 
 {% block extra_js %}
 <script>
+// Ocultar teclado en móviles después de buscar
+document.addEventListener('DOMContentLoaded', function() {
+    var form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            // Quitar foco de los inputs para ocultar teclado
+            document.getElementById('apellido').blur();
+            document.getElementById('nombre').blur();
+        });
+    }
+
+    // Si hay resultados, hacer scroll hacia ellos
+    {% if busqueda_realizada %}
+    setTimeout(function() {
+        var resultados = document.querySelector('.result-item, .no-results');
+        if (resultados) {
+            resultados.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 100);
+    {% endif %}
+});
+
 function selectHermano(id) {
     window.location.href = '{% url "miembros:editar" 0 %}'.replace('0', id);
 }
