@@ -616,9 +616,8 @@
                             {{ form.sexo }}
                         </div>
                         <div class="col-md-6">
-                            {{ form.cumpleaños.label_tag }}
-                            {{ form.cumpleaños }}
-                            <small class="form-text text-muted">Formato: AAAA-MM-DD</small>
+                            {{ form.fecha_nacimiento.label_tag }}
+                            {{ form.fecha_nacimiento }}
                         </div>
                         <div class="col-md-12">
                             <hr>
@@ -748,8 +747,8 @@
                                 <span class="info-value" id="verEstadoCivil"></span>
                             </div>
                             <div class="info-row">
-                                <span class="info-label">Cumpleaños</span>
-                                <span class="info-value" id="verCumpleaños"></span>
+                                <span class="info-label">Fecha Nacimiento</span>
+                                <span class="info-value" id="verFechaNacimiento"></span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label">Ocupación</span>
@@ -884,7 +883,7 @@ function verInfo(id) {
 
             // Datos personales
             document.getElementById('verEstadoCivil').textContent = d.estado_civil_display;
-            document.getElementById('verCumpleaños').textContent = d.cumpleaños_display;
+            document.getElementById('verFechaNacimiento').textContent = d.fecha_nacimiento_display;
             document.getElementById('verOcupacion').textContent = d.ocupacion;
 
             // Contacto

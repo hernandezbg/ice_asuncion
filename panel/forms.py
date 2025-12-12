@@ -9,7 +9,7 @@ class HermanoForm(forms.ModelForm):
     class Meta:
         model = Hermano
         fields = [
-            'nombres', 'apellidos', 'sexo', 'cumpleaños',
+            'nombres', 'apellidos', 'sexo', 'fecha_nacimiento',
             'domicilio', 'barrio', 'localidad', 'telefono_fijo', 'celular',
             'email', 'estado_civil', 'clase', 'grupo',
             'activo', 'observaciones'
@@ -18,7 +18,7 @@ class HermanoForm(forms.ModelForm):
             'nombres': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
             'apellidos': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
             'sexo': forms.Select(attrs={'class': 'form-select'}),
-            'cumpleaños': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'fecha_nacimiento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'domicilio': forms.TextInput(attrs={'class': 'form-control'}),
             'barrio': forms.TextInput(attrs={'class': 'form-control'}),
             'localidad': forms.TextInput(attrs={'class': 'form-control'}),
