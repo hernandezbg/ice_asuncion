@@ -92,40 +92,6 @@
     margin-top: 0.5rem;
 }
 
-/* Controles del carousel */
-.hero-slider .carousel-control-prev,
-.hero-slider .carousel-control-next {
-    width: 60px;
-    height: 60px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 50%;
-    opacity: 0.8;
-    transition: all 0.3s;
-}
-
-.hero-slider .carousel-control-prev {
-    left: 20px;
-}
-
-.hero-slider .carousel-control-next {
-    right: 20px;
-}
-
-.hero-slider .carousel-control-prev:hover,
-.hero-slider .carousel-control-next:hover {
-    opacity: 1;
-    transform: translateY(-50%) scale(1.1);
-}
-
-.hero-slider .carousel-control-prev-icon,
-.hero-slider .carousel-control-next-icon {
-    filter: invert(1);
-    width: 24px;
-    height: 24px;
-}
-
 /* Indicadores */
 .hero-slider .carousel-indicators {
     bottom: 30px;
@@ -164,12 +130,6 @@
 
     .hero-card .hero-description {
         font-size: 1rem;
-    }
-
-    .hero-slider .carousel-control-prev,
-    .hero-slider .carousel-control-next {
-        width: 45px;
-        height: 45px;
     }
 }
 
@@ -570,15 +530,6 @@
         {% endfor %}
     </div>
 
-    <!-- Controles -->
-    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Anterior</span>
-    </button>
-    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Siguiente</span>
-    </button>
 </div>
 {% endif %}
 
