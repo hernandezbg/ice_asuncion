@@ -3,10 +3,24 @@ from django.http import JsonResponse
 from django.conf import settings
 from django.contrib import messages
 from django.db.models import Q
+from django.db.models.functions import Lower
 import requests
+import unicodedata
 
 from .models import Hermano, Provincia, EstadoCivil, Clase, Grupo
 from contenido.models import DatosIce
+
+
+def quitar_acentos(texto):
+    """Quita acentos de un texto para búsqueda flexible"""
+    if not texto:
+        return ''
+    # Normaliza a forma NFD (separa caracteres base de diacríticos)
+    # Luego filtra solo caracteres que no son diacríticos
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', texto)
+        if unicodedata.category(c) != 'Mn'
+    ).lower()
 
 
 def verificar_recaptcha(token):
@@ -63,7 +77,7 @@ def actualizar_datos_acceso(request):
 
 def actualizar_datos_buscar(request):
     """
-    Paso 2: Buscar por apellido o nombre
+    Paso 2: Buscar por apellido o nombre (insensible a acentos)
     """
     # Verificar acceso
     if not request.session.get('acceso_miembros_verificado'):
@@ -76,11 +90,15 @@ def actualizar_datos_buscar(request):
         busqueda = request.POST.get('busqueda', '').strip()
 
         if len(busqueda) >= 2:
-            # Buscar en apellidos O en nombres
-            resultados = Hermano.objects.filter(
-                Q(apellidos__icontains=busqueda) | Q(nombres__icontains=busqueda),
-                activo=True
-            ).order_by('apellidos', 'nombres')[:20]
+            busqueda_normalizada = quitar_acentos(busqueda)
+
+            # Buscar en Python para manejar acentos correctamente
+            todos_hermanos = Hermano.objects.filter(activo=True).order_by('apellidos', 'nombres')
+            resultados = [
+                h for h in todos_hermanos
+                if busqueda_normalizada in quitar_acentos(h.apellidos)
+                or busqueda_normalizada in quitar_acentos(h.nombres)
+            ][:20]
 
     context = {
         'resultados': resultados,
