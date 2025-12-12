@@ -4,8 +4,8 @@
 
 {% block extra_css %}
 .access-container {
-    max-width: 450px;
-    margin: 80px auto;
+    max-width: 500px;
+    margin: 60px auto;
 }
 
 .access-card {
@@ -46,6 +46,71 @@
     font-size: 0.9rem;
     color: var(--text-light);
 }
+
+#codigo {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+}
+
+.explanation-box {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid var(--primary-color);
+}
+
+.explanation-box h6 {
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.explanation-box p {
+    margin-bottom: 0;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.not-member-box {
+    background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%);
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-align: center;
+    border: 1px solid #ffd699;
+}
+
+.not-member-box h6 {
+    color: #e67300;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.not-member-box p {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.btn-contact {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-contact:hover {
+    background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);
+}
 {% endblock %}
 
 {% block content %}
@@ -59,9 +124,11 @@
             </div>
 
             <div class="access-body">
-                <p class="info-text text-center mb-4">
-                    Ingresa el codigo de acceso que te fue proporcionado para actualizar tus datos personales.
-                </p>
+                <!-- Explicacion -->
+                <div class="explanation-box">
+                    <h6><i class="bi bi-info-circle me-2"></i>¿Que es esto?</h6>
+                    <p>Este formulario permite a los miembros de ICE Asuncion mantener sus datos personales actualizados. Podras verificar y modificar tu informacion de contacto, direccion y otros datos importantes.</p>
+                </div>
 
                 {% if error %}
                 <div class="alert alert-danger" role="alert">
@@ -78,9 +145,12 @@
                                class="form-control form-control-lg"
                                id="codigo"
                                name="codigo"
-                               placeholder="Ingresa el codigo"
+                               placeholder="INGRESA EL CODIGO"
                                required
-                               autocomplete="off">
+                               autocomplete="off"
+                               pattern="[A-Z0-9]+"
+                               title="Solo letras mayusculas y numeros">
+                        <small class="text-muted">Solo letras mayusculas</small>
                     </div>
 
                     {% if recaptcha_site_key %}
@@ -96,10 +166,14 @@
 
                 <hr class="my-4">
 
-                <p class="info-text text-center mb-0">
-                    <i class="bi bi-info-circle me-1"></i>
-                    Si no tienes el codigo, solicitalo al administrador de la iglesia.
-                </p>
+                <!-- Seccion para no miembros -->
+                <div class="not-member-box">
+                    <h6><i class="bi bi-person-plus me-2"></i>¿Aun no eres miembro?</h6>
+                    <p>Si deseas formar parte de nuestra iglesia, contactanos y con gusto te recibimos.</p>
+                    <a href="{% url 'contacto' %}" class="btn-contact">
+                        <i class="bi bi-envelope me-1"></i>Quiero ser miembro
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -116,4 +190,10 @@
 {% if recaptcha_site_key %}
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 {% endif %}
+<script>
+// Convertir a mayusculas mientras se escribe
+document.getElementById('codigo').addEventListener('input', function(e) {
+    this.value = this.value.toUpperCase();
+});
+</script>
 {% endblock %}

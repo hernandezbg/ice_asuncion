@@ -501,6 +501,34 @@
     opacity: 1;
     transform: translateY(0);
 }
+
+/* Boton Actualizar Datos - Naranja Degrade */
+.btn-actualizar-datos {
+    display: inline-block;
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    color: white;
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+}
+
+.btn-actualizar-datos:hover {
+    background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255, 152, 0, 0.4);
+}
+
+.member-update-box {
+    background: white;
+    padding: 3rem 2rem;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
 </style>
 {% endblock %}
 
@@ -760,6 +788,24 @@
     </div>
 </section>
 {% endif %}
+
+<!-- Seccion para Miembros -->
+<section class="section" style="background: linear-gradient(135deg, #fff8f0 0%, #ffe4cc 100%);">
+    <div class="container">
+        <div class="row align-items-center justify-content-center">
+            <div class="col-lg-8 text-center">
+                <div class="member-update-box">
+                    <i class="bi bi-person-badge" style="font-size: 3rem; color: #e67300;"></i>
+                    <h3 class="mt-3 mb-3" style="color: #333; font-weight: 700;">¿Eres miembro de ICE Asuncion?</h3>
+                    <p class="text-muted mb-4">Manten tus datos actualizados para que podamos comunicarnos contigo. Actualiza tu informacion de contacto, direccion y mas.</p>
+                    <a href="{% url 'miembros:acceso' %}" class="btn-actualizar-datos">
+                        <i class="bi bi-pencil-square me-2"></i>Actualizar mis datos
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 <!-- Contacto e Información -->
 {% if datos_ice %}

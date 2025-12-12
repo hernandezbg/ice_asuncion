@@ -54,7 +54,7 @@ def actualizar_datos_acceso(request):
     error = None
 
     if request.method == 'POST':
-        codigo = request.POST.get('codigo', '').strip()
+        codigo = request.POST.get('codigo', '').strip().upper()
         recaptcha_token = request.POST.get('g-recaptcha-response', '')
 
         # Verificar reCAPTCHA
