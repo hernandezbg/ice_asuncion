@@ -52,7 +52,7 @@ def noticias_lista(request):
     """
     Vista para listar todas las noticias
     """
-    tipo = request.GET.get('tipo', '1')  # 1=Noticias, 2=Boletines
+    tipo = request.GET.get('tipo', '2')  # 1=Noticias, 2=Boletines (predeterminado: Boletines)
     noticias = Noticia.objects.filter(activo=True, tipo=tipo).order_by('-fecha_publicacion')
 
     # Paginación
