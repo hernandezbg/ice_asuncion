@@ -136,76 +136,83 @@
     border-left: none;
 }
 
-/* Selector de Sexo con botones */
-.sexo-selector {
+/* Selector de opciones con botones (genérico) */
+.option-selector {
     display: flex;
-    gap: 1rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
-.sexo-option {
-    flex: 1;
+.option-item {
     position: relative;
 }
 
-.sexo-option input[type="radio"] {
+.option-item input[type="radio"] {
     position: absolute;
     opacity: 0;
     width: 0;
     height: 0;
 }
 
-.sexo-option label {
+.option-item label {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 1rem;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
     border: 2px solid #e9ecef;
-    border-radius: 12px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
     background: white;
+    font-size: 0.85rem;
 }
 
-.sexo-option label:hover {
+.option-item label:hover {
     border-color: var(--primary-color);
     background-color: rgba(44, 95, 141, 0.05);
 }
 
-.sexo-option input[type="radio"]:checked + label {
+.option-item input[type="radio"]:checked + label {
     border-color: var(--primary-color);
     background-color: rgba(44, 95, 141, 0.1);
-    box-shadow: 0 0 0 3px rgba(44, 95, 141, 0.2);
 }
 
-.sexo-option.masculino input[type="radio"]:checked + label {
+.option-item .option-icon {
+    font-size: 1.1rem;
+}
+
+.option-item .option-text {
+    font-weight: 500;
+    color: #495057;
+}
+
+/* Colores específicos para sexo */
+.option-item.masculino input[type="radio"]:checked + label {
     border-color: #0d6efd;
     background-color: rgba(13, 110, 253, 0.1);
-    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
 }
 
-.sexo-option.femenino input[type="radio"]:checked + label {
-    border-color: #d63384;
-    background-color: rgba(214, 51, 132, 0.1);
-    box-shadow: 0 0 0 3px rgba(214, 51, 132, 0.2);
-}
-
-.sexo-option .sexo-icon {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-}
-
-.sexo-option.masculino .sexo-icon {
+.option-item.masculino .option-icon {
     color: #0d6efd;
 }
 
-.sexo-option.femenino .sexo-icon {
+.option-item.femenino input[type="radio"]:checked + label {
+    border-color: #d63384;
+    background-color: rgba(214, 51, 132, 0.1);
+}
+
+.option-item.femenino .option-icon {
     color: #d63384;
 }
 
-.sexo-option .sexo-text {
-    font-weight: 500;
-    color: #495057;
+/* Estado civil colores */
+.option-item.estado-civil input[type="radio"]:checked + label {
+    border-color: #6f42c1;
+    background-color: rgba(111, 66, 193, 0.1);
+}
+
+.option-item.estado-civil .option-icon {
+    color: #6f42c1;
 }
 {% endblock %}
 
@@ -317,31 +324,36 @@
                     <div class="row mb-3">
                         <div class="col-md-4 mb-3 mb-md-0">
                             <label class="form-label required-field">Sexo</label>
-                            <div class="sexo-selector">
-                                <div class="sexo-option masculino">
+                            <div class="option-selector">
+                                <div class="option-item masculino">
                                     <input type="radio" id="sexo_m" name="sexo" value="M" {% if hermano.sexo == 'M' %}checked{% endif %} required>
                                     <label for="sexo_m">
-                                        <i class="bi bi-gender-male sexo-icon"></i>
-                                        <span class="sexo-text">Masculino</span>
+                                        <i class="bi bi-gender-male option-icon"></i>
+                                        <span class="option-text">Masculino</span>
                                     </label>
                                 </div>
-                                <div class="sexo-option femenino">
+                                <div class="option-item femenino">
                                     <input type="radio" id="sexo_f" name="sexo" value="F" {% if hermano.sexo == 'F' %}checked{% endif %} required>
                                     <label for="sexo_f">
-                                        <i class="bi bi-gender-female sexo-icon"></i>
-                                        <span class="sexo-text">Femenino</span>
+                                        <i class="bi bi-gender-female option-icon"></i>
+                                        <span class="option-text">Femenino</span>
                                     </label>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-4 mb-3 mb-md-0">
-                            <label for="estado_civil" class="form-label">Estado civil</label>
-                            <select class="form-select" id="estado_civil" name="estado_civil">
-                                <option value="">Seleccionar...</option>
+                            <label class="form-label">Estado civil</label>
+                            <div class="option-selector">
                                 {% for ec in estados_civiles %}
-                                <option value="{{ ec.id }}" {% if hermano.estado_civil_id == ec.id %}selected{% endif %}>{{ ec.nombre }}</option>
+                                <div class="option-item estado-civil">
+                                    <input type="radio" id="ec_{{ ec.id }}" name="estado_civil" value="{{ ec.id }}" {% if hermano.estado_civil_id == ec.id %}checked{% endif %}>
+                                    <label for="ec_{{ ec.id }}">
+                                        <i class="bi bi-heart option-icon"></i>
+                                        <span class="option-text">{{ ec.nombre }}</span>
+                                    </label>
+                                </div>
                                 {% endfor %}
-                            </select>
+                            </div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Fecha de nacimiento</label>
@@ -580,11 +592,11 @@ document.addEventListener('DOMContentLoaded', function() {
         selectAnio.appendChild(option);
     }
 
-    // Poblar select de año de bautismo (1925 a 2045)
+    // Poblar select de año de bautismo (1925 hasta año actual)
     var selectBautismo = document.getElementById('anio_bautismo');
     var anioBautismoSeleccionado = {{ hermano.anio_bautismo|default:'0' }};
 
-    for (var anio = 2045; anio >= 1925; anio--) {
+    for (var anio = anioActual; anio >= 1925; anio--) {
         var option = document.createElement('option');
         option.value = anio;
         option.textContent = anio;
