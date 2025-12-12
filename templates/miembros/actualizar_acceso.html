@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Actualizar mis datos - ICE Asuncion{% endblock %}
+
+{% block extra_css %}
+.access-container {
+    max-width: 450px;
+    margin: 80px auto;
+}
+
+.access-card {
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.access-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #1a3a52 100%);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
+
+.access-header i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.access-body {
+    padding: 2rem;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(44, 95, 141, 0.25);
+}
+
+.btn-verificar {
+    width: 100%;
+    padding: 0.75rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.info-text {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="access-container">
+        <div class="card access-card">
+            <div class="access-header">
+                <i class="bi bi-person-badge"></i>
+                <h3 class="mb-0">Actualizar mis datos</h3>
+                <p class="mb-0 mt-2 opacity-75">Como miembro de ICE Asuncion</p>
+            </div>
+
+            <div class="access-body">
+                <p class="info-text text-center mb-4">
+                    Ingresa el codigo de acceso que te fue proporcionado para actualizar tus datos personales.
+                </p>
+
+                {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
+                </div>
+                {% endif %}
+
+                <form method="post" id="formAcceso">
+                    {% csrf_token %}
+
+                    <div class="mb-4">
+                        <label for="codigo" class="form-label fw-semibold">Codigo de acceso</label>
+                        <input type="text"
+                               class="form-control form-control-lg"
+                               id="codigo"
+                               name="codigo"
+                               placeholder="Ingresa el codigo"
+                               required
+                               autocomplete="off">
+                    </div>
+
+                    {% if recaptcha_site_key %}
+                    <div class="mb-4 d-flex justify-content-center">
+                        <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
+                    </div>
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-primary btn-verificar">
+                        <i class="bi bi-shield-check me-2"></i>Verificar y continuar
+                    </button>
+                </form>
+
+                <hr class="my-4">
+
+                <p class="info-text text-center mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Si no tienes el codigo, solicitalo al administrador de la iglesia.
+                </p>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="{% url 'home' %}" class="text-muted">
+                <i class="bi bi-arrow-left me-1"></i>Volver al inicio
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if recaptcha_site_key %}
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+{% endif %}
+{% endblock %}

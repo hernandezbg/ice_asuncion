@@ -177,6 +177,15 @@ class DatosIce(ModeloBase):
     # Otros enlaces
     stream_youtube = models.CharField(max_length=500, blank=True, verbose_name='Stream en vivo YouTube')
 
+    # Código de acceso para actualización de datos de miembros
+    codigo_acceso_miembros = models.CharField(
+        max_length=50,
+        blank=True,
+        default='ICE2024',
+        verbose_name='Código de acceso para miembros',
+        help_text='Código que los miembros deben ingresar para actualizar sus datos'
+    )
+
     class Meta:
         verbose_name = 'Datos de ICE'
         verbose_name_plural = 'Datos de ICE'

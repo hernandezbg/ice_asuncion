@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}Buscar mi registro - ICE Asuncion{% endblock %}
+
+{% block extra_css %}
+.search-container {
+    max-width: 600px;
+    margin: 60px auto;
+}
+
+.search-card {
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.search-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #1a3a52 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+}
+
+.search-body {
+    padding: 2rem;
+}
+
+.result-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.result-item:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(44, 95, 141, 0.05);
+}
+
+.result-item.selected {
+    border-color: var(--primary-color);
+    background-color: rgba(44, 95, 141, 0.1);
+}
+
+.result-item input[type="radio"] {
+    margin-right: 1rem;
+    width: 20px;
+    height: 20px;
+    accent-color: var(--primary-color);
+}
+
+.result-name {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.result-new {
+    border-style: dashed;
+    color: var(--primary-color);
+}
+
+.result-new i {
+    font-size: 1.5rem;
+    margin-right: 0.75rem;
+}
+
+.no-results {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-light);
+}
+
+.no-results i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.step-indicator {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.step {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin: 0 0.5rem;
+}
+
+.step.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.step.completed {
+    background: #28a745;
+    color: white;
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="search-container">
+        <!-- Indicador de pasos -->
+        <div class="step-indicator">
+            <div class="step completed"><i class="bi bi-check"></i></div>
+            <div class="step active">2</div>
+            <div class="step">3</div>
+        </div>
+
+        <div class="card search-card">
+            <div class="search-header">
+                <h4 class="mb-0"><i class="bi bi-search me-2"></i>Buscar mi registro</h4>
+            </div>
+
+            <div class="search-body">
+                <!-- Formulario de busqueda -->
+                <form method="post" class="mb-4">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="text"
+                               class="form-control form-control-lg"
+                               name="apellido"
+                               placeholder="Ingresa tu apellido..."
+                               value="{{ apellido_buscar }}"
+                               required
+                               minlength="2"
+                               autofocus>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-search me-1"></i>Buscar
+                        </button>
+                    </div>
+                    <small class="text-muted">Ingresa al menos 2 caracteres de tu apellido</small>
+                </form>
+
+                {% if resultados is not none %}
+                    {% if resultados %}
+                    <!-- Resultados encontrados -->
+                    <form method="get" action="" id="formSeleccion">
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-list-ul me-1"></i>
+                            Selecciona tu registro ({{ resultados|length }} encontrado{{ resultados|pluralize:"s" }}):
+                        </h6>
+
+                        {% for hermano in resultados %}
+                        <label class="result-item" for="hermano_{{ hermano.id }}">
+                            <input type="radio"
+                                   name="hermano_id"
+                                   id="hermano_{{ hermano.id }}"
+                                   value="{{ hermano.id }}"
+                                   onchange="selectHermano({{ hermano.id }})">
+                            <span class="result-name">{{ hermano.apellidos }}, {{ hermano.nombres }}</span>
+                        </label>
+                        {% endfor %}
+
+                        <!-- Opcion de nuevo registro -->
+                        <label class="result-item result-new" for="hermano_nuevo">
+                            <input type="radio"
+                                   name="hermano_id"
+                                   id="hermano_nuevo"
+                                   value="nuevo"
+                                   onchange="selectNuevo()">
+                            <i class="bi bi-plus-circle"></i>
+                            <span class="result-name">No estoy en la lista, quiero registrarme</span>
+                        </label>
+                    </form>
+                    {% else %}
+                    <!-- Sin resultados -->
+                    <div class="no-results">
+                        <i class="bi bi-search"></i>
+                        <p class="mb-3">No encontramos registros con el apellido "<strong>{{ apellido_buscar }}</strong>"</p>
+                        <a href="{% url 'miembros:nuevo' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-1"></i>Registrarme como nuevo miembro
+                        </a>
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'miembros:salir' %}" class="text-muted">
+                <i class="bi bi-arrow-left me-1"></i>Volver
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selectHermano(id) {
+    window.location.href = '{% url "miembros:editar" 0 %}'.replace('0', id);
+}
+
+function selectNuevo() {
+    window.location.href = '{% url "miembros:nuevo" %}';
+}
+
+// Marcar item seleccionado visualmente
+document.querySelectorAll('.result-item input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('.result-item').forEach(item => item.classList.remove('selected'));
+        this.closest('.result-item').classList.add('selected');
+    });
+});
+</script>
+{% endblock %}

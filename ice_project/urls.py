@@ -10,6 +10,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('summernote/', include('django_summernote.urls')),
     path('panel/', include('panel.urls')),  # Panel de administración personalizado
+    path('miembros/', include('miembros.urls')),  # Actualización de datos de miembros
     path('', include('contenido.urls')),  # URLs del sitio público
 ]
 

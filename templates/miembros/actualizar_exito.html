@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Datos actualizados - ICE Asuncion{% endblock %}
+
+{% block extra_css %}
+.success-container {
+    max-width: 500px;
+    margin: 100px auto;
+    text-align: center;
+}
+
+.success-icon {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 2rem;
+    animation: scaleIn 0.5s ease-out;
+}
+
+.success-icon i {
+    font-size: 4rem;
+    color: white;
+}
+
+@keyframes scaleIn {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.success-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+}
+
+.success-message {
+    font-size: 1.1rem;
+    color: var(--text-light);
+    margin-bottom: 2rem;
+}
+
+.btn-home {
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="success-container">
+        <div class="success-icon">
+            <i class="bi bi-check-lg"></i>
+        </div>
+
+        <h1 class="success-title">Datos actualizados</h1>
+
+        <p class="success-message">
+            Tu informacion ha sido guardada correctamente.<br>
+            Gracias por mantener tus datos actualizados.
+        </p>
+
+        <a href="{% url 'home' %}" class="btn btn-primary btn-home">
+            <i class="bi bi-house me-2"></i>Volver al inicio
+        </a>
+
+        <div class="mt-4">
+            <a href="{% url 'miembros:acceso' %}" class="text-muted">
+                <i class="bi bi-arrow-repeat me-1"></i>Actualizar otros datos
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

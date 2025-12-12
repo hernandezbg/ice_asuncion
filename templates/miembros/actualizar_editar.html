@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if es_nuevo %}Registrarme{% else %}Actualizar mis datos{% endif %} - ICE Asuncion{% endblock %}
+
+{% block extra_css %}
+.form-container {
+    max-width: 700px;
+    margin: 60px auto;
+}
+
+.form-card {
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.form-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #1a3a52 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+}
+
+.form-body {
+    padding: 2rem;
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.section-title i {
+    margin-right: 0.5rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(44, 95, 141, 0.25);
+}
+
+.required-field::after {
+    content: " *";
+    color: #dc3545;
+}
+
+.step-indicator {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.step {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin: 0 0.5rem;
+}
+
+.step.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.step.completed {
+    background: #28a745;
+    color: white;
+}
+
+.btn-guardar {
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-container">
+        <!-- Indicador de pasos -->
+        <div class="step-indicator">
+            <div class="step completed"><i class="bi bi-check"></i></div>
+            <div class="step completed"><i class="bi bi-check"></i></div>
+            <div class="step active">3</div>
+        </div>
+
+        <div class="card form-card">
+            <div class="form-header">
+                <h4 class="mb-0">
+                    {% if es_nuevo %}
+                    <i class="bi bi-person-plus me-2"></i>Registrarme como miembro
+                    {% else %}
+                    <i class="bi bi-pencil-square me-2"></i>Actualizar mis datos
+                    {% endif %}
+                </h4>
+                {% if not es_nuevo %}
+                <p class="mb-0 mt-1 opacity-75">{{ hermano.apellidos }}, {{ hermano.nombres }}</p>
+                {% endif %}
+            </div>
+
+            <div class="form-body">
+                {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}" role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <!-- Datos Personales -->
+                    <div class="section-title">
+                        <i class="bi bi-person"></i>Datos Personales
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="apellidos" class="form-label required-field">Apellidos</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="apellidos"
+                                   name="apellidos"
+                                   value="{{ hermano.apellidos|default:'' }}"
+                                   required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="nombres" class="form-label required-field">Nombres</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="nombres"
+                                   name="nombres"
+                                   value="{{ hermano.nombres|default:'' }}"
+                                   required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <label for="sexo" class="form-label required-field">Sexo</label>
+                            <select class="form-select" id="sexo" name="sexo" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="M" {% if hermano.sexo == 'M' %}selected{% endif %}>Masculino</option>
+                                <option value="F" {% if hermano.sexo == 'F' %}selected{% endif %}>Femenino</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <label for="fecha_nacimiento" class="form-label">Fecha de nacimiento</label>
+                            <input type="date"
+                                   class="form-control"
+                                   id="fecha_nacimiento"
+                                   name="fecha_nacimiento"
+                                   value="{{ hermano.fecha_nacimiento|date:'Y-m-d'|default:'' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="estado_civil" class="form-label">Estado civil</label>
+                            <select class="form-select" id="estado_civil" name="estado_civil">
+                                <option value="">Seleccionar...</option>
+                                {% for ec in estados_civiles %}
+                                <option value="{{ ec.id }}" {% if hermano.estado_civil_id == ec.id %}selected{% endif %}>{{ ec.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Datos de Contacto -->
+                    <div class="section-title mt-4">
+                        <i class="bi bi-telephone"></i>Datos de Contacto
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="celular" class="form-label">Celular</label>
+                            <input type="tel"
+                                   class="form-control"
+                                   id="celular"
+                                   name="celular"
+                                   placeholder="Ej: 351-1234567"
+                                   value="{{ hermano.celular|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="telefono_fijo" class="form-label">Telefono fijo</label>
+                            <input type="tel"
+                                   class="form-control"
+                                   id="telefono_fijo"
+                                   name="telefono_fijo"
+                                   value="{{ hermano.telefono_fijo|default:'' }}">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email"
+                               class="form-control"
+                               id="email"
+                               name="email"
+                               placeholder="ejemplo@correo.com"
+                               value="{{ hermano.email|default:'' }}">
+                    </div>
+
+                    <!-- Ubicacion -->
+                    <div class="section-title mt-4">
+                        <i class="bi bi-geo-alt"></i>Ubicacion
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="provincia" class="form-label">Provincia</label>
+                            <select class="form-select" id="provincia" name="provincia">
+                                <option value="">Seleccionar...</option>
+                                {% for prov in provincias %}
+                                <option value="{{ prov.id }}" {% if hermano.provincia_id == prov.id %}selected{% endif %}>{{ prov.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="localidad" class="form-label">Localidad</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="localidad"
+                                   name="localidad"
+                                   value="{{ hermano.localidad|default:'' }}">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-8 mb-3 mb-md-0">
+                            <label for="domicilio" class="form-label">Domicilio</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="domicilio"
+                                   name="domicilio"
+                                   placeholder="Calle y numero"
+                                   value="{{ hermano.domicilio|default:'' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="barrio" class="form-label">Barrio</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="barrio"
+                                   name="barrio"
+                                   value="{{ hermano.barrio|default:'' }}">
+                        </div>
+                    </div>
+
+                    <!-- Clasificacion (solo si ya existe) -->
+                    {% if not es_nuevo %}
+                    <div class="section-title mt-4">
+                        <i class="bi bi-bookmark"></i>Clasificacion
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="clase" class="form-label">Clase</label>
+                            <select class="form-select" id="clase" name="clase">
+                                <option value="">Seleccionar...</option>
+                                {% for cl in clases %}
+                                <option value="{{ cl.id }}" {% if hermano.clase_id == cl.id %}selected{% endif %}>{{ cl.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="grupo" class="form-label">Grupo</label>
+                            <select class="form-select" id="grupo" name="grupo">
+                                <option value="">Seleccionar...</option>
+                                {% for gr in grupos %}
+                                <option value="{{ gr.id }}" {% if hermano.grupo_id == gr.id %}selected{% endif %}>{{ gr.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Botones -->
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{% url 'miembros:buscar' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Volver
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-guardar">
+                            <i class="bi bi-check-lg me-1"></i>
+                            {% if es_nuevo %}Registrarme{% else %}Guardar cambios{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
