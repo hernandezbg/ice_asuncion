@@ -968,7 +968,7 @@ def panel_login(request):
         return redirect('panel:dashboard')
 
     if request.method == 'POST':
-        username = request.POST.get('username')
+        username = request.POST.get('username', '').lower().strip()
         password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
 
