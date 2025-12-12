@@ -55,9 +55,11 @@ class NoticiaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Hacer las imágenes opcionales siempre
+        # Hacer campos opcionales
         self.fields['imagen_principal'].required = False
         self.fields['imagen_secundaria'].required = False
+        self.fields['introduccion'].required = False
+        self.fields['contenido'].required = False
 
 
 class MensajeForm(forms.ModelForm):

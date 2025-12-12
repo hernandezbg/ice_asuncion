@@ -96,8 +96,8 @@ class Noticia(ModeloBase):
 
     tipo = models.IntegerField(choices=TIPO_CHOICES, default=1, verbose_name='Tipo')
     titulo = models.CharField(max_length=300, verbose_name='Título')
-    introduccion = models.TextField(verbose_name='Introducción')
-    contenido = models.TextField(verbose_name='Contenido completo')
+    introduccion = models.TextField(blank=True, verbose_name='Introducción')
+    contenido = models.TextField(blank=True, verbose_name='Contenido completo')
     imagen_principal = models.ImageField(upload_to='noticias/', blank=True, null=True, verbose_name='Imagen principal')
     imagen_secundaria = models.ImageField(upload_to='noticias/', blank=True, null=True, verbose_name='Imagen secundaria')
     fecha_publicacion = models.DateField(verbose_name='Fecha de publicación')
