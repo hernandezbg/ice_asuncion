@@ -63,27 +63,28 @@ def actualizar_datos_acceso(request):
 
 def actualizar_datos_buscar(request):
     """
-    Paso 2: Buscar por apellido
+    Paso 2: Buscar por apellido o nombre
     """
     # Verificar acceso
     if not request.session.get('acceso_miembros_verificado'):
         return redirect('miembros:acceso')
 
     resultados = None
-    apellido_buscar = ''
+    busqueda = ''
 
     if request.method == 'POST':
-        apellido_buscar = request.POST.get('apellido', '').strip()
+        busqueda = request.POST.get('busqueda', '').strip()
 
-        if len(apellido_buscar) >= 2:
+        if len(busqueda) >= 2:
+            # Buscar en apellidos O en nombres
             resultados = Hermano.objects.filter(
-                apellidos__icontains=apellido_buscar,
+                Q(apellidos__icontains=busqueda) | Q(nombres__icontains=busqueda),
                 activo=True
             ).order_by('apellidos', 'nombres')[:20]
 
     context = {
         'resultados': resultados,
-        'apellido_buscar': apellido_buscar,
+        'busqueda': busqueda,
     }
     return render(request, 'miembros/actualizar_buscar.html', context)
 

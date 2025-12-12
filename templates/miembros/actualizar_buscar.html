@@ -132,9 +132,9 @@
                     <div class="input-group">
                         <input type="text"
                                class="form-control form-control-lg"
-                               name="apellido"
-                               placeholder="Ingresa tu apellido..."
-                               value="{{ apellido_buscar }}"
+                               name="busqueda"
+                               placeholder="Ingresa tu apellido o nombre..."
+                               value="{{ busqueda }}"
                                required
                                minlength="2"
                                autofocus>
@@ -142,7 +142,7 @@
                             <i class="bi bi-search me-1"></i>Buscar
                         </button>
                     </div>
-                    <small class="text-muted">Ingresa al menos 2 caracteres de tu apellido</small>
+                    <small class="text-muted">Puedes buscar por apellido o por nombre (al menos 2 caracteres)</small>
                 </form>
 
                 {% if resultados is not none %}
@@ -180,7 +180,7 @@
                     <!-- Sin resultados -->
                     <div class="no-results">
                         <i class="bi bi-search"></i>
-                        <p class="mb-3">No encontramos registros con el apellido "<strong>{{ apellido_buscar }}</strong>"</p>
+                        <p class="mb-3">No encontramos registros con "<strong>{{ busqueda }}</strong>"</p>
                         <a href="{% url 'miembros:nuevo' %}" class="btn btn-primary">
                             <i class="bi bi-plus-circle me-1"></i>Registrarme como nuevo miembro
                         </a>
