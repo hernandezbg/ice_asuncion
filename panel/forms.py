@@ -173,7 +173,7 @@ class DatosIceForm(forms.ModelForm):
         fields = [
             'email', 'direccion', 'telefono',
             'facebook', 'twitter', 'youtube', 'instagram',
-            'stream_youtube'
+            'stream_youtube', 'codigo_acceso_miembros'
         ]
         widgets = {
             'email': forms.EmailInput(attrs={'class': 'form-control', 'required': True}),
@@ -184,4 +184,5 @@ class DatosIceForm(forms.ModelForm):
             'youtube': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://youtube.com/...'}),
             'instagram': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://instagram.com/...'}),
             'stream_youtube': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://youtube.com/live/...'}),
+            'codigo_acceso_miembros': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: ICE2024'}),
         }
