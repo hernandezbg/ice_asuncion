@@ -342,11 +342,11 @@
                             </div>
                         </div>
                         <div class="col-md-4 mb-3 mb-md-0">
-                            <label class="form-label">Estado civil</label>
+                            <label class="form-label required-field">Estado civil</label>
                             <div class="option-selector">
                                 {% for ec in estados_civiles %}
                                 <div class="option-item estado-civil">
-                                    <input type="radio" id="ec_{{ ec.id }}" name="estado_civil" value="{{ ec.id }}" {% if hermano.estado_civil_id == ec.id %}checked{% endif %}>
+                                    <input type="radio" id="ec_{{ ec.id }}" name="estado_civil" value="{{ ec.id }}" {% if hermano.estado_civil_id == ec.id %}checked{% endif %} required>
                                     <label for="ec_{{ ec.id }}">
                                         <i class="bi bi-heart option-icon"></i>
                                         <span class="option-text">{{ ec.nombre }}</span>
@@ -356,10 +356,10 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Fecha de nacimiento</label>
+                            <label class="form-label required-field">Fecha de nacimiento</label>
                             <div class="row g-2">
                                 <div class="col-4">
-                                    <select class="form-select form-select-sm" id="nacimiento_dia" name="nacimiento_dia">
+                                    <select class="form-select form-select-sm" id="nacimiento_dia" name="nacimiento_dia" required>
                                         <option value="">Dia</option>
                                         {% for d in "123456789012345678901234567890"|make_list %}{% with dia=forloop.counter %}{% if dia <= 31 %}
                                         <option value="{{ dia }}" {% if hermano.fecha_nacimiento.day == dia %}selected{% endif %}>{{ dia }}</option>
@@ -367,7 +367,7 @@
                                     </select>
                                 </div>
                                 <div class="col-4">
-                                    <select class="form-select form-select-sm" id="nacimiento_mes" name="nacimiento_mes">
+                                    <select class="form-select form-select-sm" id="nacimiento_mes" name="nacimiento_mes" required>
                                         <option value="">Mes</option>
                                         <option value="1" {% if hermano.fecha_nacimiento.month == 1 %}selected{% endif %}>Ene</option>
                                         <option value="2" {% if hermano.fecha_nacimiento.month == 2 %}selected{% endif %}>Feb</option>
@@ -384,7 +384,7 @@
                                     </select>
                                 </div>
                                 <div class="col-4">
-                                    <select class="form-select form-select-sm" id="nacimiento_anio" name="nacimiento_anio">
+                                    <select class="form-select form-select-sm" id="nacimiento_anio" name="nacimiento_anio" required>
                                         <option value="">Año</option>
                                     </select>
                                 </div>
@@ -399,7 +399,7 @@
 
                     <div class="row mb-3">
                         <div class="col-md-6 mb-3 mb-md-0">
-                            <label for="celular" class="form-label">Celular</label>
+                            <label for="celular" class="form-label required-field">Celular</label>
                             <div class="input-group celular-input-group">
                                 <span class="input-group-text">+54 9</span>
                                 <input type="tel"
@@ -409,7 +409,8 @@
                                        placeholder="351 1234567"
                                        value="{{ hermano.celular|default:'' }}"
                                        pattern="[\d\s\-]+"
-                                       title="Solo numeros, espacios y guiones">
+                                       title="Solo numeros, espacios y guiones"
+                                       required>
                             </div>
                             <small class="text-muted">Sin 0 ni 15. Ej: 351 1234567</small>
                         </div>
@@ -460,13 +461,14 @@
 
                     <div class="row mb-3">
                         <div class="col-md-8 mb-3 mb-md-0">
-                            <label for="domicilio" class="form-label">Domicilio</label>
+                            <label for="domicilio" class="form-label required-field">Domicilio</label>
                             <input type="text"
                                    class="form-control"
                                    id="domicilio"
                                    name="domicilio"
                                    placeholder="Calle y numero"
-                                   value="{{ hermano.domicilio|default:'' }}">
+                                   value="{{ hermano.domicilio|default:'' }}"
+                                   required>
                         </div>
                         <div class="col-md-4">
                             <label for="barrio" class="form-label">Barrio</label>
