@@ -234,6 +234,11 @@
                         <a class="nav-link" href="{% url 'contacto' %}">Contacto</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{% url 'miembros:acceso' %}" style="color: #f57c00;">
+                            <i class="bi bi-person-badge"></i> Mis datos
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         {% if user.is_authenticated %}
                         <a class="nav-link btn btn-primary text-white px-3" href="{% url 'panel:dashboard' %}">
                             <i class="bi bi-speedometer2"></i> Panel
