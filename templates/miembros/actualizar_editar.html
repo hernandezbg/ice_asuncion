@@ -135,6 +135,78 @@
 .celular-input-group .form-control {
     border-left: none;
 }
+
+/* Selector de Sexo con botones */
+.sexo-selector {
+    display: flex;
+    gap: 1rem;
+}
+
+.sexo-option {
+    flex: 1;
+    position: relative;
+}
+
+.sexo-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.sexo-option label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.sexo-option label:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(44, 95, 141, 0.05);
+}
+
+.sexo-option input[type="radio"]:checked + label {
+    border-color: var(--primary-color);
+    background-color: rgba(44, 95, 141, 0.1);
+    box-shadow: 0 0 0 3px rgba(44, 95, 141, 0.2);
+}
+
+.sexo-option.masculino input[type="radio"]:checked + label {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.1);
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
+}
+
+.sexo-option.femenino input[type="radio"]:checked + label {
+    border-color: #d63384;
+    background-color: rgba(214, 51, 132, 0.1);
+    box-shadow: 0 0 0 3px rgba(214, 51, 132, 0.2);
+}
+
+.sexo-option .sexo-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.sexo-option.masculino .sexo-icon {
+    color: #0d6efd;
+}
+
+.sexo-option.femenino .sexo-icon {
+    color: #d63384;
+}
+
+.sexo-option .sexo-text {
+    font-weight: 500;
+    color: #495057;
+}
 {% endblock %}
 
 {% block content %}
@@ -244,12 +316,23 @@
 
                     <div class="row mb-3">
                         <div class="col-md-4 mb-3 mb-md-0">
-                            <label for="sexo" class="form-label required-field">Sexo</label>
-                            <select class="form-select" id="sexo" name="sexo" required>
-                                <option value="">Seleccionar...</option>
-                                <option value="M" {% if hermano.sexo == 'M' %}selected{% endif %}>Masculino</option>
-                                <option value="F" {% if hermano.sexo == 'F' %}selected{% endif %}>Femenino</option>
-                            </select>
+                            <label class="form-label required-field">Sexo</label>
+                            <div class="sexo-selector">
+                                <div class="sexo-option masculino">
+                                    <input type="radio" id="sexo_m" name="sexo" value="M" {% if hermano.sexo == 'M' %}checked{% endif %} required>
+                                    <label for="sexo_m">
+                                        <i class="bi bi-gender-male sexo-icon"></i>
+                                        <span class="sexo-text">Masculino</span>
+                                    </label>
+                                </div>
+                                <div class="sexo-option femenino">
+                                    <input type="radio" id="sexo_f" name="sexo" value="F" {% if hermano.sexo == 'F' %}checked{% endif %} required>
+                                    <label for="sexo_f">
+                                        <i class="bi bi-gender-female sexo-icon"></i>
+                                        <span class="sexo-text">Femenino</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-4 mb-3 mb-md-0">
                             <label for="estado_civil" class="form-label">Estado civil</label>
@@ -391,14 +474,9 @@
                     <div class="row mb-3">
                         <div class="col-md-4 mb-3 mb-md-0">
                             <label for="anio_bautismo" class="form-label">Año de bautismo</label>
-                            <input type="number"
-                                   class="form-control"
-                                   id="anio_bautismo"
-                                   name="anio_bautismo"
-                                   min="1900"
-                                   max="2099"
-                                   placeholder="Ej: 2010"
-                                   value="{{ hermano.anio_bautismo|default:'' }}">
+                            <select class="form-select" id="anio_bautismo" name="anio_bautismo">
+                                <option value="">Seleccionar...</option>
+                            </select>
                         </div>
                         <div class="col-md-4 mb-3 mb-md-0">
                             <label for="clase" class="form-label">Clase</label>
@@ -486,7 +564,7 @@ function previewFoto(input) {
     }
 }
 
-// Poblar select de años (desde 1920 hasta año actual)
+// Poblar select de años de nacimiento (desde 1920 hasta año actual)
 document.addEventListener('DOMContentLoaded', function() {
     var selectAnio = document.getElementById('nacimiento_anio');
     var anioActual = new Date().getFullYear();
@@ -500,6 +578,20 @@ document.addEventListener('DOMContentLoaded', function() {
             option.selected = true;
         }
         selectAnio.appendChild(option);
+    }
+
+    // Poblar select de año de bautismo (1925 a 2045)
+    var selectBautismo = document.getElementById('anio_bautismo');
+    var anioBautismoSeleccionado = {{ hermano.anio_bautismo|default:'0' }};
+
+    for (var anio = 2045; anio >= 1925; anio--) {
+        var option = document.createElement('option');
+        option.value = anio;
+        option.textContent = anio;
+        if (anio === anioBautismoSeleccionado) {
+            option.selected = true;
+        }
+        selectBautismo.appendChild(option);
     }
 });
 </script>
