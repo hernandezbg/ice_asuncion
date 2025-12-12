@@ -1,1 +1,1 @@
-web: gunicorn ice_project.wsgi --log-file -
+web: python manage.py migrate --noinput && gunicorn ice_project.wsgi --log-file -
