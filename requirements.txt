@@ -31,3 +31,6 @@ django-colorfield==0.11.0
 # Analytics y estadísticas
 user-agents==2.2.0
 geoip2==4.8.0
+
+# Email con Resend
+resend==2.5.0

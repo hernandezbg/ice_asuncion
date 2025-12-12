@@ -1,11 +1,11 @@
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
-from django.core.mail import send_mail
 from django.contrib import messages
 from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+import resend
 from .models import Pagina, Slider, Breve, Noticia, Galeria, Mensaje, Seccion, Ofrenda, DatosIce
 
 
@@ -170,7 +170,7 @@ def galeria(request):
 
 def contacto(request):
     """
-    Vista para el formulario de contacto
+    Vista para el formulario de contacto usando Resend API
     """
     if request.method == 'POST':
         nombre = request.POST.get('nombre')
@@ -183,26 +183,28 @@ def contacto(request):
             messages.error(request, 'Por favor completa todos los campos.')
         else:
             try:
-                # Preparo el mensaje
-                mensaje_completo = f"""
-                Nuevo mensaje desde el formulario de contacto:
+                # Configurar Resend API
+                resend.api_key = settings.RESEND_API_KEY
 
-                Nombre: {nombre}
-                Email: {email}
-                Asunto: {asunto}
-
-                Mensaje:
-                {mensaje_texto}
+                # Preparar el contenido HTML del email
+                html_content = f"""
+                <h2>Nuevo mensaje desde el formulario de contacto</h2>
+                <p><strong>Nombre:</strong> {nombre}</p>
+                <p><strong>Email:</strong> {email}</p>
+                <p><strong>Asunto:</strong> {asunto}</p>
+                <hr>
+                <p><strong>Mensaje:</strong></p>
+                <p>{mensaje_texto}</p>
                 """
 
-                # Envío el email
-                send_mail(
-                    subject=f'[ICE Web] {asunto}',
-                    message=mensaje_completo,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[settings.EMAIL_HOST_USER],
-                    fail_silently=False,
-                )
+                # Enviar email con Resend
+                resend.Emails.send({
+                    "from": settings.DEFAULT_FROM_EMAIL,
+                    "to": [settings.CONTACT_EMAIL],
+                    "subject": f"[ICE Web] {asunto}",
+                    "html": html_content,
+                    "reply_to": email
+                })
 
                 messages.success(request, '¡Mensaje enviado correctamente! Te responderemos pronto.')
 
