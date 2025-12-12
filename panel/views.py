@@ -20,6 +20,11 @@ def es_staff(user):
     return user.is_staff
 
 
+def es_superuser(user):
+    """Verifica que el usuario sea superusuario (para contenido web)"""
+    return user.is_superuser
+
+
 @login_required
 @user_passes_test(es_staff)
 def dashboard(request):
@@ -230,7 +235,7 @@ def hermano_eliminar(request, pk):
 
 # ========== NOTICIAS ==========
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def noticias_lista(request):
     """Lista de noticias"""
     tipo = request.GET.get('tipo', '')
@@ -258,7 +263,7 @@ def noticias_lista(request):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def noticia_crear(request):
     """Crea una nueva noticia"""
     if request.method == 'POST':
@@ -288,7 +293,7 @@ def noticia_crear(request):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def noticia_datos(request, pk):
     """Retorna datos de noticia en JSON"""
     n = get_object_or_404(Noticia, pk=pk)
@@ -305,7 +310,7 @@ def noticia_datos(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def noticia_editar(request, pk):
     """Edita una noticia existente"""
     noticia = get_object_or_404(Noticia, pk=pk)
@@ -339,7 +344,7 @@ def noticia_editar(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 @require_POST
 def noticia_eliminar(request, pk):
     """Elimina una noticia"""
@@ -351,7 +356,7 @@ def noticia_eliminar(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def noticia_toggle_activo(request, pk):
     """Activa/desactiva una noticia"""
     noticia = get_object_or_404(Noticia, pk=pk)
@@ -364,7 +369,7 @@ def noticia_toggle_activo(request, pk):
 
 # ========== MENSAJES ==========
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def mensajes_lista(request):
     """Lista de mensajes"""
     tipo = request.GET.get('tipo', '')
@@ -396,7 +401,7 @@ def mensajes_lista(request):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def mensaje_crear(request):
     """Crea un nuevo mensaje"""
     if request.method == 'POST':
@@ -411,7 +416,7 @@ def mensaje_crear(request):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def mensaje_datos(request, pk):
     """Retorna datos de mensaje en JSON"""
     m = get_object_or_404(Mensaje, pk=pk)
@@ -428,7 +433,7 @@ def mensaje_datos(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def mensaje_editar(request, pk):
     """Edita un mensaje existente"""
     mensaje = get_object_or_404(Mensaje, pk=pk)
@@ -444,7 +449,7 @@ def mensaje_editar(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 @require_POST
 def mensaje_eliminar(request, pk):
     """Elimina un mensaje"""
@@ -456,7 +461,7 @@ def mensaje_eliminar(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def mensaje_toggle_activo(request, pk):
     """Activa/desactiva un mensaje"""
     mensaje = get_object_or_404(Mensaje, pk=pk)
@@ -469,7 +474,7 @@ def mensaje_toggle_activo(request, pk):
 
 # ========== PAGINAS ==========
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def paginas_lista(request):
     """Lista de páginas"""
     busqueda = request.GET.get('q', '')
@@ -494,7 +499,7 @@ def paginas_lista(request):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def pagina_crear(request):
     """Crea una nueva página"""
     if request.method == 'POST':
@@ -509,7 +514,7 @@ def pagina_crear(request):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def pagina_datos(request, pk):
     """Retorna datos de página en JSON"""
     p = get_object_or_404(Pagina, pk=pk)
@@ -523,7 +528,7 @@ def pagina_datos(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def pagina_editar(request, pk):
     """Edita una página existente"""
     pagina = get_object_or_404(Pagina, pk=pk)
@@ -539,7 +544,7 @@ def pagina_editar(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def pagina_toggle_activo(request, pk):
     """Activa/desactiva una página"""
     pagina = get_object_or_404(Pagina, pk=pk)
@@ -587,7 +592,7 @@ def estadisticas(request):
 
 # ========== SECCIONES ==========
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def secciones_lista(request):
     """Lista de secciones de la homepage"""
     busqueda = request.GET.get('q', '')
@@ -612,7 +617,7 @@ def secciones_lista(request):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def seccion_crear(request):
     """Crea una nueva sección"""
     if request.method == 'POST':
@@ -627,7 +632,7 @@ def seccion_crear(request):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def seccion_datos(request, pk):
     """Retorna datos de sección en JSON"""
     s = get_object_or_404(Seccion, pk=pk)
@@ -644,7 +649,7 @@ def seccion_datos(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def seccion_editar(request, pk):
     """Edita una sección existente"""
     seccion = get_object_or_404(Seccion, pk=pk)
@@ -660,7 +665,7 @@ def seccion_editar(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 @require_POST
 def seccion_eliminar(request, pk):
     """Elimina una sección"""
@@ -672,7 +677,7 @@ def seccion_eliminar(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def seccion_toggle_activo(request, pk):
     """Activa/desactiva una sección"""
     seccion = get_object_or_404(Seccion, pk=pk)
@@ -685,7 +690,7 @@ def seccion_toggle_activo(request, pk):
 
 # ========== SLIDERS ==========
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def sliders_lista(request):
     """Lista de sliders del hero"""
     busqueda = request.GET.get('q', '')
@@ -710,7 +715,7 @@ def sliders_lista(request):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def slider_crear(request):
     """Crea un nuevo slider"""
     if request.method == 'POST':
@@ -752,7 +757,7 @@ def slider_crear(request):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def slider_datos(request, pk):
     """Retorna datos de slider en JSON"""
     s = get_object_or_404(Slider, pk=pk)
@@ -766,7 +771,7 @@ def slider_datos(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def slider_editar(request, pk):
     """Edita un slider existente"""
     slider = get_object_or_404(Slider, pk=pk)
@@ -789,7 +794,7 @@ def slider_editar(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 @require_POST
 def slider_eliminar(request, pk):
     """Elimina un slider"""
@@ -801,7 +806,7 @@ def slider_eliminar(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def slider_toggle_activo(request, pk):
     """Activa/desactiva un slider"""
     slider = get_object_or_404(Slider, pk=pk)
@@ -814,7 +819,7 @@ def slider_toggle_activo(request, pk):
 
 # ========== OFRENDAS ==========
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def ofrendas_lista(request):
     """Lista de información de ofrendas"""
     busqueda = request.GET.get('q', '')
@@ -843,7 +848,7 @@ def ofrendas_lista(request):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def ofrenda_crear(request):
     """Crea una nueva ofrenda"""
     if request.method == 'POST':
@@ -858,7 +863,7 @@ def ofrenda_crear(request):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def ofrenda_datos(request, pk):
     """Retorna datos de ofrenda en JSON"""
     o = get_object_or_404(Ofrenda, pk=pk)
@@ -876,7 +881,7 @@ def ofrenda_datos(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def ofrenda_editar(request, pk):
     """Edita una ofrenda existente"""
     ofrenda = get_object_or_404(Ofrenda, pk=pk)
@@ -892,7 +897,7 @@ def ofrenda_editar(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 @require_POST
 def ofrenda_eliminar(request, pk):
     """Elimina una ofrenda"""
@@ -904,7 +909,7 @@ def ofrenda_eliminar(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def ofrenda_toggle_activo(request, pk):
     """Activa/desactiva una ofrenda"""
     ofrenda = get_object_or_404(Ofrenda, pk=pk)
@@ -917,7 +922,7 @@ def ofrenda_toggle_activo(request, pk):
 
 # ========== DATOS ICE (Configuración) ==========
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(es_superuser)
 def datosice_editar(request):
     """Edita los datos de contacto y redes sociales (singleton)"""
     datos_ice = DatosIce.load()
