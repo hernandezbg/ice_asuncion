@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
+from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout, update_session_auth_hash
 from django.contrib import messages
 from django.db.models import Count, Q
 from django.utils import timezone
@@ -990,3 +990,30 @@ def panel_logout(request):
     auth_logout(request)
     messages.success(request, 'Has cerrado sesión correctamente.')
     return redirect('panel:login')
+
+
+@login_required(login_url='panel:login')
+def cambiar_password(request):
+    """Vista para cambiar contraseña del usuario"""
+    if request.method == 'POST':
+        password_actual = request.POST.get('password_actual', '')
+        password_nuevo = request.POST.get('password_nuevo', '')
+        password_confirmar = request.POST.get('password_confirmar', '')
+
+        # Validaciones
+        if not request.user.check_password(password_actual):
+            messages.error(request, 'La contraseña actual es incorrecta.')
+        elif len(password_nuevo) < 8:
+            messages.error(request, 'La nueva contraseña debe tener al menos 8 caracteres.')
+        elif password_nuevo != password_confirmar:
+            messages.error(request, 'Las contraseñas nuevas no coinciden.')
+        else:
+            # Cambiar contraseña
+            request.user.set_password(password_nuevo)
+            request.user.save()
+            # Mantener la sesión activa
+            update_session_auth_hash(request, request.user)
+            messages.success(request, 'Tu contraseña ha sido actualizada correctamente.')
+            return redirect('panel:dashboard')
+
+    return render(request, 'panel/cambiar_password.html')
