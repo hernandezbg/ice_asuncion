@@ -183,9 +183,10 @@ def hermano_crear(request):
 @login_required
 @user_passes_test(es_staff)
 def hermano_datos(request, pk):
-    """Retorna los datos de un hermano en JSON para edición"""
+    """Retorna los datos de un hermano en JSON para edición y visualización"""
     hermano = get_object_or_404(Hermano, pk=pk)
     data = {
+        # Datos para edición (IDs)
         'apellidos': hermano.apellidos,
         'nombres': hermano.nombres,
         'sexo': hermano.sexo,
@@ -201,6 +202,21 @@ def hermano_datos(request, pk):
         'grupo': hermano.grupo.id if hermano.grupo else '',
         'activo': hermano.activo,
         'observaciones': hermano.observaciones or '',
+        # Datos adicionales para visualización
+        'foto_url': hermano.foto.url if hermano.foto else '',
+        'sexo_display': hermano.get_sexo_display(),
+        'estado_civil_display': str(hermano.estado_civil) if hermano.estado_civil else '-',
+        'clase_display': str(hermano.clase) if hermano.clase else '-',
+        'grupo_display': str(hermano.grupo) if hermano.grupo else '-',
+        'edad': hermano.edad(),
+        'fecha_nacimiento': hermano.fecha_nacimiento.strftime('%d/%m/%Y') if hermano.fecha_nacimiento else '',
+        'cumpleaños_display': hermano.cumpleaños.strftime('%d/%m') if hermano.cumpleaños else '-',
+        'ocupacion': hermano.ocupacion or '-',
+        'provincia': str(hermano.provincia) if hermano.provincia else '-',
+        'anio_bautismo': hermano.anio_bautismo or '-',
+        'dones': [str(d) for d in hermano.dones.all()],
+        'fecha_creacion': hermano.fecha_creacion.strftime('%d/%m/%Y %H:%M'),
+        'fecha_modificacion': hermano.fecha_modificacion.strftime('%d/%m/%Y %H:%M'),
     }
     return JsonResponse(data)
 

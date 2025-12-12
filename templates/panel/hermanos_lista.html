@@ -170,6 +170,88 @@
         }
     }
 
+    /* Avatar/Profile Photo */
+    .avatar-sm {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #e0e0e0;
+    }
+
+    .avatar-placeholder {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .avatar-lg {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #667eea;
+    }
+
+    .avatar-placeholder-lg {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 2.5rem;
+    }
+
+    /* Modal Ver Info */
+    .info-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .info-section-title {
+        font-weight: 600;
+        color: #667eea;
+        margin-bottom: 0.75rem;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.4rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+
+    .info-value {
+        font-weight: 500;
+        color: #2c3e50;
+        text-align: right;
+    }
+
     /* Improved Filters */
     .filter-card {
         background: white;
@@ -322,9 +404,9 @@
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
+                    <th style="width: 60px;"></th>
                     <th>Nombre</th>
                     <th>Edad</th>
-                    <th>Email</th>
                     <th>Celular</th>
                     <th>Clase</th>
                     <th>Grupo</th>
@@ -335,6 +417,15 @@
             <tbody>
                 {% for h in page_obj %}
                 <tr>
+                    <td>
+                        {% if h.foto %}
+                        <img src="{{ h.foto.url }}" alt="{{ h.nombres }}" class="avatar-sm">
+                        {% else %}
+                        <div class="avatar-placeholder">
+                            {{ h.nombres|slice:":1" }}{{ h.apellidos|slice:":1" }}
+                        </div>
+                        {% endif %}
+                    </td>
                     <td>
                         <strong>{{ h.apellidos }}, {{ h.nombres }}</strong>
                         {% if h.sexo == 'M' %}
@@ -350,7 +441,6 @@
                         <span class="text-muted">-</span>
                         {% endif %}
                     </td>
-                    <td>{{ h.email|default:"-" }}</td>
                     <td>{{ h.celular|default:"-" }}</td>
                     <td>{{ h.clase|default:"-" }}</td>
                     <td>{{ h.grupo|default:"-" }}</td>
@@ -363,6 +453,9 @@
                     </td>
                     <td class="text-end">
                         <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-info" onclick="verInfo({{h.id}})" title="Ver información">
+                                <i class="bi bi-eye-fill"></i>
+                            </button>
                             <button class="btn btn-outline-primary" onclick="editar({{h.id}})" title="Editar">
                                 <i class="bi bi-pencil-fill"></i>
                             </button>
@@ -389,16 +482,22 @@
         {% for h in page_obj %}
         <div class="member-card">
             <div class="member-card-header">
-                <div>
-                    <h5 class="member-name">{{ h.apellidos }}, {{ h.nombres }}</h5>
-                    {% if h.sexo == 'M' %}
-                    <small class="text-primary"><i class="bi bi-gender-male"></i> Masculino</small>
+                <div class="d-flex align-items-center gap-2">
+                    {% if h.foto %}
+                    <img src="{{ h.foto.url }}" alt="{{ h.nombres }}" class="avatar-sm">
                     {% else %}
-                    <small class="text-danger"><i class="bi bi-gender-female"></i> Femenino</small>
+                    <div class="avatar-placeholder">
+                        {{ h.nombres|slice:":1" }}{{ h.apellidos|slice:":1" }}
+                    </div>
                     {% endif %}
-                    {% if h.edad %}
-                    <small class="text-muted ms-2"><i class="bi bi-calendar-event"></i> {{ h.edad }} años</small>
-                    {% endif %}
+                    <div>
+                        <h5 class="member-name mb-0">{{ h.apellidos }}, {{ h.nombres }}</h5>
+                        {% if h.sexo == 'M' %}
+                        <small class="text-primary"><i class="bi bi-gender-male"></i> Masculino</small>
+                        {% else %}
+                        <small class="text-danger"><i class="bi bi-gender-female"></i> Femenino</small>
+                        {% endif %}
+                    </div>
                 </div>
                 <div>
                     {% if h.activo %}
@@ -413,12 +512,6 @@
                 <div class="member-info-item">
                     <i class="bi bi-calendar-event-fill"></i>
                     <span><strong>{{ h.edad }} años</strong></span>
-                </div>
-                {% endif %}
-                {% if h.email %}
-                <div class="member-info-item">
-                    <i class="bi bi-envelope-fill"></i>
-                    <span>{{ h.email }}</span>
                 </div>
                 {% endif %}
                 {% if h.celular %}
@@ -441,11 +534,14 @@
                 {% endif %}
             </div>
             <div class="d-flex gap-2">
+                <button class="btn btn-outline-info btn-sm flex-fill" onclick="verInfo({{h.id}})">
+                    <i class="bi bi-eye-fill"></i> Ver
+                </button>
                 <button class="btn btn-outline-primary btn-sm flex-fill" onclick="editar({{h.id}})">
                     <i class="bi bi-pencil-fill"></i> Editar
                 </button>
                 <button class="btn btn-outline-danger btn-sm flex-fill" onclick="eliminar({{h.id}},'{{h.apellidos|escapejs}}, {{h.nombres|escapejs}}')">
-                    <i class="bi bi-trash-fill"></i> Eliminar
+                    <i class="bi bi-trash-fill"></i>
                 </button>
             </div>
         </div>
@@ -621,10 +717,214 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Ver Información -->
+<div class="modal fade" id="modalVerInfo" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title"><i class="bi bi-person-badge-fill"></i> Información del Hermano</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Header con foto y nombre -->
+                <div class="text-center mb-4">
+                    <div id="verFotoContainer" class="mb-3">
+                        <!-- Foto se inserta aquí via JS -->
+                    </div>
+                    <h4 id="verNombreCompleto" class="mb-1"></h4>
+                    <p class="text-muted mb-0" id="verSexoEdad"></p>
+                    <span id="verEstadoBadge" class="badge mt-2"></span>
+                </div>
+
+                <div class="row">
+                    <!-- Columna izquierda -->
+                    <div class="col-md-6">
+                        <!-- Datos Personales -->
+                        <div class="info-section">
+                            <h6 class="info-section-title"><i class="bi bi-person-fill me-2"></i>Datos Personales</h6>
+                            <div class="info-row">
+                                <span class="info-label">Estado Civil</span>
+                                <span class="info-value" id="verEstadoCivil"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Cumpleaños</span>
+                                <span class="info-value" id="verCumpleaños"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Ocupación</span>
+                                <span class="info-value" id="verOcupacion"></span>
+                            </div>
+                        </div>
+
+                        <!-- Contacto -->
+                        <div class="info-section">
+                            <h6 class="info-section-title"><i class="bi bi-telephone-fill me-2"></i>Contacto</h6>
+                            <div class="info-row">
+                                <span class="info-label">Celular</span>
+                                <span class="info-value" id="verCelular"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Tel. Fijo</span>
+                                <span class="info-value" id="verTelefonoFijo"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Email</span>
+                                <span class="info-value" id="verEmail"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna derecha -->
+                    <div class="col-md-6">
+                        <!-- Ubicación -->
+                        <div class="info-section">
+                            <h6 class="info-section-title"><i class="bi bi-geo-alt-fill me-2"></i>Ubicación</h6>
+                            <div class="info-row">
+                                <span class="info-label">Domicilio</span>
+                                <span class="info-value" id="verDomicilio"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Barrio</span>
+                                <span class="info-value" id="verBarrio"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Localidad</span>
+                                <span class="info-value" id="verLocalidad"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Provincia</span>
+                                <span class="info-value" id="verProvincia"></span>
+                            </div>
+                        </div>
+
+                        <!-- Membresía -->
+                        <div class="info-section">
+                            <h6 class="info-section-title"><i class="bi bi-award-fill me-2"></i>Membresía</h6>
+                            <div class="info-row">
+                                <span class="info-label">Clase</span>
+                                <span class="info-value" id="verClase"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Grupo</span>
+                                <span class="info-value" id="verGrupo"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Año Bautismo</span>
+                                <span class="info-value" id="verAnioBautismo"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Dones</span>
+                                <span class="info-value" id="verDones"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Observaciones -->
+                <div class="info-section" id="verObservacionesSection" style="display: none;">
+                    <h6 class="info-section-title"><i class="bi bi-chat-text-fill me-2"></i>Observaciones</h6>
+                    <p id="verObservaciones" class="mb-0 text-muted"></p>
+                </div>
+
+                <!-- Fechas del sistema -->
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        <i class="bi bi-clock"></i> Creado: <span id="verFechaCreacion"></span> |
+                        Modificado: <span id="verFechaModificacion"></span>
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cerrar
+                </button>
+                <button type="button" class="btn btn-primary" id="btnEditarDesdeVer">
+                    <i class="bi bi-pencil-fill"></i> Editar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+let currentHermanoId = null;
+
+function verInfo(id) {
+    currentHermanoId = id;
+    fetch(`/panel/hermanos/${id}/datos/`)
+        .then(r => r.json())
+        .then(d => {
+            // Foto
+            const fotoContainer = document.getElementById('verFotoContainer');
+            if (d.foto_url) {
+                fotoContainer.innerHTML = `<img src="${d.foto_url}" alt="Foto" class="avatar-lg">`;
+            } else {
+                const iniciales = (d.nombres.charAt(0) + d.apellidos.charAt(0)).toUpperCase();
+                fotoContainer.innerHTML = `<div class="avatar-placeholder-lg mx-auto">${iniciales}</div>`;
+            }
+
+            // Header info
+            document.getElementById('verNombreCompleto').textContent = `${d.nombres} ${d.apellidos}`;
+            let sexoEdad = d.sexo_display;
+            if (d.edad) sexoEdad += ` • ${d.edad} años`;
+            document.getElementById('verSexoEdad').textContent = sexoEdad;
+
+            // Estado badge
+            const estadoBadge = document.getElementById('verEstadoBadge');
+            if (d.activo) {
+                estadoBadge.className = 'badge bg-success mt-2';
+                estadoBadge.textContent = 'Activo';
+            } else {
+                estadoBadge.className = 'badge bg-secondary mt-2';
+                estadoBadge.textContent = 'Inactivo';
+            }
+
+            // Datos personales
+            document.getElementById('verEstadoCivil').textContent = d.estado_civil_display;
+            document.getElementById('verCumpleaños').textContent = d.cumpleaños_display;
+            document.getElementById('verOcupacion').textContent = d.ocupacion;
+
+            // Contacto
+            document.getElementById('verCelular').textContent = d.celular || '-';
+            document.getElementById('verTelefonoFijo').textContent = d.telefono_fijo || '-';
+            document.getElementById('verEmail').textContent = d.email || '-';
+
+            // Ubicación
+            document.getElementById('verDomicilio').textContent = d.domicilio || '-';
+            document.getElementById('verBarrio').textContent = d.barrio || '-';
+            document.getElementById('verLocalidad').textContent = d.localidad || '-';
+            document.getElementById('verProvincia').textContent = d.provincia;
+
+            // Membresía
+            document.getElementById('verClase').textContent = d.clase_display;
+            document.getElementById('verGrupo').textContent = d.grupo_display;
+            document.getElementById('verAnioBautismo').textContent = d.anio_bautismo;
+            document.getElementById('verDones').textContent = d.dones.length > 0 ? d.dones.join(', ') : '-';
+
+            // Observaciones
+            const obsSection = document.getElementById('verObservacionesSection');
+            if (d.observaciones) {
+                obsSection.style.display = 'block';
+                document.getElementById('verObservaciones').textContent = d.observaciones;
+            } else {
+                obsSection.style.display = 'none';
+            }
+
+            // Fechas
+            document.getElementById('verFechaCreacion').textContent = d.fecha_creacion;
+            document.getElementById('verFechaModificacion').textContent = d.fecha_modificacion;
+
+            new bootstrap.Modal(document.getElementById('modalVerInfo')).show();
+        })
+        .catch(err => {
+            console.error('Error al cargar datos:', err);
+            alert('Error al cargar la información del hermano');
+        });
+}
+
 function editar(id) {
     fetch(`/panel/hermanos/${id}/datos/`)
         .then(r => r.json())
@@ -656,6 +956,14 @@ function eliminar(id, nombre) {
     document.getElementById('nombreEliminar').textContent = nombre;
     new bootstrap.Modal(document.getElementById('modalEliminar')).show();
 }
+
+// Botón editar desde modal ver
+document.getElementById('btnEditarDesdeVer').addEventListener('click', function() {
+    bootstrap.Modal.getInstance(document.getElementById('modalVerInfo')).hide();
+    if (currentHermanoId) {
+        editar(currentHermanoId);
+    }
+});
 
 // Reset modal cuando se cierra
 document.getElementById('modalForm').addEventListener('hidden.bs.modal', function() {
