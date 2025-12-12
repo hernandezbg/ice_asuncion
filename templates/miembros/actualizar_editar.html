@@ -249,14 +249,6 @@
                             </select>
                         </div>
                         <div class="col-md-4 mb-3 mb-md-0">
-                            <label for="fecha_nacimiento" class="form-label">Fecha de nacimiento</label>
-                            <input type="date"
-                                   class="form-control"
-                                   id="fecha_nacimiento"
-                                   name="fecha_nacimiento"
-                                   value="{{ hermano.fecha_nacimiento|date:'Y-m-d'|default:'' }}">
-                        </div>
-                        <div class="col-md-4">
                             <label for="estado_civil" class="form-label">Estado civil</label>
                             <select class="form-select" id="estado_civil" name="estado_civil">
                                 <option value="">Seleccionar...</option>
@@ -264,6 +256,41 @@
                                 <option value="{{ ec.id }}" {% if hermano.estado_civil_id == ec.id %}selected{% endif %}>{{ ec.nombre }}</option>
                                 {% endfor %}
                             </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha de nacimiento</label>
+                            <div class="row g-2">
+                                <div class="col-4">
+                                    <select class="form-select form-select-sm" id="nacimiento_dia" name="nacimiento_dia">
+                                        <option value="">Dia</option>
+                                        {% for d in "123456789012345678901234567890"|make_list %}{% with dia=forloop.counter %}{% if dia <= 31 %}
+                                        <option value="{{ dia }}" {% if hermano.fecha_nacimiento.day == dia %}selected{% endif %}>{{ dia }}</option>
+                                        {% endif %}{% endwith %}{% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <select class="form-select form-select-sm" id="nacimiento_mes" name="nacimiento_mes">
+                                        <option value="">Mes</option>
+                                        <option value="1" {% if hermano.fecha_nacimiento.month == 1 %}selected{% endif %}>Ene</option>
+                                        <option value="2" {% if hermano.fecha_nacimiento.month == 2 %}selected{% endif %}>Feb</option>
+                                        <option value="3" {% if hermano.fecha_nacimiento.month == 3 %}selected{% endif %}>Mar</option>
+                                        <option value="4" {% if hermano.fecha_nacimiento.month == 4 %}selected{% endif %}>Abr</option>
+                                        <option value="5" {% if hermano.fecha_nacimiento.month == 5 %}selected{% endif %}>May</option>
+                                        <option value="6" {% if hermano.fecha_nacimiento.month == 6 %}selected{% endif %}>Jun</option>
+                                        <option value="7" {% if hermano.fecha_nacimiento.month == 7 %}selected{% endif %}>Jul</option>
+                                        <option value="8" {% if hermano.fecha_nacimiento.month == 8 %}selected{% endif %}>Ago</option>
+                                        <option value="9" {% if hermano.fecha_nacimiento.month == 9 %}selected{% endif %}>Sep</option>
+                                        <option value="10" {% if hermano.fecha_nacimiento.month == 10 %}selected{% endif %}>Oct</option>
+                                        <option value="11" {% if hermano.fecha_nacimiento.month == 11 %}selected{% endif %}>Nov</option>
+                                        <option value="12" {% if hermano.fecha_nacimiento.month == 12 %}selected{% endif %}>Dic</option>
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <select class="form-select form-select-sm" id="nacimiento_anio" name="nacimiento_anio">
+                                        <option value="">Año</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -446,5 +473,22 @@ function previewFoto(input) {
         reader.readAsDataURL(input.files[0]);
     }
 }
+
+// Poblar select de años (desde 1920 hasta año actual)
+document.addEventListener('DOMContentLoaded', function() {
+    var selectAnio = document.getElementById('nacimiento_anio');
+    var anioActual = new Date().getFullYear();
+    var anioSeleccionado = {{ hermano.fecha_nacimiento.year|default:'0' }};
+
+    for (var anio = anioActual; anio >= 1920; anio--) {
+        var option = document.createElement('option');
+        option.value = anio;
+        option.textContent = anio;
+        if (anio === anioSeleccionado) {
+            option.selected = true;
+        }
+        selectAnio.appendChild(option);
+    }
+});
 </script>
 {% endblock %}

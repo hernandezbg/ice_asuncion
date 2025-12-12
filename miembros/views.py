@@ -149,7 +149,6 @@ def actualizar_datos_editar(request, hermano_id=None):
             'apellido_soltera': request.POST.get('apellido_soltera', '').strip(),
             'nombres': request.POST.get('nombres', '').strip(),
             'sexo': request.POST.get('sexo', ''),
-            'fecha_nacimiento': request.POST.get('fecha_nacimiento') or None,
             'ocupacion': request.POST.get('ocupacion', '').strip(),
             'telefono_fijo': request.POST.get('telefono_fijo', '').strip(),
             'celular': request.POST.get('celular', '').strip(),
@@ -158,6 +157,24 @@ def actualizar_datos_editar(request, hermano_id=None):
             'domicilio': request.POST.get('domicilio', '').strip(),
             'barrio': request.POST.get('barrio', '').strip(),
         }
+
+        # Fecha de nacimiento (3 campos separados)
+        nacimiento_dia = request.POST.get('nacimiento_dia', '')
+        nacimiento_mes = request.POST.get('nacimiento_mes', '')
+        nacimiento_anio = request.POST.get('nacimiento_anio', '')
+
+        if nacimiento_dia and nacimiento_mes and nacimiento_anio:
+            try:
+                from datetime import date
+                datos['fecha_nacimiento'] = date(
+                    int(nacimiento_anio),
+                    int(nacimiento_mes),
+                    int(nacimiento_dia)
+                )
+            except (ValueError, TypeError):
+                datos['fecha_nacimiento'] = None
+        else:
+            datos['fecha_nacimiento'] = None
 
         # Año de bautismo
         anio_bautismo = request.POST.get('anio_bautismo', '').strip()
