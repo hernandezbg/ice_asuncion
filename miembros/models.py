@@ -1,5 +1,14 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import RegexValidator
+import re
+
+
+# Validador para celular argentino (formato internacional)
+celular_validator = RegexValidator(
+    regex=r'^\+?54?\s?9?\s?\d{2,4}\s?\d{6,8}$',
+    message='Ingrese un número válido. Ej: +54 9 351 1234567 o 351 1234567'
+)
 
 
 class ModeloBase(models.Model):
@@ -77,6 +86,24 @@ class Grupo(models.Model):
         return self.nombre
 
 
+class Don(models.Model):
+    """
+    Dones espirituales que pueden tener los miembros
+    """
+    nombre = models.CharField(max_length=100, unique=True, verbose_name='Don')
+    descripcion = models.TextField(blank=True, verbose_name='Descripción')
+    icono = models.CharField(max_length=50, blank=True, verbose_name='Icono Bootstrap',
+                            help_text='Ej: bi-music-note, bi-book, bi-heart')
+
+    class Meta:
+        verbose_name = 'Don'
+        verbose_name_plural = 'Dones'
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
+
 class Hermano(ModeloBase):
     """
     Registro de miembros de la iglesia
@@ -88,17 +115,23 @@ class Hermano(ModeloBase):
 
     # Datos personales
     apellidos = models.CharField(max_length=200, verbose_name='Apellidos')
+    apellido_soltera = models.CharField(max_length=200, blank=True, verbose_name='Apellido de soltera',
+                                        help_text='Apellido de nacimiento (opcional, para búsquedas)')
     nombres = models.CharField(max_length=200, verbose_name='Nombres')
+    foto = models.ImageField(upload_to='hermanos/', blank=True, null=True, verbose_name='Foto de perfil')
     sexo = models.CharField(max_length=1, choices=SEXO_CHOICES, verbose_name='Sexo')
     fecha_nacimiento = models.DateField(null=True, blank=True, verbose_name='Fecha de nacimiento')
     cumpleaños = models.DateField(null=True, blank=True, verbose_name='Cumpleaños',
                                   help_text='Solo mes y día (año puede ser ficticio)')
     estado_civil = models.ForeignKey(EstadoCivil, on_delete=models.SET_NULL, null=True, blank=True,
                                      verbose_name='Estado civil')
+    ocupacion = models.CharField(max_length=200, blank=True, verbose_name='Ocupación/Profesión')
 
     # Datos de contacto
     telefono_fijo = models.CharField(max_length=50, blank=True, verbose_name='Teléfono fijo')
-    celular = models.CharField(max_length=50, blank=True, verbose_name='Celular')
+    celular = models.CharField(max_length=25, blank=True, verbose_name='Celular',
+                               validators=[celular_validator],
+                               help_text='Formato: +54 9 351 1234567')
     email = models.EmailField(blank=True, verbose_name='Email')
 
     # Ubicación
@@ -111,6 +144,9 @@ class Hermano(ModeloBase):
     # Clasificación espiritual
     grupo = models.ForeignKey(Grupo, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Grupo')
     clase = models.ForeignKey(Clase, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Clase')
+    anio_bautismo = models.PositiveIntegerField(null=True, blank=True, verbose_name='Año de bautismo')
+    dones = models.ManyToManyField(Don, blank=True, verbose_name='Dones',
+                                   help_text='Seleccione uno o más dones')
 
     # Marcas espirituales (del proyecto antiguo)
     marca_1 = models.BooleanField(default=False, verbose_name='Marca 1')

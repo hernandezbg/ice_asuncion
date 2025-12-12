@@ -4,7 +4,7 @@
 
 {% block extra_css %}
 .form-container {
-    max-width: 700px;
+    max-width: 750px;
     margin: 60px auto;
 }
 
@@ -81,6 +81,60 @@
     padding: 0.75rem 2rem;
     font-weight: 600;
 }
+
+.foto-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e9ecef;
+}
+
+.foto-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: #adb5bd;
+}
+
+.don-checkbox {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    margin: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.don-checkbox:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(44, 95, 141, 0.05);
+}
+
+.don-checkbox input {
+    margin-right: 0.5rem;
+}
+
+.don-checkbox.selected {
+    border-color: var(--primary-color);
+    background-color: rgba(44, 95, 141, 0.1);
+}
+
+.celular-input-group .input-group-text {
+    background-color: #e9ecef;
+    border-right: none;
+}
+
+.celular-input-group .form-control {
+    border-left: none;
+}
 {% endblock %}
 
 {% block content %}
@@ -116,8 +170,27 @@
                 {% endfor %}
                 {% endif %}
 
-                <form method="post">
+                <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
+
+                    <!-- Foto de perfil -->
+                    <div class="text-center mb-4">
+                        {% if hermano.foto %}
+                        <img src="{{ hermano.foto.url }}" alt="Foto de perfil" class="foto-preview mb-2" id="fotoPreview">
+                        {% else %}
+                        <div class="foto-placeholder mb-2 mx-auto" id="fotoPlaceholder">
+                            <i class="bi bi-person"></i>
+                        </div>
+                        <img src="" alt="Foto de perfil" class="foto-preview mb-2 d-none" id="fotoPreview">
+                        {% endif %}
+                        <div>
+                            <label for="foto" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-camera me-1"></i>{% if hermano.foto %}Cambiar foto{% else %}Subir foto{% endif %}
+                            </label>
+                            <input type="file" class="d-none" id="foto" name="foto" accept="image/*" onchange="previewFoto(this)">
+                        </div>
+                        <small class="text-muted">Opcional - Formatos: JPG, PNG</small>
+                    </div>
 
                     <!-- Datos Personales -->
                     <div class="section-title">
@@ -135,6 +208,18 @@
                                    required>
                         </div>
                         <div class="col-md-6">
+                            <label for="apellido_soltera" class="form-label">Apellido de soltera</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="apellido_soltera"
+                                   name="apellido_soltera"
+                                   placeholder="Opcional - apellido de nacimiento"
+                                   value="{{ hermano.apellido_soltera|default:'' }}">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3 mb-md-0">
                             <label for="nombres" class="form-label required-field">Nombres</label>
                             <input type="text"
                                    class="form-control"
@@ -142,6 +227,15 @@
                                    name="nombres"
                                    value="{{ hermano.nombres|default:'' }}"
                                    required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="ocupacion" class="form-label">Ocupacion / Profesion</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="ocupacion"
+                                   name="ocupacion"
+                                   placeholder="Ej: Docente, Comerciante, Estudiante..."
+                                   value="{{ hermano.ocupacion|default:'' }}">
                         </div>
                     </div>
 
@@ -181,12 +275,18 @@
                     <div class="row mb-3">
                         <div class="col-md-6 mb-3 mb-md-0">
                             <label for="celular" class="form-label">Celular</label>
-                            <input type="tel"
-                                   class="form-control"
-                                   id="celular"
-                                   name="celular"
-                                   placeholder="Ej: 351-1234567"
-                                   value="{{ hermano.celular|default:'' }}">
+                            <div class="input-group celular-input-group">
+                                <span class="input-group-text">+54 9</span>
+                                <input type="tel"
+                                       class="form-control"
+                                       id="celular"
+                                       name="celular"
+                                       placeholder="351 1234567"
+                                       value="{{ hermano.celular|default:'' }}"
+                                       pattern="[\d\s\-]+"
+                                       title="Solo numeros, espacios y guiones">
+                            </div>
+                            <small class="text-muted">Sin 0 ni 15. Ej: 351 1234567</small>
                         </div>
                         <div class="col-md-6">
                             <label for="telefono_fijo" class="form-label">Telefono fijo</label>
@@ -253,14 +353,24 @@
                         </div>
                     </div>
 
-                    <!-- Clasificacion (solo si ya existe) -->
-                    {% if not es_nuevo %}
+                    <!-- Informacion Espiritual -->
                     <div class="section-title mt-4">
-                        <i class="bi bi-bookmark"></i>Clasificacion
+                        <i class="bi bi-bookmark-heart"></i>Informacion Espiritual
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-6 mb-3 mb-md-0">
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <label for="anio_bautismo" class="form-label">Año de bautismo</label>
+                            <input type="number"
+                                   class="form-control"
+                                   id="anio_bautismo"
+                                   name="anio_bautismo"
+                                   min="1900"
+                                   max="2099"
+                                   placeholder="Ej: 2010"
+                                   value="{{ hermano.anio_bautismo|default:'' }}">
+                        </div>
+                        <div class="col-md-4 mb-3 mb-md-0">
                             <label for="clase" class="form-label">Clase</label>
                             <select class="form-select" id="clase" name="clase">
                                 <option value="">Seleccionar...</option>
@@ -269,7 +379,7 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label for="grupo" class="form-label">Grupo</label>
                             <select class="form-select" id="grupo" name="grupo">
                                 <option value="">Seleccionar...</option>
@@ -277,6 +387,25 @@
                                 <option value="{{ gr.id }}" {% if hermano.grupo_id == gr.id %}selected{% endif %}>{{ gr.nombre }}</option>
                                 {% endfor %}
                             </select>
+                        </div>
+                    </div>
+
+                    {% if dones %}
+                    <div class="mb-3">
+                        <label class="form-label">Dones</label>
+                        <p class="text-muted small mb-2">Selecciona los dones que el Señor te ha dado:</p>
+                        <div class="d-flex flex-wrap">
+                            {% for don in dones %}
+                            <label class="don-checkbox {% if hermano and don in hermano.dones.all %}selected{% endif %}">
+                                <input type="checkbox"
+                                       name="dones"
+                                       value="{{ don.id }}"
+                                       {% if hermano and don in hermano.dones.all %}checked{% endif %}
+                                       onchange="this.parentElement.classList.toggle('selected', this.checked)">
+                                {% if don.icono %}<i class="bi {{ don.icono }} me-1"></i>{% endif %}
+                                {{ don.nombre }}
+                            </label>
+                            {% endfor %}
                         </div>
                     </div>
                     {% endif %}
@@ -298,4 +427,24 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function previewFoto(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var preview = document.getElementById('fotoPreview');
+            var placeholder = document.getElementById('fotoPlaceholder');
+            preview.src = e.target.result;
+            preview.classList.remove('d-none');
+            if (placeholder) {
+                placeholder.classList.add('d-none');
+            }
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
 {% endblock %}

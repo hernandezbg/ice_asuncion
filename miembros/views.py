@@ -7,7 +7,7 @@ from django.db.models.functions import Lower
 import requests
 import unicodedata
 
-from .models import Hermano, Provincia, EstadoCivil, Clase, Grupo
+from .models import Hermano, Provincia, EstadoCivil, Clase, Grupo, Don
 from contenido.models import DatosIce
 
 
@@ -100,11 +100,16 @@ def actualizar_datos_buscar(request):
             nombre_norm = quitar_acentos(nombre_buscar)
 
             # Buscar donde coincida apellido O nombre en cualquier campo
+            # Incluye apellido_soltera para encontrar personas con apellido de casada
             todos_hermanos = Hermano.objects.filter(activo=True).order_by('apellidos', 'nombres')
             resultados = [
                 h for h in todos_hermanos
-                if (apellido_norm in quitar_acentos(h.apellidos) or apellido_norm in quitar_acentos(h.nombres))
-                or (nombre_norm in quitar_acentos(h.nombres) or nombre_norm in quitar_acentos(h.apellidos))
+                if (apellido_norm in quitar_acentos(h.apellidos)
+                    or apellido_norm in quitar_acentos(h.apellido_soltera or '')
+                    or apellido_norm in quitar_acentos(h.nombres))
+                or (nombre_norm in quitar_acentos(h.nombres)
+                    or nombre_norm in quitar_acentos(h.apellidos)
+                    or nombre_norm in quitar_acentos(h.apellido_soltera or ''))
             ][:20]
 
     context = {
@@ -135,14 +140,17 @@ def actualizar_datos_editar(request, hermano_id=None):
     estados_civiles = EstadoCivil.objects.all()
     clases = Clase.objects.all()
     grupos = Grupo.objects.all()
+    dones = Don.objects.all()
 
     if request.method == 'POST':
         # Recoger datos del formulario
         datos = {
             'apellidos': request.POST.get('apellidos', '').strip(),
+            'apellido_soltera': request.POST.get('apellido_soltera', '').strip(),
             'nombres': request.POST.get('nombres', '').strip(),
             'sexo': request.POST.get('sexo', ''),
             'fecha_nacimiento': request.POST.get('fecha_nacimiento') or None,
+            'ocupacion': request.POST.get('ocupacion', '').strip(),
             'telefono_fijo': request.POST.get('telefono_fijo', '').strip(),
             'celular': request.POST.get('celular', '').strip(),
             'email': request.POST.get('email', '').strip(),
@@ -150,6 +158,16 @@ def actualizar_datos_editar(request, hermano_id=None):
             'domicilio': request.POST.get('domicilio', '').strip(),
             'barrio': request.POST.get('barrio', '').strip(),
         }
+
+        # Año de bautismo
+        anio_bautismo = request.POST.get('anio_bautismo', '').strip()
+        if anio_bautismo:
+            try:
+                datos['anio_bautismo'] = int(anio_bautismo)
+            except ValueError:
+                datos['anio_bautismo'] = None
+        else:
+            datos['anio_bautismo'] = None
 
         # Validación básica
         if not datos['apellidos'] or not datos['nombres']:
@@ -162,6 +180,7 @@ def actualizar_datos_editar(request, hermano_id=None):
             estado_civil_id = request.POST.get('estado_civil')
             clase_id = request.POST.get('clase')
             grupo_id = request.POST.get('grupo')
+            dones_ids = request.POST.getlist('dones')
 
             if es_nuevo:
                 hermano = Hermano()
@@ -175,7 +194,17 @@ def actualizar_datos_editar(request, hermano_id=None):
             hermano.clase_id = clase_id if clase_id else None
             hermano.grupo_id = grupo_id if grupo_id else None
 
+            # Manejar foto
+            if 'foto' in request.FILES:
+                hermano.foto = request.FILES['foto']
+
             hermano.save()
+
+            # Asignar dones (ManyToMany requiere save primero)
+            if dones_ids:
+                hermano.dones.set(dones_ids)
+            else:
+                hermano.dones.clear()
 
             # Limpiar sesión y mostrar éxito
             request.session.pop('acceso_miembros_verificado', None)
@@ -188,6 +217,7 @@ def actualizar_datos_editar(request, hermano_id=None):
         'estados_civiles': estados_civiles,
         'clases': clases,
         'grupos': grupos,
+        'dones': dones,
     }
     return render(request, 'miembros/actualizar_editar.html', context)
 

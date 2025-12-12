@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Provincia, EstadoCivil, Clase, Grupo, Hermano
+from .models import Provincia, EstadoCivil, Clase, Grupo, Don, Hermano
 
 
 @admin.register(Provincia)
@@ -38,20 +38,31 @@ class GrupoAdmin(admin.ModelAdmin):
     search_fields = ['nombre', 'descripcion']
 
 
+@admin.register(Don)
+class DonAdmin(admin.ModelAdmin):
+    """
+    Admin para dones espirituales
+    """
+    list_display = ['nombre', 'descripcion', 'icono']
+    search_fields = ['nombre', 'descripcion']
+
+
 @admin.register(Hermano)
 class HermanoAdmin(admin.ModelAdmin):
     """
     Admin para hermanos/miembros
     """
     list_display = ['apellidos', 'nombres', 'sexo', 'celular', 'email', 'grupo', 'clase', 'activo']
-    list_filter = ['sexo', 'activo', 'estado_civil', 'grupo', 'clase', 'provincia']
-    search_fields = ['apellidos', 'nombres', 'email', 'celular', 'domicilio']
+    list_filter = ['sexo', 'activo', 'estado_civil', 'grupo', 'clase', 'provincia', 'dones']
+    search_fields = ['apellidos', 'apellido_soltera', 'nombres', 'email', 'celular', 'domicilio', 'ocupacion']
     list_editable = ['activo']
     date_hierarchy = 'fecha_nacimiento'
+    filter_horizontal = ['dones']
 
     fieldsets = (
         ('Datos Personales', {
-            'fields': ('apellidos', 'nombres', 'sexo', 'fecha_nacimiento', 'cumpleaños', 'estado_civil')
+            'fields': ('foto', 'apellidos', 'apellido_soltera', 'nombres', 'sexo',
+                      'fecha_nacimiento', 'cumpleaños', 'estado_civil', 'ocupacion')
         }),
         ('Datos de Contacto', {
             'fields': ('telefono_fijo', 'celular', 'email')
@@ -60,7 +71,7 @@ class HermanoAdmin(admin.ModelAdmin):
             'fields': ('provincia', 'localidad', 'domicilio', 'barrio')
         }),
         ('Clasificación Espiritual', {
-            'fields': ('grupo', 'clase', 'marca_1', 'marca_2', 'marca_3')
+            'fields': ('grupo', 'clase', 'anio_bautismo', 'dones', 'marca_1', 'marca_2', 'marca_3')
         }),
         ('Observaciones', {
             'fields': ('observaciones',),
