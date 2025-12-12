@@ -30,10 +30,15 @@
                             {{form.direccion}}
                             <small class="form-text text-muted d-block">Dirección física de la iglesia</small>
                         </div>
-                        <div class="col-md-12">
+                        <div class="col-md-6">
                             {{form.telefono.label_tag}}
                             {{form.telefono}}
                             <small class="form-text text-muted d-block">Teléfono de contacto</small>
+                        </div>
+                        <div class="col-md-6">
+                            {{form.whatsapp.label_tag}}
+                            {{form.whatsapp}}
+                            <small class="form-text text-muted d-block">Número con código de país sin + ni espacios (ej: 595981123456)</small>
                         </div>
                     </div>
 
@@ -122,6 +127,7 @@
 
                 <h6><i class="bi bi-graph-up text-success"></i> Estado Actual:</h6>
                 <ul class="small mb-0">
+                    {% if datos_ice.whatsapp %}<li><i class="bi bi-check-circle text-success"></i> WhatsApp configurado</li>{% endif %}
                     {% if datos_ice.facebook %}<li><i class="bi bi-check-circle text-success"></i> Facebook configurado</li>{% endif %}
                     {% if datos_ice.twitter %}<li><i class="bi bi-check-circle text-success"></i> Twitter configurado</li>{% endif %}
                     {% if datos_ice.youtube %}<li><i class="bi bi-check-circle text-success"></i> YouTube configurado</li>{% endif %}

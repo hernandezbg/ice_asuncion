@@ -600,49 +600,6 @@
 </section>
 {% endif %}
 
-<!-- Mensajes Recientes -->
-{% if mensajes_recientes %}
-<section class="section bg-light">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="section-title">Mensajes Recientes</h2>
-            <p class="text-muted">Alimenta tu fe con nuestras predicaciones y estudios bíblicos</p>
-        </div>
-        <div class="row g-4">
-            {% for mensaje in mensajes_recientes %}
-            <div class="col-md-6 col-lg-3">
-                <div class="card shadow-sm">
-                    {% if mensaje.imagen %}
-                    <img src="{{ mensaje.imagen.url }}" class="card-img-top" alt="{{ mensaje.titulo }}">
-                    {% else %}
-                    <div class="card-img-top bg-primary d-flex align-items-center justify-content-center">
-                        <i class="bi bi-mic text-white" style="font-size: 3rem;"></i>
-                    </div>
-                    {% endif %}
-                    <div class="card-body">
-                        <span class="badge {% if mensaje.tipo == 1 %}bg-success{% else %}bg-danger{% endif %} badge-tipo">
-                            {{ mensaje.get_tipo_display }}
-                        </span>
-                        <h5 class="card-title mt-2">{{ mensaje.titulo|truncatewords:8 }}</h5>
-                        <p class="card-text text-muted small">
-                            <i class="bi bi-person"></i> {{ mensaje.autor }}
-                        </p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <small class="text-muted">{{ mensaje.fecha_publicacion|date:"d/m/Y" }}</small>
-                            <a href="{% url 'mensaje_detalle' mensaje.id %}" class="btn btn-sm btn-outline-primary">Ver</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        <div class="text-center mt-5">
-            <a href="{% url 'mensajes' %}" class="btn btn-primary btn-lg">Ver todos los mensajes</a>
-        </div>
-    </div>
-</section>
-{% endif %}
-
 <!-- Ofrendas y Donaciones -->
 {% if ofrendas %}
 <section class="section ofrendas-section">
@@ -772,9 +729,11 @@
             </div>
             <div class="col-md-4 mb-4">
                 <div class="text-center">
-                    <i class="bi bi-telephone-fill text-primary" style="font-size: 3rem;"></i>
-                    <h5 class="mt-3">Teléfono</h5>
-                    <p class="text-muted">{{ datos_ice.telefono }}</p>
+                    <a href="https://wa.me/{{ datos_ice.whatsapp|default:datos_ice.telefono }}" target="_blank" style="text-decoration: none;">
+                        <i class="bi bi-whatsapp" style="font-size: 3rem; color: #25D366;"></i>
+                        <h5 class="mt-3 text-dark">WhatsApp</h5>
+                        <p class="text-muted">{{ datos_ice.telefono }}</p>
+                    </a>
                 </div>
             </div>
             <div class="col-md-4 mb-4">

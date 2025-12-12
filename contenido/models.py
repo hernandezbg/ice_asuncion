@@ -167,6 +167,12 @@ class DatosIce(ModeloBase):
     email = models.EmailField(verbose_name='Email de contacto')
     direccion = models.CharField(max_length=300, verbose_name='Dirección')
     telefono = models.CharField(max_length=50, verbose_name='Teléfono')
+    whatsapp = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name='WhatsApp',
+        help_text='Numero con codigo de pais sin + ni espacios (ej: 595981123456)'
+    )
 
     # Redes sociales
     facebook = models.CharField(max_length=300, blank=True, verbose_name='Facebook URL')

@@ -171,7 +171,7 @@ class DatosIceForm(forms.ModelForm):
     class Meta:
         model = DatosIce
         fields = [
-            'email', 'direccion', 'telefono',
+            'email', 'direccion', 'telefono', 'whatsapp',
             'facebook', 'twitter', 'youtube', 'instagram',
             'stream_youtube', 'codigo_acceso_miembros'
         ]
@@ -179,6 +179,7 @@ class DatosIceForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': 'form-control', 'required': True}),
             'direccion': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
             'telefono': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
+            'whatsapp': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 595981123456'}),
             'facebook': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://facebook.com/...'}),
             'twitter': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://twitter.com/...'}),
             'youtube': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://youtube.com/...'}),
