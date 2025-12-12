@@ -289,7 +289,7 @@
                                    value="{{ hermano.apellidos|default:'' }}"
                                    required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6" id="campo_apellido_soltera" style="{% if hermano.sexo != 'F' %}display: none;{% endif %}">
                             <label for="apellido_soltera" class="form-label">Apellido de soltera</label>
                             <input type="text"
                                    class="form-control"
@@ -577,6 +577,22 @@ function previewFoto(input) {
         reader.readAsDataURL(input.files[0]);
     }
 }
+
+// Mostrar/ocultar apellido de soltera según sexo
+function toggleApellidoSoltera() {
+    var sexoFemenino = document.getElementById('sexo_f');
+    var campoApellido = document.getElementById('campo_apellido_soltera');
+
+    if (sexoFemenino && sexoFemenino.checked) {
+        campoApellido.style.display = 'block';
+    } else {
+        campoApellido.style.display = 'none';
+    }
+}
+
+// Agregar listeners a los radio buttons de sexo
+document.getElementById('sexo_m').addEventListener('change', toggleApellidoSoltera);
+document.getElementById('sexo_f').addEventListener('change', toggleApellidoSoltera);
 
 // Poblar select de años de nacimiento (desde 1920 hasta año actual)
 document.addEventListener('DOMContentLoaded', function() {
