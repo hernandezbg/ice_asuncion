@@ -590,7 +590,6 @@
                 <i class="bi bi-people-fill"></i>
                 <span>Hermanos</span>
             </a>
-            {% if user.is_superuser %}
             <a href="{% url 'panel:noticias_lista' %}" class="sidebar-nav-item {% if 'noticias' in request.path %}active{% endif %}">
                 <i class="bi bi-newspaper"></i>
                 <span>Noticias</span>
@@ -603,7 +602,7 @@
                 <i class="bi bi-file-text-fill"></i>
                 <span>Páginas</span>
             </a>
-
+            {% if user.is_superuser %}
             <div class="nav-section-title">Contenido Web</div>
             <a href="{% url 'panel:secciones_lista' %}" class="sidebar-nav-item {% if 'secciones' in request.path %}active{% endif %}">
                 <i class="bi bi-layout-text-sidebar"></i>
@@ -676,7 +675,6 @@
                 </div>
                 <span class="fab-menu-label">Estadísticas</span>
             </a>
-            {% if user.is_superuser %}
             <a href="{% url 'panel:noticias_lista' %}" class="fab-menu-item">
                 <div class="fab-menu-icon noticias">
                     <i class="bi bi-newspaper"></i>
@@ -695,6 +693,7 @@
                 </div>
                 <span class="fab-menu-label">Páginas</span>
             </a>
+            {% if user.is_superuser %}
             <a href="{% url 'panel:secciones_lista' %}" class="fab-menu-item">
                 <div class="fab-menu-icon secciones">
                     <i class="bi bi-layout-text-sidebar"></i>

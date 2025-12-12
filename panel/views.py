@@ -235,7 +235,7 @@ def hermano_eliminar(request, pk):
 
 # ========== NOTICIAS ==========
 @login_required
-@user_passes_test(es_superuser)
+@user_passes_test(es_staff)
 def noticias_lista(request):
     """Lista de noticias"""
     tipo = request.GET.get('tipo', '')
@@ -263,7 +263,7 @@ def noticias_lista(request):
 
 
 @login_required
-@user_passes_test(es_superuser)
+@user_passes_test(es_staff)
 def noticia_crear(request):
     """Crea una nueva noticia"""
     if request.method == 'POST':
@@ -293,7 +293,7 @@ def noticia_crear(request):
 
 
 @login_required
-@user_passes_test(es_superuser)
+@user_passes_test(es_staff)
 def noticia_datos(request, pk):
     """Retorna datos de noticia en JSON"""
     n = get_object_or_404(Noticia, pk=pk)
@@ -310,7 +310,7 @@ def noticia_datos(request, pk):
 
 
 @login_required
-@user_passes_test(es_superuser)
+@user_passes_test(es_staff)
 def noticia_editar(request, pk):
     """Edita una noticia existente"""
     noticia = get_object_or_404(Noticia, pk=pk)
@@ -344,7 +344,7 @@ def noticia_editar(request, pk):
 
 
 @login_required
-@user_passes_test(es_superuser)
+@user_passes_test(es_staff)
 @require_POST
 def noticia_eliminar(request, pk):
     """Elimina una noticia"""
@@ -356,7 +356,7 @@ def noticia_eliminar(request, pk):
 
 
 @login_required
-@user_passes_test(es_superuser)
+@user_passes_test(es_staff)
 def noticia_toggle_activo(request, pk):
     """Activa/desactiva una noticia"""
     noticia = get_object_or_404(Noticia, pk=pk)
@@ -369,7 +369,7 @@ def noticia_toggle_activo(request, pk):
 
 # ========== MENSAJES ==========
 @login_required
-@user_passes_test(es_superuser)
+@user_passes_test(es_staff)
 def mensajes_lista(request):
     """Lista de mensajes"""
     tipo = request.GET.get('tipo', '')
@@ -401,7 +401,7 @@ def mensajes_lista(request):
 
 
 @login_required
-@user_passes_test(es_superuser)
+@user_passes_test(es_staff)
 def mensaje_crear(request):
     """Crea un nuevo mensaje"""
     if request.method == 'POST':
@@ -416,7 +416,7 @@ def mensaje_crear(request):
 
 
 @login_required
-@user_passes_test(es_superuser)
+@user_passes_test(es_staff)
 def mensaje_datos(request, pk):
     """Retorna datos de mensaje en JSON"""
     m = get_object_or_404(Mensaje, pk=pk)
@@ -433,7 +433,7 @@ def mensaje_datos(request, pk):
 
 
 @login_required
-@user_passes_test(es_superuser)
+@user_passes_test(es_staff)
 def mensaje_editar(request, pk):
     """Edita un mensaje existente"""
     mensaje = get_object_or_404(Mensaje, pk=pk)
@@ -449,7 +449,7 @@ def mensaje_editar(request, pk):
 
 
 @login_required
-@user_passes_test(es_superuser)
+@user_passes_test(es_staff)
 @require_POST
 def mensaje_eliminar(request, pk):
     """Elimina un mensaje"""
@@ -461,7 +461,7 @@ def mensaje_eliminar(request, pk):
 
 
 @login_required
-@user_passes_test(es_superuser)
+@user_passes_test(es_staff)
 def mensaje_toggle_activo(request, pk):
     """Activa/desactiva un mensaje"""
     mensaje = get_object_or_404(Mensaje, pk=pk)
@@ -474,7 +474,7 @@ def mensaje_toggle_activo(request, pk):
 
 # ========== PAGINAS ==========
 @login_required
-@user_passes_test(es_superuser)
+@user_passes_test(es_staff)
 def paginas_lista(request):
     """Lista de páginas"""
     busqueda = request.GET.get('q', '')
@@ -499,7 +499,7 @@ def paginas_lista(request):
 
 
 @login_required
-@user_passes_test(es_superuser)
+@user_passes_test(es_staff)
 def pagina_crear(request):
     """Crea una nueva página"""
     if request.method == 'POST':
@@ -514,7 +514,7 @@ def pagina_crear(request):
 
 
 @login_required
-@user_passes_test(es_superuser)
+@user_passes_test(es_staff)
 def pagina_datos(request, pk):
     """Retorna datos de página en JSON"""
     p = get_object_or_404(Pagina, pk=pk)
@@ -528,7 +528,7 @@ def pagina_datos(request, pk):
 
 
 @login_required
-@user_passes_test(es_superuser)
+@user_passes_test(es_staff)
 def pagina_editar(request, pk):
     """Edita una página existente"""
     pagina = get_object_or_404(Pagina, pk=pk)
@@ -544,7 +544,7 @@ def pagina_editar(request, pk):
 
 
 @login_required
-@user_passes_test(es_superuser)
+@user_passes_test(es_staff)
 def pagina_toggle_activo(request, pk):
     """Activa/desactiva una página"""
     pagina = get_object_or_404(Pagina, pk=pk)
