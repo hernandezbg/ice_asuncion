@@ -710,6 +710,7 @@
                     <!-- Opción Inactivar -->
                     <form method="post" id="formInactivar" class="m-0">
                         {% csrf_token %}
+                        <input type="hidden" name="next" id="nextUrlInactivar" value="">
                         <button type="submit" class="btn btn-warning w-100 py-3 text-start">
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-person-slash fs-3 me-3"></i>
@@ -724,6 +725,7 @@
                     <!-- Opción Eliminar -->
                     <form method="post" id="formEliminar" class="m-0">
                         {% csrf_token %}
+                        <input type="hidden" name="next" id="nextUrlEliminar" value="">
                         <button type="submit" class="btn btn-outline-danger w-100 py-3 text-start">
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-trash-fill fs-3 me-3"></i>
@@ -982,6 +984,10 @@ function eliminar(id, nombre) {
     document.getElementById('formEliminar').action = `/panel/hermanos/${id}/eliminar/`;
     document.getElementById('formInactivar').action = `/panel/hermanos/${id}/inactivar/`;
     document.getElementById('nombreEliminar').textContent = nombre;
+    // Guardar URL actual con filtros para volver después de la acción
+    const currentUrl = window.location.href;
+    document.getElementById('nextUrlEliminar').value = currentUrl;
+    document.getElementById('nextUrlInactivar').value = currentUrl;
     new bootstrap.Modal(document.getElementById('modalEliminar')).show();
 }
 

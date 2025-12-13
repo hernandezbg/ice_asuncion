@@ -260,6 +260,10 @@ def hermano_eliminar(request, pk):
     nombre = f'{hermano.apellidos}, {hermano.nombres}'
     hermano.delete()
     messages.success(request, f'Hermano {nombre} eliminado correctamente.')
+    # Volver a la URL con filtros si se proporcionó
+    next_url = request.POST.get('next')
+    if next_url:
+        return redirect(next_url)
     return redirect('panel:hermanos_lista')
 
 
@@ -272,6 +276,10 @@ def hermano_inactivar(request, pk):
     hermano.activo = False
     hermano.save()
     messages.success(request, f'Hermano {hermano.apellidos}, {hermano.nombres} marcado como inactivo.')
+    # Volver a la URL con filtros si se proporcionó
+    next_url = request.POST.get('next')
+    if next_url:
+        return redirect(next_url)
     return redirect('panel:hermanos_lista')
 
 
