@@ -101,7 +101,8 @@ def actualizar_datos_buscar(request):
 
             # Buscar donde coincida apellido O nombre en cualquier campo
             # Incluye apellido_soltera para encontrar personas con apellido de casada
-            todos_hermanos = Hermano.objects.filter(activo=True).order_by('apellidos', 'nombres')
+            # Incluye activos e inactivos para permitir reactivación
+            todos_hermanos = Hermano.objects.all().order_by('apellidos', 'nombres')
             resultados = [
                 h for h in todos_hermanos
                 if (apellido_norm in quitar_acentos(h.apellidos)
@@ -133,7 +134,8 @@ def actualizar_datos_editar(request, hermano_id=None):
     es_nuevo = hermano_id is None
 
     if hermano_id:
-        hermano = get_object_or_404(Hermano, id=hermano_id, activo=True)
+        # Obtener hermano sin filtrar por activo (permite reactivación)
+        hermano = get_object_or_404(Hermano, id=hermano_id)
 
     # Cargar opciones para selects
     provincias = Provincia.objects.all()
@@ -214,6 +216,10 @@ def actualizar_datos_editar(request, hermano_id=None):
             # Manejar foto
             if 'foto' in request.FILES:
                 hermano.foto = request.FILES['foto']
+
+            # Reactivar hermano si estaba inactivo
+            if not hermano.activo:
+                hermano.activo = True
 
             hermano.save()
 
