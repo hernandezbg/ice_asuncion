@@ -6,7 +6,27 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import resend
+import requests
 from .models import Pagina, Slider, Breve, Noticia, Galeria, Mensaje, Seccion, Ofrenda, DatosIce
+
+
+def verificar_recaptcha(token):
+    """Verificar token de reCAPTCHA con Google"""
+    if not settings.RECAPTCHA_SECRET_KEY:
+        return True  # Si no hay key configurada, skip verificación
+
+    try:
+        response = requests.post(
+            'https://www.google.com/recaptcha/api/siteverify',
+            data={
+                'secret': settings.RECAPTCHA_SECRET_KEY,
+                'response': token
+            }
+        )
+        result = response.json()
+        return result.get('success', False)
+    except Exception:
+        return False
 
 
 def home(request):
@@ -177,9 +197,13 @@ def contacto(request):
         email = request.POST.get('email')
         asunto = request.POST.get('asunto')
         mensaje_texto = request.POST.get('mensaje')
+        recaptcha_token = request.POST.get('g-recaptcha-response', '')
 
+        # Verificar reCAPTCHA
+        if settings.RECAPTCHA_SITE_KEY and not verificar_recaptcha(recaptcha_token):
+            messages.error(request, 'Por favor, completa la verificación de seguridad.')
         # Validación básica
-        if not all([nombre, email, asunto, mensaje_texto]):
+        elif not all([nombre, email, asunto, mensaje_texto]):
             messages.error(request, 'Por favor completa todos los campos.')
         else:
             try:
@@ -211,7 +235,10 @@ def contacto(request):
             except Exception as e:
                 messages.error(request, 'Hubo un error al enviar el mensaje. Por favor intenta nuevamente.')
 
-    return render(request, 'contenido/contacto.html')
+    context = {
+        'recaptcha_site_key': settings.RECAPTCHA_SITE_KEY,
+    }
+    return render(request, 'contenido/contacto.html', context)
 
 
 @require_POST

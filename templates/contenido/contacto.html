@@ -43,6 +43,12 @@
                     <textarea class="form-control" id="mensaje" name="mensaje" rows="5" required></textarea>
                 </div>
 
+                {% if recaptcha_site_key %}
+                <div class="mb-3">
+                    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
+                </div>
+                {% endif %}
+
                 <button type="submit" class="btn btn-primary btn-lg">
                     <i class="bi bi-send"></i> Enviar Mensaje
                 </button>
@@ -101,4 +107,10 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{% if recaptcha_site_key %}
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+{% endif %}
 {% endblock %}
