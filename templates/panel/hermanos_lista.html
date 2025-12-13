@@ -375,6 +375,7 @@
                 <option value="edad" {% if orden_seleccionado == "edad" %}selected{% endif %}>Edad</option>
                 <option value="clase" {% if orden_seleccionado == "clase" %}selected{% endif %}>Clase</option>
                 <option value="grupo" {% if orden_seleccionado == "grupo" %}selected{% endif %}>Grupo</option>
+                <option value="actualizacion" {% if orden_seleccionado == "actualizacion" %}selected{% endif %}>Última Actualización</option>
             </select>
         </div>
         <div class="col-md-1 d-flex align-items-end">
@@ -410,6 +411,7 @@
                     <th>Celular</th>
                     <th>Clase</th>
                     <th>Grupo</th>
+                    <th>Actualizado</th>
                     <th>Estado</th>
                     <th class="text-end">Acciones</th>
                 </tr>
@@ -445,6 +447,9 @@
                     <td>{{ h.clase|default:"-" }}</td>
                     <td>{{ h.grupo|default:"-" }}</td>
                     <td>
+                        <small class="text-muted">{{ h.fecha_modificacion|date:"d/m/Y" }}</small>
+                    </td>
+                    <td>
                         {% if h.activo %}
                         <span class="badge bg-success">Activo</span>
                         {% else %}
@@ -467,7 +472,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="8" class="text-center text-muted py-5">
+                    <td colspan="9" class="text-center text-muted py-5">
                         <i class="bi bi-inbox" style="font-size: 3rem;"></i>
                         <p class="mt-2">No se encontraron hermanos</p>
                     </td>

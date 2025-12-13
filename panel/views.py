@@ -112,6 +112,8 @@ def hermanos_lista(request):
         hermanos = hermanos.order_by('clase__nombre', 'apellidos')
     elif orden == 'grupo':
         hermanos = hermanos.order_by('grupo__nombre', 'apellidos')
+    elif orden == 'actualizacion':
+        hermanos = hermanos.order_by('-fecha_modificacion')
     else:
         hermanos = hermanos.order_by('apellidos', 'nombres')
 
