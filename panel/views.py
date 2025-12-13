@@ -12,7 +12,7 @@ from django.views.decorators.http import require_POST
 from .models import Visita
 from .forms import HermanoForm, NoticiaForm, MensajeForm, PaginaForm, SeccionForm, SliderForm, OfrendaForm, DatosIceForm
 from contenido.models import Noticia, Mensaje, Pagina, Galeria, Slider, DatosIce, Seccion, Ofrenda
-from miembros.models import Hermano, Provincia, EstadoCivil, Clase, Grupo
+from miembros.models import Hermano, Provincia, EstadoCivil, Clase, Grupo, Don
 
 
 def es_staff(user):
@@ -67,12 +67,25 @@ def dashboard(request):
         activo=True, cumpleaños__month=mes_actual
     ).order_by('cumpleaños__day')[:10]
 
+    # Estadísticas de dones
+    estadisticas_dones = []
+    for don in Don.objects.all():
+        count = Hermano.objects.filter(activo=True, dones=don).count()
+        if count > 0:
+            estadisticas_dones.append({
+                'nombre': don.nombre,
+                'count': count
+            })
+    # Ordenar por cantidad descendente
+    estadisticas_dones.sort(key=lambda x: x['count'], reverse=True)
+
     context = {
         **stats,
         'visitas_dispositivo': visitas_dispositivo,
         'visitas_por_dia': visitas_por_dia,
         'ultimas_noticias': ultimas_noticias,
         'cumpleaños_mes': cumpleaños_mes,
+        'estadisticas_dones': estadisticas_dones,
     }
 
     return render(request, 'panel/dashboard.html', context)
