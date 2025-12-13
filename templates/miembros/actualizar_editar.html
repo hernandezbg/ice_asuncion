@@ -127,13 +127,27 @@
     background-color: rgba(44, 95, 141, 0.1);
 }
 
-.celular-input-group .input-group-text {
-    background-color: #e9ecef;
-    border-right: none;
+/* intl-tel-input estilos personalizados */
+.iti {
+    width: 100%;
 }
 
-.celular-input-group .form-control {
-    border-left: none;
+.iti__flag-container {
+    z-index: 2;
+}
+
+.iti__selected-flag {
+    background-color: #e9ecef;
+    border-radius: 0.375rem 0 0 0.375rem;
+}
+
+.iti--separate-dial-code .iti__selected-flag {
+    background-color: #e9ecef;
+}
+
+.iti__country-list {
+    z-index: 1060;
+    max-height: 250px;
 }
 
 /* Selector de opciones con botones (genérico) */
@@ -214,6 +228,11 @@
 .option-item.estado-civil .option-icon {
     color: #6f42c1;
 }
+{% endblock %}
+
+{% block extra_head %}
+<!-- intl-tel-input CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css">
 {% endblock %}
 
 {% block content %}
@@ -400,19 +419,14 @@
                     <div class="row mb-3">
                         <div class="col-md-6 mb-3 mb-md-0">
                             <label for="celular" class="form-label required-field">Celular</label>
-                            <div class="input-group celular-input-group">
-                                <span class="input-group-text">+54 9</span>
-                                <input type="tel"
-                                       class="form-control"
-                                       id="celular"
-                                       name="celular"
-                                       placeholder="351 1234567"
-                                       value="{{ hermano.celular|default:'' }}"
-                                       pattern="[\d\s\-]+"
-                                       title="Solo numeros, espacios y guiones"
-                                       required>
-                            </div>
-                            <small class="text-muted">Sin 0 ni 15. Ej: 351 1234567</small>
+                            <input type="tel"
+                                   class="form-control"
+                                   id="celular"
+                                   name="celular"
+                                   placeholder="351 1234567"
+                                   value="{{ hermano.celular|default:'' }}"
+                                   required>
+                            <small class="text-muted">Selecciona tu país e ingresa el número</small>
                         </div>
                         <div class="col-md-6">
                             <label for="telefono_fijo" class="form-label">Telefono fijo</label>
@@ -622,6 +636,34 @@ document.addEventListener('DOMContentLoaded', function() {
             option.selected = true;
         }
         selectBautismo.appendChild(option);
+    }
+});
+</script>
+
+<!-- intl-tel-input JS -->
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var inputCelular = document.querySelector("#celular");
+    if (inputCelular) {
+        var iti = window.intlTelInput(inputCelular, {
+            initialCountry: "ar",
+            preferredCountries: ["ar", "py", "br", "uy", "cl", "bo", "pe", "co", "ec", "ve", "mx", "us", "es"],
+            separateDialCode: true,
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js",
+            i18n: {
+                searchPlaceholder: "Buscar país...",
+            }
+        });
+
+        // Antes de enviar el formulario, obtener el número completo
+        var form = inputCelular.closest('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                // Guardar el número completo con código de país
+                inputCelular.value = iti.getNumber();
+            });
+        }
     }
 });
 </script>
