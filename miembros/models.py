@@ -29,11 +29,12 @@ class Provincia(models.Model):
     Provincias de Argentina
     """
     nombre = models.CharField(max_length=100, unique=True, verbose_name='Provincia')
+    orden = models.PositiveIntegerField(default=0, verbose_name='Orden')
 
     class Meta:
         verbose_name = 'Provincia'
         verbose_name_plural = 'Provincias'
-        ordering = ['nombre']
+        ordering = ['orden', 'nombre']
 
     def __str__(self):
         return self.nombre
