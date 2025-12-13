@@ -1,6 +1,6 @@
 from django import forms
 from contenido.models import Noticia, Mensaje, Pagina, Seccion, Slider, Ofrenda, DatosIce
-from miembros.models import Hermano
+from miembros.models import Hermano, Don
 
 
 class HermanoForm(forms.ModelForm):
@@ -9,25 +9,33 @@ class HermanoForm(forms.ModelForm):
     class Meta:
         model = Hermano
         fields = [
-            'nombres', 'apellidos', 'sexo', 'fecha_nacimiento',
-            'domicilio', 'barrio', 'localidad', 'telefono_fijo', 'celular',
-            'email', 'estado_civil', 'clase', 'grupo',
+            'apellidos', 'apellido_soltera', 'nombres', 'sexo', 'fecha_nacimiento',
+            'estado_civil', 'ocupacion', 'foto',
+            'domicilio', 'barrio', 'localidad', 'provincia',
+            'telefono_fijo', 'celular', 'email',
+            'clase', 'grupo', 'anio_bautismo', 'dones',
             'activo', 'observaciones'
         ]
         widgets = {
-            'nombres': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
             'apellidos': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
+            'apellido_soltera': forms.TextInput(attrs={'class': 'form-control'}),
+            'nombres': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
             'sexo': forms.Select(attrs={'class': 'form-select'}),
             'fecha_nacimiento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'estado_civil': forms.Select(attrs={'class': 'form-select'}),
+            'ocupacion': forms.TextInput(attrs={'class': 'form-control'}),
+            'foto': forms.FileInput(attrs={'class': 'form-control'}),
             'domicilio': forms.TextInput(attrs={'class': 'form-control'}),
             'barrio': forms.TextInput(attrs={'class': 'form-control'}),
             'localidad': forms.TextInput(attrs={'class': 'form-control'}),
+            'provincia': forms.Select(attrs={'class': 'form-select'}),
             'telefono_fijo': forms.TextInput(attrs={'class': 'form-control'}),
             'celular': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'estado_civil': forms.Select(attrs={'class': 'form-select'}),
             'clase': forms.Select(attrs={'class': 'form-select'}),
             'grupo': forms.Select(attrs={'class': 'form-select'}),
+            'anio_bautismo': forms.NumberInput(attrs={'class': 'form-control', 'min': 1900, 'max': 2100}),
+            'dones': forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
             'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }

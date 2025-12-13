@@ -598,41 +598,66 @@
 
 <!-- Modal Crear/Editar Hermano -->
 <div class="modal fade" id="modalForm" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <form method="post" id="formPrincipal" action="{% url 'panel:hermano_crear' %}">
+            <form method="post" id="formPrincipal" action="{% url 'panel:hermano_crear' %}" enctype="multipart/form-data">
                 {% csrf_token %}
+                <input type="hidden" name="next" id="formNextUrl" value="">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalTitle"><i class="bi bi-person-plus-fill"></i> Nuevo Hermano</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <!-- Datos Personales -->
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2"><i class="bi bi-person-fill"></i> Datos Personales</h6>
+                        </div>
+                        <div class="col-md-4">
                             {{ form.apellidos.label_tag }}
                             {{ form.apellidos }}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            {{ form.apellido_soltera.label_tag }}
+                            {{ form.apellido_soltera }}
+                        </div>
+                        <div class="col-md-4">
                             {{ form.nombres.label_tag }}
                             {{ form.nombres }}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             {{ form.sexo.label_tag }}
                             {{ form.sexo }}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             {{ form.fecha_nacimiento.label_tag }}
                             {{ form.fecha_nacimiento }}
                         </div>
-                        <div class="col-md-12">
-                            <hr>
-                            <h6 class="text-primary"><i class="bi bi-geo-alt-fill"></i> Datos de Contacto</h6>
+                        <div class="col-md-3">
+                            {{ form.estado_civil.label_tag }}
+                            {{ form.estado_civil }}
                         </div>
-                        <div class="col-md-12">
+                        <div class="col-md-3">
+                            {{ form.ocupacion.label_tag }}
+                            {{ form.ocupacion }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.foto.label_tag }}
+                            {{ form.foto }}
+                            <div id="fotoActual" class="mt-2" style="display: none;">
+                                <small class="text-muted">Foto actual: <span id="fotoActualNombre"></span></small>
+                            </div>
+                        </div>
+
+                        <!-- Datos de Contacto -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-success border-bottom pb-2"><i class="bi bi-geo-alt-fill"></i> Ubicación y Contacto</h6>
+                        </div>
+                        <div class="col-md-8">
                             {{ form.domicilio.label_tag }}
                             {{ form.domicilio }}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             {{ form.barrio.label_tag }}
                             {{ form.barrio }}
                         </div>
@@ -641,24 +666,25 @@
                             {{ form.localidad }}
                         </div>
                         <div class="col-md-6">
+                            {{ form.provincia.label_tag }}
+                            {{ form.provincia }}
+                        </div>
+                        <div class="col-md-4">
                             {{ form.telefono_fijo.label_tag }}
                             {{ form.telefono_fijo }}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             {{ form.celular.label_tag }}
                             {{ form.celular }}
                         </div>
-                        <div class="col-md-12">
+                        <div class="col-md-4">
                             {{ form.email.label_tag }}
                             {{ form.email }}
                         </div>
-                        <div class="col-md-12">
-                            <hr>
-                            <h6 class="text-success"><i class="bi bi-person-badge-fill"></i> Información de Membresía</h6>
-                        </div>
-                        <div class="col-md-4">
-                            {{ form.estado_civil.label_tag }}
-                            {{ form.estado_civil }}
+
+                        <!-- Información de Membresía -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-warning border-bottom pb-2"><i class="bi bi-award-fill"></i> Membresía</h6>
                         </div>
                         <div class="col-md-4">
                             {{ form.clase.label_tag }}
@@ -667,6 +693,21 @@
                         <div class="col-md-4">
                             {{ form.grupo.label_tag }}
                             {{ form.grupo }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.anio_bautismo.label_tag }}
+                            {{ form.anio_bautismo }}
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label">Dones</label>
+                            <div class="d-flex flex-wrap gap-3">
+                                {% for checkbox in form.dones %}
+                                <div class="form-check">
+                                    {{ checkbox.tag }}
+                                    <label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
                         </div>
                         <div class="col-md-12">
                             {{ form.observaciones.label_tag }}
@@ -960,17 +1001,38 @@ function editar(id) {
         .then(d => {
             document.getElementById('formPrincipal').action = `/panel/hermanos/${id}/editar/`;
             document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil-square"></i> Editar Hermano';
+            // Guardar URL actual para preservar filtros
+            document.getElementById('formNextUrl').value = window.location.href;
 
-            Object.keys(d).forEach(k => {
+            // Cargar campos de texto y select
+            const campos = ['apellidos', 'apellido_soltera', 'nombres', 'sexo', 'fecha_nacimiento',
+                          'estado_civil', 'ocupacion', 'domicilio', 'barrio', 'localidad', 'provincia',
+                          'telefono_fijo', 'celular', 'email', 'clase', 'grupo', 'anio_bautismo', 'observaciones'];
+            campos.forEach(k => {
                 const el = document.getElementById(`id_${k}`);
                 if (el) {
-                    if (el.type === 'checkbox') {
-                        el.checked = d[k];
-                    } else {
-                        el.value = d[k] || '';
-                    }
+                    el.value = d[k] || '';
                 }
             });
+
+            // Checkbox activo
+            const activoEl = document.getElementById('id_activo');
+            if (activoEl) activoEl.checked = d.activo;
+
+            // Checkboxes de dones
+            document.querySelectorAll('input[name="dones"]').forEach(cb => {
+                cb.checked = d.dones_ids && d.dones_ids.includes(parseInt(cb.value));
+            });
+
+            // Mostrar foto actual si existe
+            const fotoActualDiv = document.getElementById('fotoActual');
+            const fotoActualNombre = document.getElementById('fotoActualNombre');
+            if (d.foto_nombre) {
+                fotoActualDiv.style.display = 'block';
+                fotoActualNombre.textContent = d.foto_nombre;
+            } else {
+                fotoActualDiv.style.display = 'none';
+            }
 
             new bootstrap.Modal(document.getElementById('modalForm')).show();
         })
@@ -1004,6 +1066,17 @@ document.getElementById('modalForm').addEventListener('hidden.bs.modal', functio
     document.getElementById('formPrincipal').action = '{% url "panel:hermano_crear" %}';
     document.getElementById('modalTitle').innerHTML = '<i class="bi bi-person-plus-fill"></i> Nuevo Hermano';
     document.getElementById('formPrincipal').reset();
+    // Limpiar checkboxes de dones
+    document.querySelectorAll('input[name="dones"]').forEach(cb => cb.checked = false);
+    // Ocultar foto actual
+    document.getElementById('fotoActual').style.display = 'none';
+    // Limpiar URL de retorno
+    document.getElementById('formNextUrl').value = '';
+});
+
+// Al abrir modal para nuevo hermano, guardar URL actual
+document.querySelector('[data-bs-target="#modalForm"]').addEventListener('click', function() {
+    document.getElementById('formNextUrl').value = window.location.href;
 });
 </script>
 {% endblock %}

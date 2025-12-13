@@ -178,11 +178,10 @@ def hermanos_lista(request):
 def hermano_crear(request):
     """Crea un nuevo hermano"""
     if request.method == 'POST':
-        form = HermanoForm(request.POST)
+        form = HermanoForm(request.POST, request.FILES)
         if form.is_valid():
             hermano = form.save()
             messages.success(request, f'Hermano {hermano.apellidos}, {hermano.nombres} creado correctamente.')
-            return redirect('panel:hermanos_lista')
         else:
             # Mostrar errores específicos de validación
             errores = []
@@ -192,6 +191,10 @@ def hermano_crear(request):
                     errores.append(f"{field_name}: {error}")
             error_msg = " | ".join(errores) if errores else "Error al crear el hermano. Verifica los datos."
             messages.error(request, error_msg)
+    # Volver a la URL con filtros si se proporcionó
+    next_url = request.POST.get('next')
+    if next_url:
+        return redirect(next_url)
     return redirect('panel:hermanos_lista')
 
 
@@ -201,33 +204,39 @@ def hermano_datos(request, pk):
     """Retorna los datos de un hermano en JSON para edición y visualización"""
     hermano = get_object_or_404(Hermano, pk=pk)
     data = {
-        # Datos para edición (IDs)
+        # Datos para edición (IDs y valores)
         'apellidos': hermano.apellidos,
+        'apellido_soltera': hermano.apellido_soltera or '',
         'nombres': hermano.nombres,
         'sexo': hermano.sexo,
         'fecha_nacimiento': hermano.fecha_nacimiento.strftime('%Y-%m-%d') if hermano.fecha_nacimiento else '',
+        'estado_civil': hermano.estado_civil.id if hermano.estado_civil else '',
+        'ocupacion': hermano.ocupacion or '',
         'domicilio': hermano.domicilio or '',
         'barrio': hermano.barrio or '',
         'localidad': hermano.localidad or '',
+        'provincia': hermano.provincia.id if hermano.provincia else '',
         'telefono_fijo': hermano.telefono_fijo or '',
         'celular': hermano.celular or '',
         'email': hermano.email or '',
-        'estado_civil': hermano.estado_civil.id if hermano.estado_civil else '',
         'clase': hermano.clase.id if hermano.clase else '',
         'grupo': hermano.grupo.id if hermano.grupo else '',
+        'anio_bautismo': hermano.anio_bautismo or '',
+        'dones_ids': [d.id for d in hermano.dones.all()],
         'activo': hermano.activo,
         'observaciones': hermano.observaciones or '',
         # Datos adicionales para visualización
         'foto_url': hermano.foto.url if hermano.foto else '',
+        'foto_nombre': hermano.foto.name.split('/')[-1] if hermano.foto else '',
         'sexo_display': hermano.get_sexo_display(),
         'estado_civil_display': str(hermano.estado_civil) if hermano.estado_civil else '-',
         'clase_display': str(hermano.clase) if hermano.clase else '-',
         'grupo_display': str(hermano.grupo) if hermano.grupo else '-',
         'edad': hermano.edad(),
         'fecha_nacimiento_display': hermano.fecha_nacimiento.strftime('%d/%m/%Y') if hermano.fecha_nacimiento else '-',
-        'ocupacion': hermano.ocupacion or '-',
-        'provincia': str(hermano.provincia) if hermano.provincia else '-',
-        'anio_bautismo': hermano.anio_bautismo or '-',
+        'ocupacion_display': hermano.ocupacion or '-',
+        'provincia_display': str(hermano.provincia) if hermano.provincia else '-',
+        'anio_bautismo_display': hermano.anio_bautismo or '-',
         'dones': [str(d) for d in hermano.dones.all()],
         'fecha_creacion': hermano.fecha_creacion.strftime('%d/%m/%Y %H:%M'),
         'fecha_modificacion': hermano.fecha_modificacion.strftime('%d/%m/%Y %H:%M'),
@@ -241,13 +250,23 @@ def hermano_editar(request, pk):
     """Edita un hermano existente"""
     hermano = get_object_or_404(Hermano, pk=pk)
     if request.method == 'POST':
-        form = HermanoForm(request.POST, instance=hermano)
+        form = HermanoForm(request.POST, request.FILES, instance=hermano)
         if form.is_valid():
             hermano = form.save()
             messages.success(request, f'Hermano {hermano.apellidos}, {hermano.nombres} actualizado correctamente.')
-            return redirect('panel:hermanos_lista')
         else:
-            messages.error(request, 'Error al actualizar el hermano. Verifica los datos.')
+            # Mostrar errores específicos de validación
+            errores = []
+            for field, errors in form.errors.items():
+                field_name = form.fields[field].label if field in form.fields else field
+                for error in errors:
+                    errores.append(f"{field_name}: {error}")
+            error_msg = " | ".join(errores) if errores else "Error al actualizar el hermano. Verifica los datos."
+            messages.error(request, error_msg)
+    # Volver a la URL con filtros si se proporcionó
+    next_url = request.POST.get('next')
+    if next_url:
+        return redirect(next_url)
     return redirect('panel:hermanos_lista')
 
 
