@@ -699,25 +699,48 @@
 <div class="modal fade" id="modalEliminar" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="post" id="formEliminar">
-                {% csrf_token %}
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill"></i> Confirmar Eliminación</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill"></i> ¿Qué desea hacer?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Seleccione una acción para <strong id="nombreEliminar"></strong>:</p>
+
+                <div class="d-grid gap-3">
+                    <!-- Opción Inactivar -->
+                    <form method="post" id="formInactivar" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning w-100 py-3 text-start">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-person-slash fs-3 me-3"></i>
+                                <div>
+                                    <strong>Poner como Inactivo</strong>
+                                    <br><small class="text-dark">El hermano permanece en el sistema pero marcado como inactivo. Puede reactivarse después.</small>
+                                </div>
+                            </div>
+                        </button>
+                    </form>
+
+                    <!-- Opción Eliminar -->
+                    <form method="post" id="formEliminar" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger w-100 py-3 text-start">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-trash-fill fs-3 me-3"></i>
+                                <div>
+                                    <strong>Eliminar Definitivamente</strong>
+                                    <br><small>Se elimina permanentemente del sistema. Esta acción no se puede deshacer.</small>
+                                </div>
+                            </div>
+                        </button>
+                    </form>
                 </div>
-                <div class="modal-body">
-                    <p>¿Está seguro de eliminar a <strong id="nombreEliminar"></strong>?</p>
-                    <p class="text-danger mb-0"><small><i class="bi bi-exclamation-circle"></i> Esta acción no se puede deshacer.</small></p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle"></i> Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-trash-fill"></i> Eliminar
-                    </button>
-                </div>
-            </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -957,6 +980,7 @@ function editar(id) {
 
 function eliminar(id, nombre) {
     document.getElementById('formEliminar').action = `/panel/hermanos/${id}/eliminar/`;
+    document.getElementById('formInactivar').action = `/panel/hermanos/${id}/inactivar/`;
     document.getElementById('nombreEliminar').textContent = nombre;
     new bootstrap.Modal(document.getElementById('modalEliminar')).show();
 }

@@ -263,6 +263,18 @@ def hermano_eliminar(request, pk):
     return redirect('panel:hermanos_lista')
 
 
+@login_required
+@user_passes_test(es_staff)
+@require_POST
+def hermano_inactivar(request, pk):
+    """Pone un hermano como inactivo"""
+    hermano = get_object_or_404(Hermano, pk=pk)
+    hermano.activo = False
+    hermano.save()
+    messages.success(request, f'Hermano {hermano.apellidos}, {hermano.nombres} marcado como inactivo.')
+    return redirect('panel:hermanos_lista')
+
+
 # ========== NOTICIAS ==========
 @login_required
 @user_passes_test(es_staff)

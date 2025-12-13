@@ -19,6 +19,7 @@ urlpatterns = [
     path('hermanos/<int:pk>/datos/', views.hermano_datos, name='hermano_datos'),
     path('hermanos/<int:pk>/editar/', views.hermano_editar, name='hermano_editar'),
     path('hermanos/<int:pk>/eliminar/', views.hermano_eliminar, name='hermano_eliminar'),
+    path('hermanos/<int:pk>/inactivar/', views.hermano_inactivar, name='hermano_inactivar'),
 
     # Noticias
     path('noticias/', views.noticias_lista, name='noticias_lista'),
