@@ -379,8 +379,8 @@
                             <div class="row g-2">
                                 <div class="col-4">
                                     <select class="form-select form-select-sm" id="nacimiento_dia" name="nacimiento_dia" required>
-                                        <option value="">Dia</option>
-                                        {% for d in "123456789012345678901234567890"|make_list %}{% with dia=forloop.counter %}{% if dia <= 31 %}
+                                        <option value="">Día</option>
+                                        {% for d in "1234567890123456789012345678901"|make_list %}{% with dia=forloop.counter %}{% if dia <= 31 %}
                                         <option value="{{ dia }}" {% if hermano.fecha_nacimiento.day == dia %}selected{% endif %}>{{ dia }}</option>
                                         {% endif %}{% endwith %}{% endfor %}
                                     </select>
