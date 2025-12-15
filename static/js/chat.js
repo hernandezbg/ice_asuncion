@@ -380,7 +380,7 @@
         try {
             const formData = new FormData();
             formData.append('session_id', state.sessionId);
-            formData.append('audio', audioBlob, 'audio.webm');
+            formData.append('audio_file', audioBlob, 'audio.webm');
 
             const response = await fetch(`${CONFIG.API_BASE}/send-audio/`, {
                 method: 'POST',

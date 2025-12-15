@@ -206,20 +206,14 @@ def send_message(request):
                 f'{AGENT_URL}/api/chat',
                 json={
                     'message': message,
-                    'thread_id': session.agent_thread_id or None
+                    'session_id': str(session.session_id)
                 },
                 timeout=60
             )
 
             if agent_response.status_code == 200:
                 response_data = agent_response.json()
-                assistant_message = response_data.get('response', response_data.get('message', ''))
-                thread_id = response_data.get('thread_id', '')
-
-                # Actualizar thread_id si es nuevo
-                if thread_id and not session.agent_thread_id:
-                    session.agent_thread_id = thread_id
-                    session.save()
+                assistant_message = response_data.get('message', '')
 
                 # Guardar respuesta del asistente
                 ICEChatMessage.objects.create(
@@ -265,7 +259,7 @@ def send_audio(request):
     """Envía un mensaje de audio al agente"""
     try:
         session_id = request.POST.get('session_id', '').strip()
-        audio_file = request.FILES.get('audio')
+        audio_file = request.FILES.get('audio_file')
 
         if not session_id or not audio_file:
             return JsonResponse({
@@ -284,11 +278,16 @@ def send_audio(request):
 
         # Enviar audio al agente externo
         try:
-            files = {'audio': (audio_file.name, audio_file, audio_file.content_type)}
-            data = {'thread_id': session.agent_thread_id or ''}
+            # Leer el contenido del archivo en memoria
+            content = audio_file.read()
+
+            files = {
+                'audio_file': (audio_file.name, content, audio_file.content_type)
+            }
+            data = {'session_id': str(session.session_id)}
 
             agent_response = requests.post(
-                f'{AGENT_URL}/api/chat/audio',
+                f'{AGENT_URL}/api/chat',
                 files=files,
                 data=data,
                 timeout=120
@@ -299,13 +298,7 @@ def send_audio(request):
 
                 # Obtener transcripción del usuario (si está disponible)
                 user_transcription = response_data.get('transcription', '[Audio]')
-                assistant_message = response_data.get('response', response_data.get('message', ''))
-                thread_id = response_data.get('thread_id', '')
-
-                # Actualizar thread_id si es nuevo
-                if thread_id and not session.agent_thread_id:
-                    session.agent_thread_id = thread_id
-                    session.save()
+                assistant_message = response_data.get('message', '')
 
                 # Guardar mensaje del usuario
                 ICEChatMessage.objects.create(
