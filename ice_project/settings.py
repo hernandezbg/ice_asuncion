@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'contenido',
     'miembros',
     'panel',
+    'chat',
 ]
 
 MIDDLEWARE = [
@@ -219,6 +220,11 @@ LOGOUT_REDIRECT_URL = 'panel:login'
 # reCAPTCHA Configuration
 RECAPTCHA_SITE_KEY = config('RECAPTCHA_SITE_KEY', default='')
 RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default='')
+
+# Twilio Configuration (para SMS del chat)
+TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='')
+TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
+TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='')
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

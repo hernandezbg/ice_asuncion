@@ -192,6 +192,13 @@ class DatosIce(ModeloBase):
         help_text='Código que los miembros deben ingresar para actualizar sus datos'
     )
 
+    # Chat con agente IA
+    chat_habilitado = models.BooleanField(
+        default=False,
+        verbose_name='Chat habilitado',
+        help_text='Habilitar el chat con el asistente virtual en el sitio público'
+    )
+
     class Meta:
         verbose_name = 'Datos de ICE'
         verbose_name_plural = 'Datos de ICE'

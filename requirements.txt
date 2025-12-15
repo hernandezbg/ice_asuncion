@@ -34,3 +34,9 @@ geoip2==4.8.0
 
 # Email con Resend
 resend==2.19.0
+
+# SMS con Twilio (para chat)
+twilio==9.3.7
+
+# HTTP requests
+requests==2.32.3

@@ -181,7 +181,7 @@ class DatosIceForm(forms.ModelForm):
         fields = [
             'email', 'direccion', 'telefono', 'whatsapp',
             'facebook', 'twitter', 'youtube', 'instagram',
-            'stream_youtube', 'codigo_acceso_miembros'
+            'stream_youtube', 'codigo_acceso_miembros', 'chat_habilitado'
         ]
         widgets = {
             'email': forms.EmailInput(attrs={'class': 'form-control', 'required': True}),
@@ -194,4 +194,5 @@ class DatosIceForm(forms.ModelForm):
             'instagram': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://instagram.com/...'}),
             'stream_youtube': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://youtube.com/live/...'}),
             'codigo_acceso_miembros': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: ICE2024'}),
+            'chat_habilitado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

@@ -95,6 +95,24 @@
 
                     <hr class="my-4">
 
+                    <h5 class="mb-3"><i class="bi bi-chat-dots text-info"></i> Chat con Asistente Virtual</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-12">
+                            <div class="form-check form-switch">
+                                {{form.chat_habilitado}}
+                                <label class="form-check-label" for="id_chat_habilitado">
+                                    <strong>Habilitar chat</strong>
+                                </label>
+                            </div>
+                            <small class="form-text text-muted d-block mt-2">
+                                <i class="bi bi-info-circle"></i>
+                                Cuando está habilitado, aparece un botón flotante en todas las páginas del sitio que permite a los visitantes chatear con el asistente virtual de la iglesia.
+                            </small>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-success btn-lg">
                             <i class="bi bi-check-circle"></i> Guardar Cambios
@@ -133,6 +151,7 @@
                     {% if datos_ice.youtube %}<li><i class="bi bi-check-circle text-success"></i> YouTube configurado</li>{% endif %}
                     {% if datos_ice.instagram %}<li><i class="bi bi-check-circle text-success"></i> Instagram configurado</li>{% endif %}
                     {% if datos_ice.stream_youtube %}<li><i class="bi bi-broadcast text-danger"></i> Stream en vivo activo</li>{% endif %}
+                    {% if datos_ice.chat_habilitado %}<li><i class="bi bi-chat-dots text-info"></i> Chat habilitado</li>{% else %}<li><i class="bi bi-chat-dots text-muted"></i> Chat deshabilitado</li>{% endif %}
                 </ul>
             </div>
         </div>
