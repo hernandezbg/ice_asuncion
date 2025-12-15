@@ -79,6 +79,22 @@ def dashboard(request):
     # Ordenar por cantidad descendente
     estadisticas_dones.sort(key=lambda x: x['count'], reverse=True)
 
+    # Estadísticas de visitas por ubicación (último mes)
+    visitas_por_pais = Visita.objects.filter(
+        fecha__gte=hace_30_dias,
+        pais__isnull=False
+    ).exclude(pais='').values('pais').annotate(total=Count('id')).order_by('-total')[:10]
+
+    visitas_por_region = Visita.objects.filter(
+        fecha__gte=hace_30_dias,
+        region__isnull=False
+    ).exclude(region='').values('region', 'pais').annotate(total=Count('id')).order_by('-total')[:10]
+
+    visitas_por_ciudad = Visita.objects.filter(
+        fecha__gte=hace_30_dias,
+        ciudad__isnull=False
+    ).exclude(ciudad='').values('ciudad', 'region').annotate(total=Count('id')).order_by('-total')[:10]
+
     context = {
         **stats,
         'visitas_dispositivo': visitas_dispositivo,
@@ -86,6 +102,9 @@ def dashboard(request):
         'ultimas_noticias': ultimas_noticias,
         'cumpleaños_mes': cumpleaños_mes,
         'estadisticas_dones': estadisticas_dones,
+        'visitas_por_pais': visitas_por_pais,
+        'visitas_por_region': visitas_por_region,
+        'visitas_por_ciudad': visitas_por_ciudad,
     }
 
     return render(request, 'panel/dashboard.html', context)

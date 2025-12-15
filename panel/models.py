@@ -13,6 +13,7 @@ class Visita(models.Model):
     sistema_operativo = models.CharField(max_length=100, blank=True, verbose_name='Sistema Operativo')
     dispositivo = models.CharField(max_length=50, blank=True, verbose_name='Dispositivo')  # mobile, tablet, pc
     pais = models.CharField(max_length=100, blank=True, verbose_name='País')
+    region = models.CharField(max_length=100, blank=True, verbose_name='Región/Provincia')
     ciudad = models.CharField(max_length=100, blank=True, verbose_name='Ciudad')
     url = models.CharField(max_length=500, verbose_name='URL visitada')
     referrer = models.CharField(max_length=500, blank=True, verbose_name='Referencia')

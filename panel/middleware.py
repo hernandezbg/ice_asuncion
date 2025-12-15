@@ -1,4 +1,44 @@
+import requests
 from .models import Visita
+
+
+# Cache simple para geolocalización (evita llamadas repetidas a la API)
+_geo_cache = {}
+
+
+def get_geolocation(ip):
+    """Obtiene la geolocalización de una IP usando ip-api.com (gratuito)"""
+    # No geolocalizar IPs locales
+    if ip in ('127.0.0.1', 'localhost', '::1') or ip.startswith('192.168.') or ip.startswith('10.'):
+        return {'pais': '', 'region': '', 'ciudad': ''}
+
+    # Verificar cache
+    if ip in _geo_cache:
+        return _geo_cache[ip]
+
+    try:
+        response = requests.get(
+            f'http://ip-api.com/json/{ip}?fields=status,country,regionName,city',
+            timeout=2
+        )
+        data = response.json()
+
+        if data.get('status') == 'success':
+            result = {
+                'pais': data.get('country', ''),
+                'region': data.get('regionName', ''),
+                'ciudad': data.get('city', '')
+            }
+        else:
+            result = {'pais': '', 'region': '', 'ciudad': ''}
+
+        # Guardar en cache (máximo 1000 entradas)
+        if len(_geo_cache) < 1000:
+            _geo_cache[ip] = result
+
+        return result
+    except Exception:
+        return {'pais': '', 'region': '', 'ciudad': ''}
 
 
 def get_client_ip(request):
@@ -73,12 +113,18 @@ class VisitasMiddleware:
                 user_agent = request.META.get('HTTP_USER_AGENT', '')
                 navegador, sistema, dispositivo = parse_user_agent(user_agent)
 
+                # Obtener geolocalización
+                geo = get_geolocation(ip)
+
                 Visita.objects.create(
                     ip=ip,
                     user_agent=user_agent,
                     navegador=navegador,
                     sistema_operativo=sistema,
                     dispositivo=dispositivo,
+                    pais=geo.get('pais', ''),
+                    region=geo.get('region', ''),
+                    ciudad=geo.get('ciudad', ''),
                     url=request.path,
                     referrer=request.META.get('HTTP_REFERER', ''),
                 )
