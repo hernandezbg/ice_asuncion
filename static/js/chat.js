@@ -140,6 +140,10 @@
 
         if (state.isVerified) {
             elements.chatInput.focus();
+            // Scroll al final de los mensajes cuando se abre el chat
+            setTimeout(() => {
+                elements.messagesContainer.scrollTop = elements.messagesContainer.scrollHeight;
+            }, 50);
         } else {
             elements.phoneInput.focus();
         }
