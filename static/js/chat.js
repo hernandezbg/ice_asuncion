@@ -264,6 +264,11 @@
                 data.messages.forEach(msg => {
                     addMessageToUI(msg.content, msg.role, false);
                 });
+
+                // Scroll al final después de cargar el historial
+                setTimeout(() => {
+                    elements.messagesContainer.scrollTop = elements.messagesContainer.scrollHeight;
+                }, 100);
             }
         } catch (error) {
             console.error('Error cargando historial:', error);
