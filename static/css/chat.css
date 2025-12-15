@@ -228,12 +228,27 @@
     box-shadow: 0 5px 15px rgba(44, 95, 141, 0.3);
 }
 
+/* Vista principal del chat */
+#ice-chat-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0; /* Importante para que flex funcione con overflow */
+    overflow: hidden;
+}
+
+#ice-chat-main.ice-chat-main-hidden {
+    display: none;
+}
+
 /* Área de mensajes */
 .ice-chat-messages {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 20px;
     background: var(--ice-chat-light);
+    min-height: 0; /* Permite que el contenedor se encoja */
 }
 
 .ice-chat-welcome {
@@ -320,6 +335,7 @@
     padding: 15px;
     background: white;
     border-top: 1px solid #e9ecef;
+    flex-shrink: 0; /* No se encoge, queda fijo abajo */
 }
 
 .ice-chat-input-container {

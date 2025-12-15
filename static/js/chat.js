@@ -242,7 +242,7 @@
      */
     function showChatView() {
         elements.verifyView.classList.add('d-none');
-        elements.mainView.classList.remove('d-none');
+        elements.mainView.classList.remove('ice-chat-main-hidden');
         elements.chatInput.focus();
     }
 
