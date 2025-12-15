@@ -429,6 +429,10 @@
                     <span>${content}</span>
                 </div>
             `;
+        } else if (role === 'assistant' && typeof marked !== 'undefined') {
+            // Parsear markdown para mensajes del asistente
+            bubbleDiv.innerHTML = marked.parse(content);
+            bubbleDiv.classList.add('ice-chat-markdown');
         } else {
             bubbleDiv.textContent = content;
         }

@@ -547,6 +547,93 @@
     font-size: 0.8rem;
 }
 
+/* Estilos para markdown en mensajes del asistente */
+.ice-chat-markdown {
+    line-height: 1.5;
+}
+
+.ice-chat-markdown p {
+    margin: 0 0 0.5em 0;
+}
+
+.ice-chat-markdown p:last-child {
+    margin-bottom: 0;
+}
+
+.ice-chat-markdown strong,
+.ice-chat-markdown b {
+    font-weight: 600;
+}
+
+.ice-chat-markdown em,
+.ice-chat-markdown i {
+    font-style: italic;
+}
+
+.ice-chat-markdown ul,
+.ice-chat-markdown ol {
+    margin: 0.5em 0;
+    padding-left: 1.2em;
+}
+
+.ice-chat-markdown li {
+    margin-bottom: 0.25em;
+}
+
+.ice-chat-markdown h1,
+.ice-chat-markdown h2,
+.ice-chat-markdown h3,
+.ice-chat-markdown h4,
+.ice-chat-markdown h5,
+.ice-chat-markdown h6 {
+    margin: 0.5em 0 0.25em 0;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.ice-chat-markdown h1 { font-size: 1.2em; }
+.ice-chat-markdown h2 { font-size: 1.1em; }
+.ice-chat-markdown h3 { font-size: 1.05em; }
+
+.ice-chat-markdown code {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.ice-chat-markdown pre {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 0.5em;
+    border-radius: 5px;
+    overflow-x: auto;
+    margin: 0.5em 0;
+}
+
+.ice-chat-markdown pre code {
+    background: none;
+    padding: 0;
+}
+
+.ice-chat-markdown a {
+    color: var(--ice-chat-secondary);
+    text-decoration: underline;
+}
+
+.ice-chat-markdown blockquote {
+    border-left: 3px solid rgba(0, 0, 0, 0.2);
+    margin: 0.5em 0;
+    padding-left: 0.75em;
+    font-style: italic;
+}
+
+.ice-chat-markdown hr {
+    border: none;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0.75em 0;
+}
+
 .ice-chat-audio-indicator i {
     font-size: 1rem;
 }
