@@ -637,3 +637,28 @@
 .ice-chat-audio-indicator i {
     font-size: 1rem;
 }
+
+/* Estilos para intl-tel-input en el chat widget */
+.ice-chat-verify-content .iti {
+    width: 100%;
+}
+
+.ice-chat-verify-content .iti__flag-container {
+    padding-left: 8px;
+}
+
+.ice-chat-verify-content .iti__selected-flag {
+    background: transparent;
+    border-radius: 8px 0 0 8px;
+}
+
+.ice-chat-verify-content .iti__country-list {
+    max-height: 200px;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+.ice-chat-verify-content .iti input {
+    width: 100%;
+    padding-left: 52px !important;
+}

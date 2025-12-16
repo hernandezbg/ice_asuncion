@@ -21,7 +21,8 @@
         phone: null,
         isRecording: false,
         mediaRecorder: null,
-        audioChunks: []
+        audioChunks: [],
+        iti: null  // intl-tel-input instance
     };
 
     // Elementos DOM
@@ -58,11 +59,28 @@
             loadingIndicator: document.getElementById('ice-chat-loading')
         };
 
+        // Inicializar intl-tel-input para formato de teléfono
+        initPhoneInput();
+
         // Verificar si hay sesión guardada
         checkExistingSession();
 
         // Event listeners
         setupEventListeners();
+    }
+
+    /**
+     * Inicializar intl-tel-input
+     */
+    function initPhoneInput() {
+        if (typeof intlTelInput !== 'undefined' && elements.phoneInput) {
+            state.iti = intlTelInput(elements.phoneInput, {
+                initialCountry: 'py',  // Paraguay por defecto
+                preferredCountries: ['py', 'ar', 'br', 'uy', 'cl'],  // Países preferidos
+                separateDialCode: true,
+                utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js'
+            });
+        }
     }
 
     /**
@@ -159,7 +177,18 @@
      * Enviar código de verificación
      */
     async function sendVerificationCode() {
-        const phone = elements.phoneInput.value.trim();
+        let phone;
+
+        // Obtener número formateado con intl-tel-input si está disponible
+        if (state.iti) {
+            if (!state.iti.isValidNumber()) {
+                showVerifyMessage('Por favor ingresa un número de teléfono válido', 'error');
+                return;
+            }
+            phone = state.iti.getNumber();  // Obtiene número en formato E.164 (+595981123456)
+        } else {
+            phone = elements.phoneInput.value.trim();
+        }
 
         if (!phone) {
             showVerifyMessage('Por favor ingresa tu número de teléfono', 'error');
