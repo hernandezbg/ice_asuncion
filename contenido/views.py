@@ -41,7 +41,7 @@ def home(request):
 
     # Noticias y Mensajes recientes
     noticias_recientes = Noticia.objects.filter(activo=True).order_by('-fecha_publicacion')[:4]
-    mensajes_recientes = Mensaje.objects.filter(activo=True).select_related('tipo').order_by('-fecha_publicacion')[:4]
+    mensajes_recientes = Mensaje.objects.filter(activo=True, tipo__nombre__icontains='Video').select_related('tipo').order_by('-fecha_publicacion')[:4]
 
     # Información de ofrendas
     ofrendas = Ofrenda.objects.filter(activo=True).order_by('orden')
