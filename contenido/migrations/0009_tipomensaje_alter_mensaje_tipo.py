@@ -4,6 +4,26 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
+def create_tipos_mensaje(apps, schema_editor):
+    """Crear los tipos de mensaje por defecto ANTES de la FK"""
+    TipoMensaje = apps.get_model('contenido', 'TipoMensaje')
+
+    # Crear los tipos originales con IDs específicos
+    TipoMensaje.objects.get_or_create(
+        id=1,
+        defaults={'nombre': 'Fundamento (Mensaje escrito)', 'color': 'bg-success', 'orden': 1}
+    )
+    TipoMensaje.objects.get_or_create(
+        id=2,
+        defaults={'nombre': 'Video', 'color': 'bg-danger', 'orden': 2}
+    )
+
+
+def reverse_tipos(apps, schema_editor):
+    """No hacer nada en reverse - la tabla se elimina"""
+    pass
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -11,6 +31,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # 1. Crear el modelo TipoMensaje
         migrations.CreateModel(
             name='TipoMensaje',
             fields=[
@@ -26,6 +47,9 @@ class Migration(migrations.Migration):
                 'ordering': ['orden', 'nombre'],
             },
         ),
+        # 2. Insertar los datos de tipos ANTES de crear la FK
+        migrations.RunPython(create_tipos_mensaje, reverse_tipos),
+        # 3. Ahora sí alterar el campo a FK
         migrations.AlterField(
             model_name='mensaje',
             name='tipo',
