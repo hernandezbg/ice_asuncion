@@ -40,8 +40,8 @@ def home(request):
     secciones = Seccion.objects.filter(activo=True, mostrar_en_home=True).order_by('orden')
 
     # Noticias y Mensajes recientes
-    noticias_recientes = Noticia.objects.filter(activo=True)[:4]
-    mensajes_recientes = Mensaje.objects.filter(activo=True)[:4]
+    noticias_recientes = Noticia.objects.filter(activo=True).order_by('-fecha_publicacion')[:4]
+    mensajes_recientes = Mensaje.objects.filter(activo=True).select_related('tipo').order_by('-fecha_publicacion')[:4]
 
     # Información de ofrendas
     ofrendas = Ofrenda.objects.filter(activo=True).order_by('orden')
