@@ -83,7 +83,7 @@
                     <td>{% if m.imagen %}<img src="{{m.imagen.url}}" class="img-thumbnail" style="width:50px;height:50px;object-fit:cover">{% else %}<div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="width:50px;height:50px"><i class="bi bi-mic"></i></div>{% endif %}</td>
                     <td><strong>{{m.titulo|truncatewords:10}}</strong><br><small class="text-muted">{{m.introduccion|truncatewords:15}}</small></td>
                     <td>{{m.autor|default:"-"}}</td>
-                    <td><span class="badge {% if m.tipo == 1 %}bg-success{% else %}bg-danger{% endif %}">{{m.get_tipo_display}}</span></td>
+                    <td><span class="badge {{m.tipo.color|default:'bg-secondary'}}">{{m.tipo.nombre|default:"-"}}</span></td>
                     <td>{{m.fecha_publicacion|date:"d/m/Y"}}</td>
                     <td>{% if m.activo %}<span class="badge bg-success">Publicado</span>{% else %}<span class="badge bg-secondary">Borrador</span>{% endif %}</td>
                     <td class="text-end">
@@ -116,7 +116,7 @@
                     <h6 class="mb-1 fw-bold">{{m.titulo|truncatewords:8}}</h6>
                     <p class="text-muted small mb-2">{{m.introduccion|truncatewords:10}}</p>
                     <div class="d-flex gap-2 align-items-center flex-wrap">
-                        <span class="badge {% if m.tipo == 1 %}bg-success{% else %}bg-danger{% endif %}">{{m.get_tipo_display}}</span>
+                        <span class="badge {{m.tipo.color|default:'bg-secondary'}}">{{m.tipo.nombre|default:"-"}}</span>
                         {% if m.activo %}
                         <span class="badge bg-success">Publicado</span>
                         {% else %}

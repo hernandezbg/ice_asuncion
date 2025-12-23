@@ -130,16 +130,31 @@ class Galeria(ModeloBase):
         return self.titulo
 
 
+class TipoMensaje(models.Model):
+    """
+    Tipos de mensajes configurables
+    """
+    nombre = models.CharField(max_length=100, verbose_name='Nombre')
+    color = models.CharField(max_length=20, default='bg-primary', verbose_name='Color (clase Bootstrap)',
+                            help_text='Ej: bg-primary, bg-success, bg-danger, bg-warning, bg-info')
+    orden = models.PositiveIntegerField(default=0, verbose_name='Orden')
+    activo = models.BooleanField(default=True, verbose_name='Activo')
+
+    class Meta:
+        verbose_name = 'Tipo de Mensaje'
+        verbose_name_plural = 'Tipos de Mensaje'
+        ordering = ['orden', 'nombre']
+
+    def __str__(self):
+        return self.nombre
+
+
 class Mensaje(ModeloBase):
     """
     Mensajes predicados y videos
     """
-    TIPO_CHOICES = [
-        (1, 'Fundamento (Mensaje escrito)'),
-        (2, 'Video'),
-    ]
-
-    tipo = models.IntegerField(choices=TIPO_CHOICES, default=1, verbose_name='Tipo de mensaje')
+    tipo = models.ForeignKey(TipoMensaje, on_delete=models.PROTECT, verbose_name='Tipo de mensaje',
+                            null=True, blank=True)
     titulo = models.CharField(max_length=300, verbose_name='Título')
     autor = models.CharField(max_length=200, verbose_name='Autor/Predicador')
     introduccion = models.TextField(verbose_name='Introducción')

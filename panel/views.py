@@ -519,7 +519,7 @@ def mensaje_datos(request, pk):
         'autor': m.autor or '',
         'introduccion': m.introduccion or '',
         'contenido': m.contenido or '',
-        'tipo': m.tipo,
+        'tipo': m.tipo_id or '',
         'enlace_video': m.enlace_video or '',
         'fecha_publicacion': m.fecha_publicacion.strftime('%Y-%m-%d') if m.fecha_publicacion else '',
         'activo': m.activo,

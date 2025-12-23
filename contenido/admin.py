@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django_summernote.admin import SummernoteModelAdmin
-from .models import Pagina, Slider, Breve, Noticia, Galeria, Mensaje, DatosIce, Seccion, Ofrenda
+from .models import Pagina, Slider, Breve, Noticia, Galeria, TipoMensaje, Mensaje, DatosIce, Seccion, Ofrenda
 
 
 @admin.register(Pagina)
@@ -155,6 +155,16 @@ class GaleriaAdmin(admin.ModelAdmin):
         if not change:
             obj.usuario = request.user
         super().save_model(request, obj, form, change)
+
+
+@admin.register(TipoMensaje)
+class TipoMensajeAdmin(admin.ModelAdmin):
+    """
+    Admin para tipos de mensaje
+    """
+    list_display = ['nombre', 'color', 'orden', 'activo']
+    list_editable = ['orden', 'activo']
+    search_fields = ['nombre']
 
 
 @admin.register(Mensaje)
