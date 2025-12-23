@@ -7,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import resend
 import requests
-from .models import Pagina, Slider, Breve, Noticia, Galeria, Mensaje, Seccion, Ofrenda, DatosIce
+from .models import Pagina, Slider, Breve, Noticia, Galeria, TipoMensaje, Mensaje, Seccion, Ofrenda, DatosIce
 
 
 def verificar_recaptcha(token):
@@ -124,14 +124,14 @@ def mensajes_lista(request):
     """
     Vista para listar mensajes y videos con búsqueda
     """
-    tipo = request.GET.get('tipo', '')  # 1=Fundamentos, 2=Videos
+    tipo_id = request.GET.get('tipo', '')
     busqueda = request.GET.get('q', '')
 
-    mensajes = Mensaje.objects.filter(activo=True)
+    mensajes = Mensaje.objects.filter(activo=True).select_related('tipo')
 
     # Filtro por tipo
-    if tipo:
-        mensajes = mensajes.filter(tipo=tipo)
+    if tipo_id:
+        mensajes = mensajes.filter(tipo_id=tipo_id)
 
     # Búsqueda
     if busqueda:
@@ -148,9 +148,13 @@ def mensajes_lista(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    # Obtener tipos activos para el filtro
+    tipos = TipoMensaje.objects.filter(activo=True).order_by('orden')
+
     context = {
         'page_obj': page_obj,
-        'tipo': tipo,
+        'tipo_id': tipo_id,
+        'tipos': tipos,
         'busqueda': busqueda,
     }
     return render(request, 'contenido/mensajes_lista.html', context)

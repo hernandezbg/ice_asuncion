@@ -19,10 +19,11 @@
                     </form>
                 </div>
                 <div class="col-md-6">
-                    <div class="btn-group" role="group">
-                        <a href="?" class="btn {% if not tipo %}btn-primary{% else %}btn-outline-primary{% endif %}">Todos</a>
-                        <a href="?tipo=1" class="btn {% if tipo == '1' %}btn-primary{% else %}btn-outline-primary{% endif %}">Fundamentos</a>
-                        <a href="?tipo=2" class="btn {% if tipo == '2' %}btn-primary{% else %}btn-outline-primary{% endif %}">Videos</a>
+                    <div class="btn-group flex-wrap" role="group">
+                        <a href="?" class="btn {% if not tipo_id %}btn-primary{% else %}btn-outline-primary{% endif %}">Todos</a>
+                        {% for t in tipos %}
+                        <a href="?tipo={{ t.id }}" class="btn {% if tipo_id == t.id|stringformat:'d' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ t.nombre }}</a>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
@@ -38,11 +39,11 @@
                 <img src="{{ mensaje.imagen.url }}" class="card-img-top" alt="{{ mensaje.titulo }}" style="height: 180px; object-fit: cover;">
                 {% else %}
                 <div class="card-img-top bg-primary d-flex align-items-center justify-content-center" style="height: 180px;">
-                    <i class="bi bi-{% if mensaje.tipo == 2 %}play-circle{% else %}book{% endif %} text-white" style="font-size: 4rem;"></i>
+                    <i class="bi bi-mic text-white" style="font-size: 4rem;"></i>
                 </div>
                 {% endif %}
                 <div class="card-body">
-                    <span class="badge bg-secondary mb-2">{{ mensaje.get_tipo_display }}</span>
+                    <span class="badge {{ mensaje.tipo.color|default:'bg-secondary' }} mb-2">{{ mensaje.tipo.nombre|default:"-" }}</span>
                     <h5 class="card-title">{{ mensaje.titulo }}</h5>
                     <p class="text-muted small"><i class="bi bi-person"></i> {{ mensaje.autor }}</p>
                     <p class="card-text">{{ mensaje.introduccion|truncatewords:15 }}</p>
@@ -62,17 +63,17 @@
     <nav class="mt-5">
         <ul class="pagination justify-content-center">
             {% if page_obj.has_previous %}
-            <li class="page-item"><a class="page-link" href="?tipo={{ tipo }}&q={{ busqueda }}&page={{ page_obj.previous_page_number }}">Anterior</a></li>
+            <li class="page-item"><a class="page-link" href="?tipo={{ tipo_id }}&q={{ busqueda }}&page={{ page_obj.previous_page_number }}">Anterior</a></li>
             {% endif %}
             {% for num in page_obj.paginator.page_range %}
                 {% if page_obj.number == num %}
                 <li class="page-item active"><span class="page-link">{{ num }}</span></li>
                 {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                <li class="page-item"><a class="page-link" href="?tipo={{ tipo }}&q={{ busqueda }}&page={{ num }}">{{ num }}</a></li>
+                <li class="page-item"><a class="page-link" href="?tipo={{ tipo_id }}&q={{ busqueda }}&page={{ num }}">{{ num }}</a></li>
                 {% endif %}
             {% endfor %}
             {% if page_obj.has_next %}
-            <li class="page-item"><a class="page-link" href="?tipo={{ tipo }}&q={{ busqueda }}&page={{ page_obj.next_page_number }}">Siguiente</a></li>
+            <li class="page-item"><a class="page-link" href="?tipo={{ tipo_id }}&q={{ busqueda }}&page={{ page_obj.next_page_number }}">Siguiente</a></li>
             {% endif %}
         </ul>
     </nav>
