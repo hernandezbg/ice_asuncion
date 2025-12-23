@@ -499,7 +499,13 @@ def mensaje_crear(request):
             messages.success(request, f'Mensaje "{mensaje.titulo}" creado correctamente.')
             return redirect('panel:mensajes_lista')
         else:
-            messages.error(request, 'Error al crear el mensaje. Verifica los datos.')
+            # Mostrar errores específicos del formulario
+            errores = []
+            for field, errors in form.errors.items():
+                field_name = form.fields[field].label or field
+                for error in errors:
+                    errores.append(f"{field_name}: {error}")
+            messages.error(request, f'Error al crear el mensaje: {"; ".join(errores)}')
     return redirect('panel:mensajes_lista')
 
 
