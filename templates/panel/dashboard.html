@@ -138,7 +138,7 @@
             </div>
         </div>
 
-        <!-- Gráfico de Dones -->
+        <!-- Gráfico de Dones (barras) -->
         {% if estadisticas_dones %}
         <div class="card mt-3">
             <div class="card-header">
@@ -146,6 +146,18 @@
             </div>
             <div class="card-body">
                 <canvas id="donesChart" height="150"></canvas>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Gráfico de Dones y Talentos (dona) -->
+        {% if estadisticas_dones %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Dones y Talentos</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="donesDonutChart" height="200"></canvas>
             </div>
         </div>
         {% endif %}
@@ -321,7 +333,7 @@ new Chart(ctx, {
 });
 
 {% if estadisticas_dones %}
-// Gráfico de dones
+// Gráfico de dones (barras)
 const ctxDones = document.getElementById('donesChart').getContext('2d');
 new Chart(ctxDones, {
     type: 'bar',
@@ -371,6 +383,85 @@ new Chart(ctxDones, {
                 beginAtZero: true,
                 ticks: {
                     stepSize: 1
+                }
+            }
+        }
+    }
+});
+
+// Gráfico de dones y talentos (dona con porcentajes)
+const ctxDonut = document.getElementById('donesDonutChart').getContext('2d');
+const donesData = [{% for item in estadisticas_dones %}{{ item.count }}{% if not forloop.last %},{% endif %}{% endfor %}];
+const donesLabels = [{% for item in estadisticas_dones %}'{{ item.nombre }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+const totalDones = donesData.reduce((a, b) => a + b, 0);
+
+new Chart(ctxDonut, {
+    type: 'doughnut',
+    data: {
+        labels: donesLabels,
+        datasets: [{
+            data: donesData,
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.8)',
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(255, 206, 86, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(153, 102, 255, 0.8)',
+                'rgba(255, 159, 64, 0.8)',
+                'rgba(199, 199, 199, 0.8)',
+                'rgba(83, 102, 255, 0.8)',
+                'rgba(255, 99, 255, 0.8)',
+                'rgba(99, 255, 132, 0.8)'
+            ],
+            borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)',
+                'rgba(199, 199, 199, 1)',
+                'rgba(83, 102, 255, 1)',
+                'rgba(255, 99, 255, 1)',
+                'rgba(99, 255, 132, 1)'
+            ],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: {
+                    generateLabels: function(chart) {
+                        const data = chart.data;
+                        if (data.labels.length && data.datasets.length) {
+                            return data.labels.map((label, i) => {
+                                const value = data.datasets[0].data[i];
+                                const percentage = ((value / totalDones) * 100).toFixed(1);
+                                return {
+                                    text: `${label}: ${percentage}%`,
+                                    fillStyle: data.datasets[0].backgroundColor[i],
+                                    strokeStyle: data.datasets[0].borderColor[i],
+                                    lineWidth: 2,
+                                    hidden: false,
+                                    index: i
+                                };
+                            });
+                        }
+                        return [];
+                    }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const value = context.parsed;
+                        const percentage = ((value / totalDones) * 100).toFixed(1);
+                        return `${context.label}: ${value} (${percentage}%)`;
+                    }
                 }
             }
         }
