@@ -393,7 +393,7 @@ new Chart(ctxDones, {
 const ctxDonut = document.getElementById('donesDonutChart').getContext('2d');
 const donesData = [{% for item in estadisticas_dones %}{{ item.count }}{% if not forloop.last %},{% endif %}{% endfor %}];
 const donesLabels = [{% for item in estadisticas_dones %}'{{ item.nombre }}'{% if not forloop.last %},{% endif %}{% endfor %}];
-const totalHermanosConDonesConDones = {{ hermanos_con_dones }};
+const totalHermanosConDones = {{ hermanos_con_dones|default:1 }};
 
 new Chart(ctxDonut, {
     type: 'doughnut',
