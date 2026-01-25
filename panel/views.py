@@ -79,6 +79,9 @@ def dashboard(request):
     # Ordenar por cantidad descendente
     estadisticas_dones.sort(key=lambda x: x['count'], reverse=True)
 
+    # Total de hermanos con al menos un don cargado
+    hermanos_con_dones = Hermano.objects.filter(activo=True, dones__isnull=False).distinct().count()
+
     # Estadísticas de visitas por ubicación (último mes)
     visitas_por_pais = Visita.objects.filter(
         fecha__gte=hace_30_dias,
@@ -102,6 +105,7 @@ def dashboard(request):
         'ultimas_noticias': ultimas_noticias,
         'cumpleaños_mes': cumpleaños_mes,
         'estadisticas_dones': estadisticas_dones,
+        'hermanos_con_dones': hermanos_con_dones,
         'visitas_por_pais': visitas_por_pais,
         'visitas_por_region': visitas_por_region,
         'visitas_por_ciudad': visitas_por_ciudad,

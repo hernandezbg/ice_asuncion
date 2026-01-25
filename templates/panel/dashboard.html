@@ -393,7 +393,7 @@ new Chart(ctxDones, {
 const ctxDonut = document.getElementById('donesDonutChart').getContext('2d');
 const donesData = [{% for item in estadisticas_dones %}{{ item.count }}{% if not forloop.last %},{% endif %}{% endfor %}];
 const donesLabels = [{% for item in estadisticas_dones %}'{{ item.nombre }}'{% if not forloop.last %},{% endif %}{% endfor %}];
-const totalHermanos = {{ total_hermanos }};
+const totalHermanosConDonesConDones = {{ hermanos_con_dones }};
 
 new Chart(ctxDonut, {
     type: 'doughnut',
@@ -445,7 +445,7 @@ new Chart(ctxDonut, {
                         if (data.labels.length && data.datasets.length) {
                             return data.labels.map((label, i) => {
                                 const value = data.datasets[0].data[i];
-                                const percentage = ((value / totalHermanos) * 100).toFixed(1);
+                                const percentage = ((value / totalHermanosConDones) * 100).toFixed(1);
                                 return {
                                     text: `${label}: ${percentage}%`,
                                     fillStyle: data.datasets[0].backgroundColor[i],
@@ -464,7 +464,7 @@ new Chart(ctxDonut, {
                 callbacks: {
                     label: function(context) {
                         const value = context.parsed;
-                        const percentage = ((value / totalHermanos) * 100).toFixed(1);
+                        const percentage = ((value / totalHermanosConDones) * 100).toFixed(1);
                         return `${context.label}: ${value} (${percentage}%)`;
                     }
                 }
