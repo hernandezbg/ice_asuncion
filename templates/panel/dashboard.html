@@ -156,8 +156,8 @@
             <div class="card-header">
                 <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Dones y Talentos</h5>
             </div>
-            <div class="card-body">
-                <canvas id="donesDonutChart" height="200"></canvas>
+            <div class="card-body d-flex justify-content-center" style="max-height: 300px;">
+                <canvas id="donesDonutChart" style="max-width: 400px; max-height: 280px;"></canvas>
             </div>
         </div>
         {% endif %}
@@ -430,11 +430,16 @@ new Chart(ctxDonut, {
     },
     options: {
         responsive: true,
-        maintainAspectRatio: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
-                position: 'right',
+                position: 'bottom',
                 labels: {
+                    boxWidth: 12,
+                    padding: 8,
+                    font: {
+                        size: 11
+                    },
                     generateLabels: function(chart) {
                         const data = chart.data;
                         if (data.labels.length && data.datasets.length) {
