@@ -48,6 +48,21 @@
         50% { opacity: 0.7; }
     }
 
+    .qr-container {
+        display: flex;
+        justify-content: center;
+        margin: 1rem 0;
+    }
+
+    .qr-image {
+        width: 150px;
+        height: 150px;
+        border-radius: 8px;
+        background: white;
+        padding: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
     .presenter-container {
         display: grid;
         grid-template-columns: 1fr 350px;
@@ -375,6 +390,9 @@
         <div class="info-card">
             <h6><i class="bi bi-qr-code me-2"></i>Codigo de Acceso</h6>
             <div class="codigo-display">{{ encuesta.codigo }}</div>
+            <div class="qr-container">
+                <img id="qr-code" src="" alt="QR Code" class="qr-image">
+            </div>
             <div class="url-display">{{ request.scheme }}://{{ request.get_host }}/encuestas/{{ encuesta.codigo }}/</div>
         </div>
 
@@ -663,10 +681,21 @@
             });
     }
 
+    // Generar QR Code
+    function generarQR() {
+        const url = '{{ request.scheme }}://{{ request.get_host }}/encuestas/{{ encuesta.codigo }}/';
+        const qrImg = document.getElementById('qr-code');
+        if (qrImg) {
+            // Usar API de QR Server (gratuita, sin límites)
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}`;
+        }
+    }
+
     // Inicializar
     document.addEventListener('DOMContentLoaded', function() {
         initChart();
         poll();
+        generarQR();
 
         // Mostrar gráfico si ya estaba mostrando resultados
         if (mostrandoResultados) {
