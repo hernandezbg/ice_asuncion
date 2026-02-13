@@ -516,6 +516,15 @@ def panel_poll(request, encuesta_id):
                     estadisticas = pregunta_actual.estadisticas()
                     respuestas_pregunta = Respuesta.objects.filter(pregunta=pregunta_actual).count()
 
+    # Lista de participantes con estado de conexión
+    participantes_lista = []
+    for p in encuesta.participantes.order_by('-creado')[:20]:  # Últimos 20
+        participantes_lista.append({
+            'nombre': p.nombre,
+            'conectado': p.ultima_actividad >= limite,
+            'session_id': str(p.session_id)[:8]  # Para generar avatar único
+        })
+
     return JsonResponse({
         'estado': encuesta.estado,
         'pregunta_actual': encuesta.pregunta_actual,
@@ -526,7 +535,8 @@ def panel_poll(request, encuesta_id):
         'respuestas_pregunta': respuestas_pregunta,
         'estadisticas': estadisticas,
         'todos_respondieron': todos_respondieron,
-        'avanzo_automatico': avanzo_automatico
+        'avanzo_automatico': avanzo_automatico,
+        'participantes': participantes_lista
     })
 
 
