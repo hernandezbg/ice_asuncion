@@ -576,16 +576,12 @@
         })
         .then(r => r.json())
         .then(data => {
-            if (data.es_ultima) {
+            if (data.success) {
+                // Recargar para obtener nueva pregunta
+                location.reload();
+            } else if (data.es_ultima) {
                 document.getElementById('btn-siguiente').disabled = true;
             }
-            document.getElementById('btn-anterior').disabled = false;
-
-            // Reset UI
-            document.querySelectorAll('.option-box').forEach(box => {
-                box.classList.remove('correct');
-            });
-            document.getElementById('btn-respuesta').innerHTML = '<i class="bi bi-eye-fill"></i> Mostrar Respuesta';
         });
     }
 
@@ -596,10 +592,12 @@
         })
         .then(r => r.json())
         .then(data => {
-            if (data.es_primera) {
+            if (data.success) {
+                // Recargar para obtener pregunta anterior
+                location.reload();
+            } else if (data.es_primera) {
                 document.getElementById('btn-anterior').disabled = true;
             }
-            document.getElementById('btn-siguiente').disabled = false;
         });
     }
 
