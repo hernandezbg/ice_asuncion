@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado - {{ encuesta.titulo }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .result-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .result-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-header .participant-name {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 2rem auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .score-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #1e293b;
+            line-height: 1;
+        }
+
+        .score-label {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .interpretation {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .interpretation.success { background: #dcfce7; color: #166534; }
+        .interpretation.primary { background: #dbeafe; color: #1e40af; }
+        .interpretation.warning { background: #fef3c7; color: #92400e; }
+        .interpretation.orange { background: #ffedd5; color: #9a3412; }
+        .interpretation.danger { background: #fee2e2; color: #991b1b; }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .response-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+        }
+
+        .response-question {
+            flex: 1;
+            padding-right: 1rem;
+        }
+
+        .response-question small {
+            color: #64748b;
+            font-size: 0.75rem;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .response-question span {
+            font-size: 0.9rem;
+            color: #1e293b;
+        }
+
+        .response-value {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 50px;
+        }
+
+        .response-value .number {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            font-weight: 700;
+        }
+
+        .response-value .label {
+            font-size: 0.7rem;
+            color: #64748b;
+            text-align: center;
+            margin-top: 0.25rem;
+            max-width: 80px;
+        }
+
+        .thank-you {
+            text-align: center;
+            padding: 1.5rem;
+            color: white;
+        }
+
+        .thank-you i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="result-header">
+                <i class="bi bi-trophy-fill" style="font-size: 3rem;"></i>
+                <h1>{{ encuesta.titulo }}</h1>
+                <p>Encuesta finalizada</p>
+                <div class="participant-name">
+                    <i class="bi bi-person-fill me-2"></i>{{ participante.nombre }}
+                </div>
+            </div>
+
+            <div class="card-body text-center">
+                <div class="score-circle">
+                    <span class="score-value">{{ resultado.porcentaje }}%</span>
+                    <span class="score-label">Puntaje</span>
+                </div>
+
+                <div class="interpretation {{ interpretacion.color }}">
+                    <i class="bi bi-{{ interpretacion.icono }} me-2"></i>
+                    {{ interpretacion.nivel }}
+                </div>
+
+                <p class="text-muted mb-0">
+                    Promedio: <strong>{{ resultado.promedio }}</strong> de 5
+                </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h6 class="mb-3 text-muted">
+                    <i class="bi bi-list-check me-2"></i>Tus respuestas
+                </h6>
+                {% for item in respuestas %}
+                <div class="response-item">
+                    <div class="response-question">
+                        <small>Pregunta {{ forloop.counter }}</small>
+                        <span>{{ item.pregunta.texto|truncatechars:60 }}</span>
+                    </div>
+                    <div class="response-value">
+                        {% if item.respuesta %}
+                        <span class="number">{{ item.respuesta.valor }}</span>
+                        <span class="label">{{ item.etiqueta|truncatechars:20 }}</span>
+                        {% else %}
+                        <span class="number" style="background: #e2e8f0; color: #64748b;">-</span>
+                        <span class="label">Sin responder</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="thank-you">
+            <i class="bi bi-heart-fill"></i>
+            <p>Gracias por participar en esta encuesta.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ encuesta.titulo }} - Responder</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            padding: 1rem 0;
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .progress {
+            height: 8px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .progress-bar {
+            background: white;
+            border-radius: 10px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-top: 1rem;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .question-number {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .option-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .option-btn:hover:not(.disabled) {
+            border-color: #667eea;
+            background: #f0f5ff;
+            transform: translateX(5px);
+        }
+
+        .option-btn.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .option-btn.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .option-number {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e2e8f0;
+            color: #64748b;
+            border-radius: 50%;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .option-btn.selected .option-number {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .option-text {
+            font-size: 0.95rem;
+            line-height: 1.3;
+        }
+
+        .waiting-response {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .waiting-response i {
+            font-size: 4rem;
+            color: #22c55e;
+        }
+
+        .waiting-response h3 {
+            color: #1e293b;
+            margin: 1rem 0 0.5rem;
+        }
+
+        .waiting-response p {
+            color: #64748b;
+        }
+
+        .participant-info {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{ encuesta.titulo }}</h1>
+            <div class="progress-info">
+                <span>{{ participante.nombre }}</span>
+                <span id="progress-text">Pregunta {{ pregunta_num }} de {{ total_preguntas }}</span>
+            </div>
+            <div class="progress">
+                <div class="progress-bar" id="progress-bar" style="width: {{ pregunta_num|divisibleby:total_preguntas }}%"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body" id="question-container">
+                {% if pregunta %}
+                    {% if ya_respondio %}
+                    <div class="waiting-response">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <h3>Respuesta enviada</h3>
+                        <p>Esperando la siguiente pregunta...</p>
+                    </div>
+                    {% else %}
+                    <div class="question-number">
+                        Pregunta {{ pregunta_num }} de {{ total_preguntas }}
+                    </div>
+                    <p class="question-text" id="question-text">{{ pregunta.texto }}</p>
+
+                    <div class="options-container" id="options-container">
+                        {% for value in "12345" %}
+                        <button class="option-btn" data-value="{{ value }}" onclick="selectOption(this, {{ value }})">
+                            <span class="option-number">{{ value }}</span>
+                            <span class="option-text">
+                                {% if value == "1" %}{{ pregunta.etiqueta_1 }}
+                                {% elif value == "2" %}{{ pregunta.etiqueta_2 }}
+                                {% elif value == "3" %}{{ pregunta.etiqueta_3 }}
+                                {% elif value == "4" %}{{ pregunta.etiqueta_4 }}
+                                {% else %}{{ pregunta.etiqueta_5 }}{% endif %}
+                            </span>
+                        </button>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                {% else %}
+                <div class="waiting-response">
+                    <i class="bi bi-hourglass-split" style="color: #f59e0b;"></i>
+                    <h3>Esperando...</h3>
+                    <p>El presentador esta preparando la siguiente pregunta.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="participant-info">
+        <i class="bi bi-broadcast me-1"></i> En vivo
+    </div>
+
+    <script>
+        let currentQuestion = {{ encuesta.pregunta_actual }};
+        let isAnswered = {% if ya_respondio %}true{% else %}false{% endif %};
+        const csrfToken = '{{ csrf_token }}';
+        const sessionId = '{{ participante.session_id }}';
+
+        function selectOption(btn, value) {
+            if (btn.classList.contains('disabled') || isAnswered) return;
+
+            // Deshabilitar todos los botones
+            document.querySelectorAll('.option-btn').forEach(b => {
+                b.classList.add('disabled');
+            });
+            btn.classList.add('selected');
+
+            // Enviar respuesta
+            fetch('{% url "encuestas:responder" session_id=participante.session_id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: `valor=${value}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    isAnswered = true;
+                    showWaiting();
+                } else {
+                    alert(data.error || 'Error al enviar respuesta');
+                    document.querySelectorAll('.option-btn').forEach(b => {
+                        b.classList.remove('disabled', 'selected');
+                    });
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                document.querySelectorAll('.option-btn').forEach(b => {
+                    b.classList.remove('disabled', 'selected');
+                });
+            });
+        }
+
+        function showWaiting() {
+            document.getElementById('question-container').innerHTML = `
+                <div class="waiting-response">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <h3>Respuesta enviada</h3>
+                    <p>Esperando la siguiente pregunta...</p>
+                </div>
+            `;
+        }
+
+        function updateQuestion(data) {
+            if (data.estado === 'finalizada') {
+                window.location.href = '{% url "encuestas:resultado_participante" session_id=participante.session_id %}';
+                return;
+            }
+
+            if (data.estado !== 'en_vivo') {
+                return;
+            }
+
+            if (data.pregunta_actual !== currentQuestion) {
+                currentQuestion = data.pregunta_actual;
+                isAnswered = data.pregunta ? data.pregunta.ya_respondio : false;
+
+                // Actualizar progreso
+                const progress = ((currentQuestion + 1) / data.total_preguntas) * 100;
+                document.getElementById('progress-bar').style.width = progress + '%';
+                document.getElementById('progress-text').textContent = `Pregunta ${currentQuestion + 1} de ${data.total_preguntas}`;
+
+                if (data.pregunta && !isAnswered) {
+                    // Mostrar nueva pregunta
+                    let optionsHtml = '';
+                    for (let i = 0; i < 5; i++) {
+                        optionsHtml += `
+                            <button class="option-btn" data-value="${i + 1}" onclick="selectOption(this, ${i + 1})">
+                                <span class="option-number">${i + 1}</span>
+                                <span class="option-text">${data.pregunta.etiquetas[i]}</span>
+                            </button>
+                        `;
+                    }
+
+                    document.getElementById('question-container').innerHTML = `
+                        <div class="question-number">
+                            Pregunta ${currentQuestion + 1} de ${data.total_preguntas}
+                        </div>
+                        <p class="question-text" id="question-text">${data.pregunta.texto}</p>
+                        <div class="options-container" id="options-container">
+                            ${optionsHtml}
+                        </div>
+                    `;
+                } else if (isAnswered) {
+                    showWaiting();
+                }
+            }
+        }
+
+        // Long polling
+        function poll() {
+            fetch('{% url "encuestas:poll_participante" session_id=participante.session_id %}')
+                .then(response => response.json())
+                .then(data => {
+                    updateQuestion(data);
+                    setTimeout(poll, 1500);
+                })
+                .catch(err => {
+                    console.error(err);
+                    setTimeout(poll, 3000);
+                });
+        }
+
+        poll();
+    </script>
+</body>
+</html>

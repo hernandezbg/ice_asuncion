@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encuesta no disponible</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .card-body {
+            padding: 3rem 2rem;
+        }
+
+        .icon {
+            font-size: 4rem;
+            color: #f59e0b;
+        }
+
+        h2 {
+            color: #1e293b;
+            margin: 1rem 0;
+        }
+
+        p {
+            color: #64748b;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        .status-badge.borrador {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .status-badge.finalizada {
+            background: #dcfce7;
+            color: #166534;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-body">
+            {% if encuesta.estado == 'borrador' %}
+            <i class="bi bi-file-earmark-text icon"></i>
+            <h2>Encuesta en preparacion</h2>
+            <p>Esta encuesta aun no esta disponible para participantes.</p>
+            <div class="status-badge borrador">
+                <i class="bi bi-pencil me-1"></i> Borrador
+            </div>
+            {% elif encuesta.estado == 'finalizada' %}
+            <i class="bi bi-check-circle icon" style="color: #22c55e;"></i>
+            <h2>Encuesta finalizada</h2>
+            <p>Esta encuesta ya ha terminado y no acepta mas participantes.</p>
+            <div class="status-badge finalizada">
+                <i class="bi bi-check me-1"></i> Finalizada
+            </div>
+            {% else %}
+            <i class="bi bi-exclamation-triangle icon"></i>
+            <h2>Encuesta no disponible</h2>
+            <p>Esta encuesta no esta disponible en este momento.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

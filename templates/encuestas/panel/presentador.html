@@ -1,0 +1,585 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block title %}Presentador - {{ encuesta.titulo }}{% endblock %}
+
+{% block page_title %}{{ encuesta.titulo }}{% endblock %}
+{% block page_subtitle %}Vista del presentador{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .presenter-container {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 1.5rem;
+    }
+
+    @media (max-width: 992px) {
+        .presenter-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .main-panel {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 2rem;
+    }
+
+    .side-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .info-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 1.25rem;
+    }
+
+    .info-card h6 {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 0.75rem;
+    }
+
+    .codigo-display {
+        font-family: monospace;
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: 0.3em;
+        text-align: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .url-display {
+        font-size: 0.8rem;
+        color: #64748b;
+        text-align: center;
+        word-break: break-all;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .stat-box {
+        text-align: center;
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 10px;
+    }
+
+    .stat-box .value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .stat-box .label {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .status-badge.waiting {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-badge.live {
+        background: #dcfce7;
+        color: #166534;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    .question-display {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .question-number {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .question-text {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 2rem;
+    }
+
+    .chart-container {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .control-buttons {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+
+    .btn-control {
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-control:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-control.primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-control.primary:hover:not(:disabled) {
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-control.success {
+        background: #22c55e;
+        color: white;
+    }
+
+    .btn-control.success:hover:not(:disabled) {
+        background: #16a34a;
+    }
+
+    .btn-control.secondary {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .btn-control.secondary:hover:not(:disabled) {
+        background: #e2e8f0;
+    }
+
+    .btn-control.danger {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-control.danger:hover:not(:disabled) {
+        background: #dc2626;
+    }
+
+    .waiting-screen {
+        text-align: center;
+        padding: 3rem;
+    }
+
+    .waiting-screen i {
+        font-size: 4rem;
+        color: #667eea;
+    }
+
+    .waiting-screen h3 {
+        color: #1e293b;
+        margin: 1rem 0;
+    }
+
+    .waiting-screen p {
+        color: #64748b;
+    }
+
+    .response-counter {
+        text-align: center;
+        margin: 1rem 0;
+    }
+
+    .response-counter .count {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #22c55e;
+    }
+
+    .response-counter .total {
+        color: #64748b;
+    }
+
+    .participants-list {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .participant-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .participant-item:last-child {
+        border-bottom: none;
+    }
+
+    .participant-name {
+        font-weight: 500;
+        color: #1e293b;
+    }
+
+    .participant-status {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #22c55e;
+    }
+
+    .participant-status.offline {
+        background: #e2e8f0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="presenter-container">
+    <div class="main-panel">
+        <div id="main-content">
+            {% if encuesta.estado == 'activa' %}
+            <div class="waiting-screen">
+                <i class="bi bi-people-fill"></i>
+                <h3>Esperando participantes</h3>
+                <p>Los participantes pueden unirse con el codigo de arriba.</p>
+                <p class="mt-3">
+                    <span class="status-badge waiting">
+                        <i class="bi bi-hourglass-split me-1"></i>
+                        <span id="participants-count">0</span> participantes conectados
+                    </span>
+                </p>
+                <div class="control-buttons">
+                    <button class="btn-control success" onclick="iniciarEncuesta()" id="btn-iniciar">
+                        <i class="bi bi-play-fill"></i> Iniciar Encuesta
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <div class="question-display" id="question-display">
+                <div class="question-number" id="question-number">
+                    Pregunta <span id="current-num">{{ encuesta.pregunta_actual|add:1 }}</span> de {{ encuesta.total_preguntas }}
+                </div>
+                <div class="question-text" id="question-text">
+                    {% if encuesta.pregunta_actual_obj %}
+                    {{ encuesta.pregunta_actual_obj.texto }}
+                    {% endif %}
+                </div>
+
+                <div class="response-counter">
+                    <span class="count" id="response-count">0</span>
+                    <span class="total">/ <span id="total-participants">{{ encuesta.total_participantes }}</span> respuestas</span>
+                </div>
+
+                <div class="chart-container" id="chart-container" style="display: none;">
+                    <canvas id="resultsChart"></canvas>
+                </div>
+
+                <div class="control-buttons">
+                    <button class="btn-control secondary" onclick="anteriorPregunta()" id="btn-anterior" {% if encuesta.pregunta_actual == 0 %}disabled{% endif %}>
+                        <i class="bi bi-chevron-left"></i> Anterior
+                    </button>
+                    <button class="btn-control primary" onclick="toggleResultados()" id="btn-resultados">
+                        <i class="bi bi-bar-chart-fill"></i> <span id="btn-resultados-text">Mostrar Resultados</span>
+                    </button>
+                    <button class="btn-control success" onclick="siguientePregunta()" id="btn-siguiente" {% if encuesta.pregunta_actual >= encuesta.total_preguntas|add:"-1" %}disabled{% endif %}>
+                        Siguiente <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <button class="btn-control danger" onclick="finalizarEncuesta()" id="btn-finalizar">
+                        <i class="bi bi-stop-fill"></i> Finalizar
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="side-panel">
+        <div class="info-card">
+            <h6><i class="bi bi-qr-code me-2"></i>Codigo de Acceso</h6>
+            <div class="codigo-display">{{ encuesta.codigo }}</div>
+            <div class="url-display">{{ request.scheme }}://{{ request.get_host }}/encuestas/{{ encuesta.codigo }}/</div>
+        </div>
+
+        <div class="info-card">
+            <h6><i class="bi bi-graph-up me-2"></i>Estadisticas</h6>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="value" id="stat-conectados">0</div>
+                    <div class="label">Conectados</div>
+                </div>
+                <div class="stat-box">
+                    <div class="value" id="stat-total">{{ encuesta.total_participantes }}</div>
+                    <div class="label">Total</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h6><i class="bi bi-people me-2"></i>Participantes</h6>
+            <div class="participants-list" id="participants-list">
+                <p class="text-muted text-center small">Cargando...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const encuestaId = {{ encuesta.id }};
+    const csrfToken = '{{ csrf_token }}';
+    let chart = null;
+    let estado = '{{ encuesta.estado }}';
+    let mostrandoResultados = {{ encuesta.mostrar_resultados|yesno:"true,false" }};
+
+    // Inicializar Chart.js
+    function initChart() {
+        const ctx = document.getElementById('resultsChart');
+        if (!ctx) return;
+
+        chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['1', '2', '3', '4', '5'],
+                datasets: [{
+                    label: 'Respuestas',
+                    data: [0, 0, 0, 0, 0],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(249, 115, 22, 0.8)',
+                        'rgba(234, 179, 8, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(16, 185, 129, 0.8)'
+                    ],
+                    borderRadius: 8,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateChart(distribucion) {
+        if (chart) {
+            chart.data.datasets[0].data = [
+                distribucion[1] || 0,
+                distribucion[2] || 0,
+                distribucion[3] || 0,
+                distribucion[4] || 0,
+                distribucion[5] || 0
+            ];
+            chart.update();
+        }
+    }
+
+    function iniciarEncuesta() {
+        fetch(`/encuestas/panel/${encuestaId}/presentador/iniciar/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                estado = 'en_vivo';
+                location.reload();
+            } else {
+                alert(data.error || 'Error al iniciar');
+            }
+        });
+    }
+
+    function siguientePregunta() {
+        fetch(`/encuestas/panel/${encuestaId}/presentador/siguiente/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.es_ultima) {
+                document.getElementById('btn-siguiente').disabled = true;
+            }
+            document.getElementById('btn-anterior').disabled = false;
+
+            // Ocultar resultados al cambiar pregunta
+            mostrandoResultados = false;
+            document.getElementById('chart-container').style.display = 'none';
+            document.getElementById('btn-resultados-text').textContent = 'Mostrar Resultados';
+        });
+    }
+
+    function anteriorPregunta() {
+        fetch(`/encuestas/panel/${encuestaId}/presentador/anterior/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.es_primera) {
+                document.getElementById('btn-anterior').disabled = true;
+            }
+            document.getElementById('btn-siguiente').disabled = false;
+
+            // Ocultar resultados al cambiar pregunta
+            mostrandoResultados = false;
+            document.getElementById('chart-container').style.display = 'none';
+            document.getElementById('btn-resultados-text').textContent = 'Mostrar Resultados';
+        });
+    }
+
+    function toggleResultados() {
+        fetch(`/encuestas/panel/${encuestaId}/presentador/mostrar-resultados/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            mostrandoResultados = data.mostrar_resultados;
+            const chartContainer = document.getElementById('chart-container');
+            const btnText = document.getElementById('btn-resultados-text');
+
+            if (mostrandoResultados) {
+                chartContainer.style.display = 'block';
+                btnText.textContent = 'Ocultar Resultados';
+            } else {
+                chartContainer.style.display = 'none';
+                btnText.textContent = 'Mostrar Resultados';
+            }
+        });
+    }
+
+    function finalizarEncuesta() {
+        if (!confirm('¿Seguro que quieres finalizar la encuesta?')) return;
+
+        fetch(`/encuestas/panel/${encuestaId}/presentador/finalizar/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = `/encuestas/panel/${encuestaId}/resultados/`;
+            }
+        });
+    }
+
+    function poll() {
+        fetch(`/encuestas/panel/${encuestaId}/presentador/poll/`)
+            .then(r => r.json())
+            .then(data => {
+                // Actualizar estadísticas
+                document.getElementById('stat-conectados').textContent = data.participantes_conectados;
+                document.getElementById('stat-total').textContent = data.total_participantes;
+
+                if (document.getElementById('participants-count')) {
+                    document.getElementById('participants-count').textContent = data.participantes_conectados;
+                }
+
+                if (document.getElementById('total-participants')) {
+                    document.getElementById('total-participants').textContent = data.total_participantes;
+                }
+
+                if (document.getElementById('response-count')) {
+                    document.getElementById('response-count').textContent = data.respuestas_pregunta;
+                }
+
+                // Actualizar número de pregunta
+                if (document.getElementById('current-num')) {
+                    document.getElementById('current-num').textContent = data.pregunta_actual + 1;
+                }
+
+                // Actualizar gráfico si hay estadísticas
+                if (data.estadisticas && chart) {
+                    updateChart(data.estadisticas.distribucion);
+                }
+
+                // Actualizar botones de navegación
+                if (document.getElementById('btn-anterior')) {
+                    document.getElementById('btn-anterior').disabled = data.pregunta_actual === 0;
+                }
+                if (document.getElementById('btn-siguiente')) {
+                    document.getElementById('btn-siguiente').disabled = data.pregunta_actual >= data.total_preguntas - 1;
+                }
+
+                setTimeout(poll, 1500);
+            })
+            .catch(err => {
+                console.error(err);
+                setTimeout(poll, 3000);
+            });
+    }
+
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', function() {
+        initChart();
+        poll();
+
+        // Mostrar gráfico si ya estaba mostrando resultados
+        if (mostrandoResultados) {
+            document.getElementById('chart-container').style.display = 'block';
+            document.getElementById('btn-resultados-text').textContent = 'Ocultar Resultados';
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,382 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block title %}Resultados - {{ encuesta.titulo }}{% endblock %}
+
+{% block page_title %}Resultados: {{ encuesta.titulo }}{% endblock %}
+{% block page_subtitle %}Resumen final de la encuesta{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-action {
+        padding: 0.625rem 1.25rem;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-action.primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-action.secondary {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .general-score-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        color: white;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .score-circle {
+        width: 150px;
+        height: 150px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .score-value {
+        font-size: 3rem;
+        font-weight: 800;
+        color: #1e293b;
+        line-height: 1;
+    }
+
+    .score-label {
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+
+    .interpretation-badge {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.75rem 2rem;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .general-stats {
+        display: flex;
+        justify-content: center;
+        gap: 3rem;
+        flex-wrap: wrap;
+    }
+
+    .general-stat {
+        text-align: center;
+    }
+
+    .general-stat .value {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .general-stat .label {
+        opacity: 0.8;
+        font-size: 0.875rem;
+    }
+
+    .questions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .question-result-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 1.5rem;
+    }
+
+    .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .question-number {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .question-score {
+        text-align: right;
+    }
+
+    .question-score .percentage {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .question-score .average {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .question-text {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 1rem;
+        padding-left: 2.5rem;
+    }
+
+    .mini-chart {
+        height: 100px;
+    }
+
+    .interpretation-mini {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .interpretation-mini.success { background: #dcfce7; color: #166534; }
+    .interpretation-mini.primary { background: #dbeafe; color: #1e40af; }
+    .interpretation-mini.warning { background: #fef3c7; color: #92400e; }
+    .interpretation-mini.orange { background: #ffedd5; color: #9a3412; }
+    .interpretation-mini.danger { background: #fee2e2; color: #991b1b; }
+
+    .participants-section {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 1.5rem;
+    }
+
+    .participants-section h4 {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+    }
+
+    .participants-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .participants-table th {
+        text-align: left;
+        padding: 0.75rem;
+        background: #f8fafc;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+
+    .participants-table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .participants-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .participant-score {
+        font-weight: 700;
+        color: #1e293b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="results-header">
+    <a href="{% url 'encuestas:panel_lista' %}" class="btn-action secondary">
+        <i class="bi bi-arrow-left"></i> Volver
+    </a>
+    <div class="header-actions">
+        <a href="{% url 'encuestas:panel_exportar' encuesta_id=encuesta.id %}" class="btn-action primary">
+            <i class="bi bi-download"></i> Exportar CSV
+        </a>
+    </div>
+</div>
+
+<div class="general-score-card">
+    <div class="score-circle">
+        <span class="score-value">{{ porcentaje_general }}%</span>
+        <span class="score-label">Puntaje</span>
+    </div>
+    <div class="interpretation-badge">
+        <i class="bi bi-{{ interpretacion_general.icono }} me-2"></i>
+        {{ interpretacion_general.nivel }}
+    </div>
+    <p style="opacity: 0.9; margin-bottom: 1.5rem;">
+        Promedio general: <strong>{{ promedio_general }}</strong> de 5
+    </p>
+    <div class="general-stats">
+        <div class="general-stat">
+            <div class="value">{{ encuesta.total_preguntas }}</div>
+            <div class="label">Preguntas</div>
+        </div>
+        <div class="general-stat">
+            <div class="value">{{ participantes|length }}</div>
+            <div class="label">Participantes</div>
+        </div>
+    </div>
+</div>
+
+<h4 class="mb-3"><i class="bi bi-list-check me-2"></i>Resultados por Pregunta</h4>
+<div class="questions-grid">
+    {% for item in resultados_preguntas %}
+    <div class="question-result-card">
+        <div class="question-header">
+            <div class="question-number">{{ forloop.counter }}</div>
+            <div class="question-score">
+                <div class="percentage">{{ item.porcentaje }}%</div>
+                <div class="average">Promedio: {{ item.promedio }}/5</div>
+            </div>
+        </div>
+        <div class="question-text">{{ item.pregunta.texto }}</div>
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="interpretation-mini {{ item.interpretacion.color }}">
+                <i class="bi bi-{{ item.interpretacion.icono }} me-1"></i>
+                {{ item.interpretacion.nivel }}
+            </span>
+            <span class="text-muted small">{{ item.total }} respuestas</span>
+        </div>
+        <div class="mini-chart mt-3">
+            <canvas id="chart-{{ forloop.counter }}"></canvas>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="participants-section">
+    <h4><i class="bi bi-people me-2"></i>Participantes</h4>
+    <div class="table-responsive">
+        <table class="participants-table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Promedio</th>
+                    <th>Porcentaje</th>
+                    <th>Nivel</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in participantes %}
+                <tr>
+                    <td>{{ item.participante.nombre }}</td>
+                    <td class="participant-score">{{ item.resultado.promedio }}/5</td>
+                    <td class="participant-score">{{ item.resultado.porcentaje }}%</td>
+                    <td>
+                        <span class="interpretation-mini {{ item.interpretacion.color }}">
+                            {{ item.interpretacion.nivel }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted">No hay participantes</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Datos de distribución por pregunta
+    const questionsData = [
+        {% for item in resultados_preguntas %}
+        {
+            labels: ['1', '2', '3', '4', '5'],
+            data: [
+                {{ item.distribucion.1 }},
+                {{ item.distribucion.2 }},
+                {{ item.distribucion.3 }},
+                {{ item.distribucion.4 }},
+                {{ item.distribucion.5 }}
+            ]
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    // Crear mini charts
+    questionsData.forEach((qData, index) => {
+        const ctx = document.getElementById(`chart-${index + 1}`);
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: qData.labels,
+                    datasets: [{
+                        data: qData.data,
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(249, 115, 22, 0.8)',
+                            'rgba(234, 179, 8, 0.8)',
+                            'rgba(34, 197, 94, 0.8)',
+                            'rgba(16, 185, 129, 0.8)'
+                        ],
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

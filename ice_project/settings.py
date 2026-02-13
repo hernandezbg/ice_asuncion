@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'miembros',
     'panel',
     'chat',
+    'encuestas',
 ]
 
 MIDDLEWARE = [

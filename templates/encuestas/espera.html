@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esperando - {{ encuesta.titulo }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .card-body {
+            padding: 3rem 2rem;
+        }
+
+        .waiting-icon {
+            font-size: 4rem;
+            color: #667eea;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+        }
+
+        h2 {
+            color: #1e293b;
+            font-weight: 700;
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        .lead {
+            color: #64748b;
+        }
+
+        .participant-name {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            margin-top: 1.5rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-body">
+            <i class="bi bi-hourglass-split waiting-icon"></i>
+            <h2>{{ encuesta.titulo }}</h2>
+            <p class="lead">La encuesta comenzara pronto...</p>
+            <div class="participant-name">
+                <i class="bi bi-person-fill me-2"></i>{{ participante.nombre }}
+            </div>
+            <div class="status-badge">
+                <i class="bi bi-clock me-1"></i>
+                Esperando al presentador
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Poll para verificar estado
+        setInterval(function() {
+            fetch('{% url "encuestas:poll_participante" session_id=participante.session_id %}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.estado === 'en_vivo') {
+                        window.location.reload();
+                    } else if (data.estado === 'finalizada') {
+                        window.location.href = '{% url "encuestas:resultado_participante" session_id=participante.session_id %}';
+                    }
+                });
+        }, 1500);
+    </script>
+</body>
+</html>

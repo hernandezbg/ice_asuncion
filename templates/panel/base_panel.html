@@ -608,6 +608,10 @@
                 <i class="bi bi-graph-up-arrow"></i>
                 <span>Estadísticas</span>
             </a>
+            <a href="{% url 'encuestas:panel_lista' %}" class="sidebar-nav-item {% if 'encuestas' in request.path %}active{% endif %}">
+                <i class="bi bi-clipboard-check"></i>
+                <span>Encuestas en Vivo</span>
+            </a>
 
             <div class="nav-section-title">Gestión</div>
             <a href="{% url 'panel:hermanos_lista' %}" class="sidebar-nav-item {% if 'hermanos' in request.path %}active{% endif %}">
@@ -702,6 +706,12 @@
                     <i class="bi bi-graph-up-arrow"></i>
                 </div>
                 <span class="fab-menu-label">Estadísticas</span>
+            </a>
+            <a href="{% url 'encuestas:panel_lista' %}" class="fab-menu-item">
+                <div class="fab-menu-icon" style="background: #8b5cf6;">
+                    <i class="bi bi-clipboard-check"></i>
+                </div>
+                <span class="fab-menu-label">Encuestas</span>
             </a>
             <a href="{% url 'panel:noticias_lista' %}" class="fab-menu-item">
                 <div class="fab-menu-icon noticias">

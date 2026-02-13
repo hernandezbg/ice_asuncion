@@ -1,0 +1,159 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block title %}{% if editar %}Editar{% else %}Nueva{% endif %} Encuesta - Panel{% endblock %}
+
+{% block page_title %}{% if editar %}Editar Encuesta{% else %}Nueva Encuesta{% endif %}{% endblock %}
+{% block page_subtitle %}{% if editar %}Modifica los datos de la encuesta{% else %}Crea una nueva encuesta interactiva{% endif %}{% endblock %}
+
+{% block content %}
+<style>
+    .form-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 2rem;
+        max-width: 700px;
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .form-section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #f1f5f9;
+    }
+
+    .range-inputs {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    @media (max-width: 576px) {
+        .range-inputs {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid #f1f5f9;
+    }
+
+    .btn-submit {
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-submit.primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-submit.primary:hover {
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-submit.secondary {
+        background: #f1f5f9;
+        color: #475569;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-submit.secondary:hover {
+        background: #e2e8f0;
+    }
+
+    .help-text {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 0.25rem;
+    }
+</style>
+
+<div class="form-card">
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-info-circle me-2"></i>Informacion General
+            </div>
+
+            <div class="mb-3">
+                <label for="id_titulo" class="form-label fw-semibold">Titulo de la encuesta</label>
+                {{ form.titulo }}
+                {% if form.titulo.errors %}
+                <div class="text-danger small">{{ form.titulo.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="id_descripcion" class="form-label fw-semibold">Descripcion (opcional)</label>
+                {{ form.descripcion }}
+                <div class="help-text">Breve descripcion que veran los participantes</div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-sliders me-2"></i>Rangos de Interpretacion
+            </div>
+            <p class="text-muted small mb-3">
+                Define los porcentajes minimos para cada nivel de interpretacion de resultados.
+            </p>
+
+            <div class="range-inputs">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-star-fill text-success me-1"></i>Excelente (%)
+                    </label>
+                    {{ form.rango_excelente }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-hand-thumbs-up-fill text-primary me-1"></i>Bueno (%)
+                    </label>
+                    {{ form.rango_bueno }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-dash-circle-fill text-warning me-1"></i>Regular (%)
+                    </label>
+                    {{ form.rango_regular }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>Bajo (%)
+                    </label>
+                    {{ form.rango_bajo }}
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-submit primary">
+                <i class="bi bi-check-lg me-2"></i>
+                {% if editar %}Guardar Cambios{% else %}Crear Encuesta{% endif %}
+            </button>
+            <a href="{% url 'encuestas:panel_lista' %}" class="btn-submit secondary">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

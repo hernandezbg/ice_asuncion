@@ -1,0 +1,268 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block title %}Encuestas en Vivo - Panel{% endblock %}
+
+{% block page_title %}Encuestas en Vivo{% endblock %}
+{% block page_subtitle %}Gestiona encuestas interactivas tipo Kahoot{% endblock %}
+
+{% block content %}
+<style>
+    .encuesta-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .encuesta-card:hover {
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .encuesta-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .encuesta-titulo {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+    }
+
+    .encuesta-codigo {
+        font-family: monospace;
+        font-size: 1rem;
+        background: #f1f5f9;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        letter-spacing: 0.2em;
+        color: #475569;
+    }
+
+    .estado-badge {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .estado-borrador { background: #f1f5f9; color: #64748b; }
+    .estado-activa { background: #dbeafe; color: #1e40af; }
+    .estado-en_vivo { background: #dcfce7; color: #166534; }
+    .estado-finalizada { background: #fef3c7; color: #92400e; }
+
+    .encuesta-stats {
+        display: flex;
+        gap: 2rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 10px;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        text-transform: uppercase;
+    }
+
+    .encuesta-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-action.primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-action.primary:hover {
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-action.secondary {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .btn-action.secondary:hover {
+        background: #e2e8f0;
+    }
+
+    .btn-action.success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .btn-action.danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 16px;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #cbd5e1;
+    }
+
+    .empty-state h3 {
+        color: #1e293b;
+        margin: 1rem 0 0.5rem;
+    }
+
+    .empty-state p {
+        color: #64748b;
+        margin-bottom: 1.5rem;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+</style>
+
+<div class="header-actions">
+    <a href="{% url 'encuestas:panel_crear' %}" class="btn-action primary">
+        <i class="bi bi-plus-lg"></i> Nueva Encuesta
+    </a>
+</div>
+
+{% if encuestas %}
+    {% for encuesta in encuestas %}
+    <div class="encuesta-card">
+        <div class="encuesta-header">
+            <div>
+                <h3 class="encuesta-titulo">{{ encuesta.titulo }}</h3>
+                <span class="estado-badge estado-{{ encuesta.estado }}">
+                    {% if encuesta.estado == 'borrador' %}<i class="bi bi-pencil me-1"></i>
+                    {% elif encuesta.estado == 'activa' %}<i class="bi bi-clock me-1"></i>
+                    {% elif encuesta.estado == 'en_vivo' %}<i class="bi bi-broadcast me-1"></i>
+                    {% else %}<i class="bi bi-check-circle me-1"></i>{% endif %}
+                    {{ encuesta.get_estado_display }}
+                </span>
+            </div>
+            <div class="encuesta-codigo" title="Codigo de acceso">
+                {{ encuesta.codigo }}
+            </div>
+        </div>
+
+        {% if encuesta.descripcion %}
+        <p class="text-muted mb-3">{{ encuesta.descripcion|truncatechars:100 }}</p>
+        {% endif %}
+
+        <div class="encuesta-stats">
+            <div class="stat-item">
+                <div class="stat-value">{{ encuesta.total_preguntas }}</div>
+                <div class="stat-label">Preguntas</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ encuesta.total_participantes }}</div>
+                <div class="stat-label">Participantes</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ encuesta.creado|date:"d/m/Y" }}</div>
+                <div class="stat-label">Creado</div>
+            </div>
+        </div>
+
+        <div class="encuesta-actions">
+            {% if encuesta.estado == 'borrador' %}
+                <a href="{% url 'encuestas:panel_preguntas' encuesta_id=encuesta.id %}" class="btn-action primary">
+                    <i class="bi bi-list-check"></i> Editar Preguntas
+                </a>
+                <a href="{% url 'encuestas:panel_editar' encuesta_id=encuesta.id %}" class="btn-action secondary">
+                    <i class="bi bi-pencil"></i> Editar
+                </a>
+                {% if encuesta.total_preguntas > 0 %}
+                <form action="{% url 'encuestas:panel_activar' encuesta_id=encuesta.id %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-action success">
+                        <i class="bi bi-play-fill"></i> Activar
+                    </button>
+                </form>
+                {% endif %}
+            {% elif encuesta.estado == 'activa' %}
+                <a href="{% url 'encuestas:panel_presentador' encuesta_id=encuesta.id %}" class="btn-action primary">
+                    <i class="bi bi-broadcast"></i> Iniciar Presentacion
+                </a>
+                <a href="{% url 'encuestas:panel_preguntas' encuesta_id=encuesta.id %}" class="btn-action secondary">
+                    <i class="bi bi-list-check"></i> Ver Preguntas
+                </a>
+            {% elif encuesta.estado == 'en_vivo' %}
+                <a href="{% url 'encuestas:panel_presentador' encuesta_id=encuesta.id %}" class="btn-action primary">
+                    <i class="bi bi-broadcast"></i> Continuar Presentacion
+                </a>
+            {% else %}
+                <a href="{% url 'encuestas:panel_resultados' encuesta_id=encuesta.id %}" class="btn-action primary">
+                    <i class="bi bi-bar-chart-fill"></i> Ver Resultados
+                </a>
+                <a href="{% url 'encuestas:panel_exportar' encuesta_id=encuesta.id %}" class="btn-action secondary">
+                    <i class="bi bi-download"></i> Exportar CSV
+                </a>
+                <form action="{% url 'encuestas:panel_reiniciar' encuesta_id=encuesta.id %}" method="post" style="display: inline;" onsubmit="return confirm('¿Seguro que quieres reiniciar esta encuesta? Se eliminaran todas las respuestas.');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-action danger">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reiniciar
+                    </button>
+                </form>
+            {% endif %}
+
+            {% if encuesta.estado == 'borrador' %}
+            <a href="{% url 'encuestas:panel_eliminar' encuesta_id=encuesta.id %}" class="btn-action danger">
+                <i class="bi bi-trash"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="empty-state">
+        <i class="bi bi-clipboard-check"></i>
+        <h3>No hay encuestas</h3>
+        <p>Crea tu primera encuesta interactiva para comenzar.</p>
+        <a href="{% url 'encuestas:panel_crear' %}" class="btn-action primary">
+            <i class="bi bi-plus-lg"></i> Crear Encuesta
+        </a>
+    </div>
+{% endif %}
+{% endblock %}

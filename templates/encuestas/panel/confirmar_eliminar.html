@@ -1,0 +1,93 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block title %}Eliminar Encuesta - Panel{% endblock %}
+
+{% block page_title %}Eliminar Encuesta{% endblock %}
+{% block page_subtitle %}Confirma la eliminacion{% endblock %}
+
+{% block content %}
+<style>
+    .confirm-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 2rem;
+        max-width: 500px;
+        text-align: center;
+    }
+
+    .confirm-card i {
+        font-size: 4rem;
+        color: #ef4444;
+    }
+
+    .confirm-card h3 {
+        color: #1e293b;
+        margin: 1rem 0;
+    }
+
+    .confirm-card p {
+        color: #64748b;
+        margin-bottom: 1.5rem;
+    }
+
+    .encuesta-name {
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .btn-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+    }
+
+    .btn-action {
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-action.danger {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-action.danger:hover {
+        background: #dc2626;
+    }
+
+    .btn-action.secondary {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .btn-action.secondary:hover {
+        background: #e2e8f0;
+    }
+</style>
+
+<div class="confirm-card">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <h3>¿Eliminar esta encuesta?</h3>
+    <p>
+        Estas a punto de eliminar la encuesta<br>
+        <span class="encuesta-name">"{{ encuesta.titulo }}"</span><br><br>
+        Esta accion no se puede deshacer. Se eliminaran todas las preguntas, participantes y respuestas.
+    </p>
+
+    <form method="post" class="btn-actions">
+        {% csrf_token %}
+        <button type="submit" class="btn-action danger">
+            <i class="bi bi-trash me-2"></i>Si, eliminar
+        </button>
+        <a href="{% url 'encuestas:panel_lista' %}" class="btn-action secondary">
+            Cancelar
+        </a>
+    </form>
+</div>
+{% endblock %}
