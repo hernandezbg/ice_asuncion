@@ -490,8 +490,31 @@ def panel_poll(request, encuesta_id):
 
     # Contar respuestas de la pregunta actual
     respuestas_pregunta = 0
+    todos_respondieron = False
+    avanzo_automatico = False
+
     if pregunta_actual:
         respuestas_pregunta = Respuesta.objects.filter(pregunta=pregunta_actual).count()
+
+        # Verificar si todos los participantes respondieron
+        if total_participantes > 0 and respuestas_pregunta >= total_participantes:
+            todos_respondieron = True
+
+            # Auto-avanzar si está habilitado y no es la última pregunta
+            auto_avanzar = request.GET.get('auto_avanzar', 'true') == 'true'
+            total_preguntas = encuesta.preguntas.count()
+
+            if auto_avanzar and encuesta.pregunta_actual < total_preguntas - 1:
+                encuesta.pregunta_actual += 1
+                encuesta.mostrar_resultados = False
+                encuesta.save(update_fields=['pregunta_actual', 'mostrar_resultados'])
+                avanzo_automatico = True
+
+                # Actualizar pregunta actual y estadísticas después del avance
+                pregunta_actual = encuesta.pregunta_actual_obj()
+                if pregunta_actual:
+                    estadisticas = pregunta_actual.estadisticas()
+                    respuestas_pregunta = Respuesta.objects.filter(pregunta=pregunta_actual).count()
 
     return JsonResponse({
         'estado': encuesta.estado,
@@ -501,7 +524,9 @@ def panel_poll(request, encuesta_id):
         'participantes_conectados': participantes_conectados,
         'total_participantes': total_participantes,
         'respuestas_pregunta': respuestas_pregunta,
-        'estadisticas': estadisticas
+        'estadisticas': estadisticas,
+        'todos_respondieron': todos_respondieron,
+        'avanzo_automatico': avanzo_automatico
     })
 
 

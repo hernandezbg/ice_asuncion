@@ -8,6 +8,46 @@
 {% block extra_css %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
+    .auto-advance-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        background: #22c55e;
+        color: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        font-weight: 600;
+        z-index: 9999;
+        transform: translateX(120%);
+        transition: transform 0.3s ease;
+    }
+
+    .auto-advance-notification.show {
+        transform: translateX(0);
+    }
+
+    .auto-advance-notification.info {
+        background: #3b82f6;
+    }
+
+    .all-responded {
+        display: inline-block;
+        margin-top: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        background: #dcfce7;
+        color: #166534;
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        animation: pulse-green 1.5s infinite;
+    }
+
+    @keyframes pulse-green {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
     .presenter-container {
         display: grid;
         grid-template-columns: 1fr 350px;
@@ -353,6 +393,16 @@
         </div>
 
         <div class="info-card">
+            <h6><i class="bi bi-gear me-2"></i>Opciones</h6>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="auto-avanzar-toggle" checked>
+                <label class="form-check-label" for="auto-avanzar-toggle">
+                    <small>Avanzar automaticamente cuando todos respondan</small>
+                </label>
+            </div>
+        </div>
+
+        <div class="info-card">
             <h6><i class="bi bi-people me-2"></i>Participantes</h6>
             <div class="participants-list" id="participants-list">
                 <p class="text-muted text-center small">Cargando...</p>
@@ -369,6 +419,21 @@
     let chart = null;
     let estado = '{{ encuesta.estado }}';
     let mostrandoResultados = {{ encuesta.mostrar_resultados|yesno:"true,false" }};
+    let autoAvanzar = true;
+    let preguntaActualLocal = {{ encuesta.pregunta_actual }};
+
+    function mostrarNotificacion(mensaje, tipo = 'info') {
+        const notif = document.createElement('div');
+        notif.className = `auto-advance-notification ${tipo}`;
+        notif.innerHTML = `<i class="bi bi-${tipo === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>${mensaje}`;
+        document.body.appendChild(notif);
+
+        setTimeout(() => notif.classList.add('show'), 10);
+        setTimeout(() => {
+            notif.classList.remove('show');
+            setTimeout(() => notif.remove(), 300);
+        }, 3000);
+    }
 
     // Inicializar Chart.js
     function initChart() {
@@ -525,7 +590,8 @@
     }
 
     function poll() {
-        fetch(`/encuestas/panel/${encuestaId}/presentador/poll/`)
+        const url = `/encuestas/panel/${encuestaId}/presentador/poll/?auto_avanzar=${autoAvanzar}`;
+        fetch(url)
             .then(r => r.json())
             .then(data => {
                 // Actualizar estadísticas
@@ -543,6 +609,19 @@
                 if (document.getElementById('response-count')) {
                     document.getElementById('response-count').textContent = data.respuestas_pregunta;
                 }
+
+                // Detectar avance automático
+                if (data.avanzo_automatico && data.pregunta_actual !== preguntaActualLocal) {
+                    mostrarNotificacion('Todos respondieron - Avanzando a la siguiente pregunta', 'success');
+
+                    // Ocultar resultados al cambiar pregunta
+                    mostrandoResultados = false;
+                    const chartContainer = document.getElementById('chart-container');
+                    const btnText = document.getElementById('btn-resultados-text');
+                    if (chartContainer) chartContainer.style.display = 'none';
+                    if (btnText) btnText.textContent = 'Mostrar Resultados';
+                }
+                preguntaActualLocal = data.pregunta_actual;
 
                 // Actualizar número de pregunta
                 if (document.getElementById('current-num')) {
@@ -562,6 +641,20 @@
                     document.getElementById('btn-siguiente').disabled = data.pregunta_actual >= data.total_preguntas - 1;
                 }
 
+                // Mostrar indicador de "todos respondieron" si aplica
+                const responseCounter = document.querySelector('.response-counter');
+                if (responseCounter && data.todos_respondieron && !data.avanzo_automatico) {
+                    if (!responseCounter.querySelector('.all-responded')) {
+                        const badge = document.createElement('div');
+                        badge.className = 'all-responded';
+                        badge.innerHTML = '<i class="bi bi-check-circle-fill"></i> Todos respondieron';
+                        responseCounter.appendChild(badge);
+                    }
+                } else if (responseCounter) {
+                    const badge = responseCounter.querySelector('.all-responded');
+                    if (badge) badge.remove();
+                }
+
                 setTimeout(poll, 1500);
             })
             .catch(err => {
@@ -579,6 +672,14 @@
         if (mostrandoResultados) {
             document.getElementById('chart-container').style.display = 'block';
             document.getElementById('btn-resultados-text').textContent = 'Ocultar Resultados';
+        }
+
+        // Toggle avance automático
+        const autoAvanzarToggle = document.getElementById('auto-avanzar-toggle');
+        if (autoAvanzarToggle) {
+            autoAvanzarToggle.addEventListener('change', function() {
+                autoAvanzar = this.checked;
+            });
         }
     });
 </script>
