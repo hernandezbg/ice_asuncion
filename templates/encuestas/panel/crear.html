@@ -107,9 +107,53 @@
                 {{ form.descripcion }}
                 <div class="help-text">Breve descripcion que veran los participantes</div>
             </div>
+
+            <div class="mb-3">
+                <label for="id_tipo" class="form-label fw-semibold">Tipo de dinamica</label>
+                {{ form.tipo }}
+                <div class="help-text" id="tipo-help">
+                    <strong>Opinion:</strong> Escala 1-5 para medir opiniones<br>
+                    <strong>Trivia:</strong> Preguntas con respuesta correcta, puntos y ranking<br>
+                    <strong>Votacion:</strong> Votar por opciones y ver las mas populares
+                </div>
+            </div>
         </div>
 
-        <div class="form-section">
+        <div class="form-section" id="section-trivia" style="display: none;">
+            <div class="form-section-title">
+                <i class="bi bi-controller me-2"></i>Configuracion de Trivia
+            </div>
+            <p class="text-muted small mb-3">
+                Configura los puntos y tiempos para la trivia.
+            </p>
+
+            <div class="range-inputs">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-star-fill text-warning me-1"></i>Puntos por respuesta correcta
+                    </label>
+                    {{ form.puntos_base }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-clock-fill text-primary me-1"></i>Tiempo limite (segundos)
+                    </label>
+                    {{ form.tiempo_limite }}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="form-check">
+                    {{ form.bonus_tiempo }}
+                    <label class="form-check-label" for="id_bonus_tiempo">
+                        <strong>Bonus por responder rapido</strong><br>
+                        <small class="text-muted">Hasta 50% extra de puntos por responder antes del limite</small>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section" id="section-opinion">
             <div class="form-section-title">
                 <i class="bi bi-sliders me-2"></i>Rangos de Interpretacion
             </div>
@@ -156,4 +200,33 @@
         </div>
     </form>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tipoSelect = document.getElementById('id_tipo');
+        const sectionTrivia = document.getElementById('section-trivia');
+        const sectionOpinion = document.getElementById('section-opinion');
+
+        function updateSections() {
+            const tipo = tipoSelect ? tipoSelect.value : 'opinion';
+
+            if (tipo === 'trivia') {
+                sectionTrivia.style.display = 'block';
+                sectionOpinion.style.display = 'none';
+            } else if (tipo === 'opinion') {
+                sectionTrivia.style.display = 'none';
+                sectionOpinion.style.display = 'block';
+            } else {
+                // votacion - no special config needed
+                sectionTrivia.style.display = 'none';
+                sectionOpinion.style.display = 'none';
+            }
+        }
+
+        if (tipoSelect) {
+            tipoSelect.addEventListener('change', updateSections);
+            updateSections(); // Initial state
+        }
+    });
+</script>
 {% endblock %}

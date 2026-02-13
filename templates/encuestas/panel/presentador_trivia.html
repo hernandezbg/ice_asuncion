@@ -1,0 +1,745 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block title %}Presentador - {{ encuesta.titulo }}{% endblock %}
+
+{% block page_title %}{{ encuesta.titulo }}{% endblock %}
+{% block page_subtitle %}Vista del presentador - Trivia{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        font-weight: 600;
+        z-index: 9999;
+        transform: translateX(120%);
+        transition: transform 0.3s ease;
+    }
+
+    .notification.show {
+        transform: translateX(0);
+    }
+
+    .notification.success { background: #22c55e; color: white; }
+    .notification.info { background: #3b82f6; color: white; }
+
+    .qr-container {
+        display: flex;
+        justify-content: center;
+        margin: 1rem 0;
+    }
+
+    .qr-image {
+        width: 150px;
+        height: 150px;
+        border-radius: 8px;
+        background: white;
+        padding: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .presenter-container {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 1.5rem;
+    }
+
+    @media (max-width: 992px) {
+        .presenter-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .main-panel {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 2rem;
+    }
+
+    .side-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .info-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 1.25rem;
+    }
+
+    .info-card h6 {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 0.75rem;
+    }
+
+    .codigo-display {
+        font-family: monospace;
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: 0.3em;
+        text-align: center;
+        background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .url-display {
+        font-size: 0.8rem;
+        color: #64748b;
+        text-align: center;
+        word-break: break-all;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .stat-box {
+        text-align: center;
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 10px;
+    }
+
+    .stat-box .value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .stat-box .label {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .status-badge.waiting {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-badge.live {
+        background: #dcfce7;
+        color: #166534;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    .question-display {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .question-number {
+        display: inline-block;
+        background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 100%);
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .question-text {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 2rem;
+    }
+
+    .timer-display {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.5rem;
+        font-weight: 700;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        margin-bottom: 1rem;
+    }
+
+    .timer-display.normal { background: #dcfce7; color: #166534; }
+    .timer-display.warning { background: #fef3c7; color: #92400e; }
+    .timer-display.danger { background: #fee2e2; color: #dc2626; }
+
+    .options-display {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .option-box {
+        padding: 1rem;
+        border-radius: 12px;
+        text-align: center;
+        color: white;
+        font-weight: 600;
+    }
+
+    .option-box.a { background: #ef4444; }
+    .option-box.b { background: #3b82f6; }
+    .option-box.c { background: #eab308; }
+    .option-box.d { background: #22c55e; }
+
+    .option-box.correct {
+        box-shadow: 0 0 0 4px #22c55e, 0 0 20px rgba(34, 197, 94, 0.5);
+    }
+
+    .option-letter {
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+
+    .option-text {
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+
+    .option-count {
+        font-size: 1.25rem;
+        margin-top: 0.5rem;
+        opacity: 0.9;
+    }
+
+    .chart-container {
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .control-buttons {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+
+    .btn-control {
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-control:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-control.primary {
+        background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 100%);
+        color: white;
+    }
+
+    .btn-control.success {
+        background: #22c55e;
+        color: white;
+    }
+
+    .btn-control.secondary {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .btn-control.danger {
+        background: #ef4444;
+        color: white;
+    }
+
+    .waiting-screen {
+        text-align: center;
+        padding: 3rem;
+    }
+
+    .waiting-screen i {
+        font-size: 4rem;
+        color: #7c3aed;
+    }
+
+    .response-counter {
+        text-align: center;
+        margin: 1rem 0;
+    }
+
+    .response-counter .count {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #22c55e;
+    }
+
+    .ranking-mini {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .ranking-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem;
+        background: #f8fafc;
+        border-radius: 8px;
+    }
+
+    .ranking-item.first { background: #fef3c7; }
+    .ranking-item.second { background: #f1f5f9; }
+    .ranking-item.third { background: #ffedd5; }
+
+    .ranking-pos {
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .ranking-pos.first { background: #fbbf24; color: white; }
+    .ranking-pos.second { background: #94a3b8; color: white; }
+    .ranking-pos.third { background: #f97316; color: white; }
+
+    .ranking-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+    }
+
+    .ranking-name {
+        flex: 1;
+        font-weight: 600;
+        font-size: 0.875rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ranking-points {
+        font-weight: 700;
+        color: #7c3aed;
+    }
+
+    .participants-list {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .participant-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .participant-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+    }
+
+    .participant-name {
+        flex: 1;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .participant-status {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #22c55e;
+    }
+
+    .participant-status.offline {
+        background: #e2e8f0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="presenter-container">
+    <div class="main-panel">
+        <div id="main-content">
+            {% if encuesta.estado == 'activa' %}
+            <div class="waiting-screen">
+                <i class="bi bi-controller"></i>
+                <h3>Esperando participantes</h3>
+                <p>Los participantes pueden unirse con el codigo de arriba.</p>
+                <p class="mt-3">
+                    <span class="status-badge waiting">
+                        <i class="bi bi-hourglass-split me-1"></i>
+                        <span id="participants-count">0</span> participantes conectados
+                    </span>
+                </p>
+                <div class="control-buttons">
+                    <button class="btn-control success" onclick="iniciarEncuesta()" id="btn-iniciar">
+                        <i class="bi bi-play-fill"></i> Iniciar Trivia
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <div class="question-display" id="question-display">
+                <div class="question-number" id="question-number">
+                    Pregunta <span id="current-num">{{ encuesta.pregunta_actual|add:1 }}</span> de {{ encuesta.total_preguntas }}
+                </div>
+
+                <div class="timer-display normal" id="timer-display">
+                    <i class="bi bi-clock-fill"></i>
+                    <span id="timer-seconds">{{ encuesta.tiempo_limite }}</span>s
+                </div>
+
+                <div class="question-text" id="question-text">
+                    {% if encuesta.pregunta_actual_obj %}
+                    {{ encuesta.pregunta_actual_obj.texto }}
+                    {% endif %}
+                </div>
+
+                <div class="options-display" id="options-display">
+                    {% with pregunta=encuesta.pregunta_actual_obj %}
+                    {% if pregunta.opcion_a %}
+                    <div class="option-box a" data-option="A">
+                        <div class="option-letter">A</div>
+                        <div class="option-text">{{ pregunta.opcion_a }}</div>
+                        <div class="option-count" id="count-a">0</div>
+                    </div>
+                    {% endif %}
+                    {% if pregunta.opcion_b %}
+                    <div class="option-box b" data-option="B">
+                        <div class="option-letter">B</div>
+                        <div class="option-text">{{ pregunta.opcion_b }}</div>
+                        <div class="option-count" id="count-b">0</div>
+                    </div>
+                    {% endif %}
+                    {% if pregunta.opcion_c %}
+                    <div class="option-box c" data-option="C">
+                        <div class="option-letter">C</div>
+                        <div class="option-text">{{ pregunta.opcion_c }}</div>
+                        <div class="option-count" id="count-c">0</div>
+                    </div>
+                    {% endif %}
+                    {% if pregunta.opcion_d %}
+                    <div class="option-box d" data-option="D">
+                        <div class="option-letter">D</div>
+                        <div class="option-text">{{ pregunta.opcion_d }}</div>
+                        <div class="option-count" id="count-d">0</div>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+
+                <div class="response-counter">
+                    <span class="count" id="response-count">0</span>
+                    <span class="total">/ <span id="total-participants">{{ encuesta.total_participantes }}</span> respuestas</span>
+                </div>
+
+                <div class="control-buttons">
+                    <button class="btn-control secondary" onclick="anteriorPregunta()" id="btn-anterior" {% if encuesta.pregunta_actual == 0 %}disabled{% endif %}>
+                        <i class="bi bi-chevron-left"></i> Anterior
+                    </button>
+                    <button class="btn-control primary" onclick="mostrarRespuesta()" id="btn-respuesta">
+                        <i class="bi bi-eye-fill"></i> Mostrar Respuesta
+                    </button>
+                    <button class="btn-control success" onclick="siguientePregunta()" id="btn-siguiente" {% if encuesta.pregunta_actual >= encuesta.total_preguntas|add:"-1" %}disabled{% endif %}>
+                        Siguiente <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <button class="btn-control danger" onclick="finalizarEncuesta()" id="btn-finalizar">
+                        <i class="bi bi-stop-fill"></i> Finalizar
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="side-panel">
+        <div class="info-card">
+            <h6><i class="bi bi-qr-code me-2"></i>Codigo de Acceso</h6>
+            <div class="codigo-display">{{ encuesta.codigo }}</div>
+            <div class="qr-container">
+                <img id="qr-code" src="" alt="QR Code" class="qr-image">
+            </div>
+            <div class="url-display">{{ request.scheme }}://{{ request.get_host }}/encuestas/{{ encuesta.codigo }}/</div>
+        </div>
+
+        <div class="info-card">
+            <h6><i class="bi bi-trophy me-2"></i>Ranking en Vivo</h6>
+            <div class="ranking-mini" id="ranking-list">
+                <div class="text-center text-muted py-3">
+                    <small>El ranking aparecera cuando inicie la trivia</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h6><i class="bi bi-graph-up me-2"></i>Estadisticas</h6>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="value" id="stat-conectados">0</div>
+                    <div class="label">Conectados</div>
+                </div>
+                <div class="stat-box">
+                    <div class="value" id="stat-total">{{ encuesta.total_participantes }}</div>
+                    <div class="label">Total</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h6><i class="bi bi-people me-2"></i>Participantes</h6>
+            <div class="participants-list" id="participants-list">
+                <div class="text-center text-muted py-3">
+                    <small>Esperando participantes...</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const encuestaId = {{ encuesta.id }};
+    const csrfToken = '{{ csrf_token }}';
+    let estado = '{{ encuesta.estado }}';
+    let preguntaActualLocal = {{ encuesta.pregunta_actual }};
+    let timerInterval = null;
+    let timeLimit = {{ encuesta.tiempo_limite }};
+    let respuestaCorrecta = '{% if encuesta.pregunta_actual_obj %}{{ encuesta.pregunta_actual_obj.respuesta_correcta }}{% endif %}';
+
+    function mostrarNotificacion(mensaje, tipo = 'info') {
+        const notif = document.createElement('div');
+        notif.className = `notification ${tipo}`;
+        notif.innerHTML = `<i class="bi bi-${tipo === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>${mensaje}`;
+        document.body.appendChild(notif);
+
+        setTimeout(() => notif.classList.add('show'), 10);
+        setTimeout(() => {
+            notif.classList.remove('show');
+            setTimeout(() => notif.remove(), 300);
+        }, 3000);
+    }
+
+    function iniciarEncuesta() {
+        fetch(`/encuestas/panel/${encuestaId}/presentador/iniciar/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                estado = 'en_vivo';
+                location.reload();
+            } else {
+                alert(data.error || 'Error al iniciar');
+            }
+        });
+    }
+
+    function siguientePregunta() {
+        fetch(`/encuestas/panel/${encuestaId}/presentador/siguiente/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.es_ultima) {
+                document.getElementById('btn-siguiente').disabled = true;
+            }
+            document.getElementById('btn-anterior').disabled = false;
+
+            // Reset UI
+            document.querySelectorAll('.option-box').forEach(box => {
+                box.classList.remove('correct');
+            });
+            document.getElementById('btn-respuesta').innerHTML = '<i class="bi bi-eye-fill"></i> Mostrar Respuesta';
+        });
+    }
+
+    function anteriorPregunta() {
+        fetch(`/encuestas/panel/${encuestaId}/presentador/anterior/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.es_primera) {
+                document.getElementById('btn-anterior').disabled = true;
+            }
+            document.getElementById('btn-siguiente').disabled = false;
+        });
+    }
+
+    function mostrarRespuesta() {
+        // Highlight correct answer
+        document.querySelectorAll('.option-box').forEach(box => {
+            box.classList.remove('correct');
+            if (box.dataset.option === respuestaCorrecta) {
+                box.classList.add('correct');
+            }
+        });
+        document.getElementById('btn-respuesta').innerHTML = '<i class="bi bi-check-circle-fill"></i> ' + respuestaCorrecta + ' es correcta';
+    }
+
+    function finalizarEncuesta() {
+        if (!confirm('¿Seguro que quieres finalizar la trivia?')) return;
+
+        fetch(`/encuestas/panel/${encuestaId}/presentador/finalizar/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = `/encuestas/panel/${encuestaId}/resultados/`;
+            }
+        });
+    }
+
+    function actualizarRanking(ranking) {
+        const lista = document.getElementById('ranking-list');
+        if (!lista || !ranking || ranking.length === 0) return;
+
+        let html = '';
+        ranking.forEach((p, i) => {
+            const posClass = i === 0 ? 'first' : (i === 1 ? 'second' : (i === 2 ? 'third' : ''));
+            const avatarUrl = `https://api.dicebear.com/7.x/thumbs/svg?seed=${encodeURIComponent(p.session_id)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
+
+            html += `
+                <div class="ranking-item ${posClass}">
+                    <div class="ranking-pos ${posClass}">${i + 1}</div>
+                    <img src="${avatarUrl}" class="ranking-avatar">
+                    <span class="ranking-name">${p.nombre}</span>
+                    <span class="ranking-points">${p.puntos} pts</span>
+                </div>
+            `;
+        });
+        lista.innerHTML = html;
+    }
+
+    function actualizarParticipantes(participantes) {
+        const lista = document.getElementById('participants-list');
+        if (!lista) return;
+
+        if (!participantes || participantes.length === 0) {
+            lista.innerHTML = '<div class="text-center text-muted py-3"><small>Esperando participantes...</small></div>';
+            return;
+        }
+
+        let html = '';
+        participantes.forEach(p => {
+            const avatarUrl = `https://api.dicebear.com/7.x/thumbs/svg?seed=${encodeURIComponent(p.session_id)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
+            html += `
+                <div class="participant-item">
+                    <img src="${avatarUrl}" class="participant-avatar">
+                    <span class="participant-name">${p.nombre}</span>
+                    <span class="participant-status ${p.conectado ? '' : 'offline'}"></span>
+                </div>
+            `;
+        });
+        lista.innerHTML = html;
+    }
+
+    function poll() {
+        fetch(`/encuestas/panel/${encuestaId}/presentador/poll/`)
+            .then(r => r.json())
+            .then(data => {
+                // Stats
+                document.getElementById('stat-conectados').textContent = data.participantes_conectados;
+                document.getElementById('stat-total').textContent = data.total_participantes;
+
+                if (document.getElementById('participants-count')) {
+                    document.getElementById('participants-count').textContent = data.participantes_conectados;
+                }
+
+                if (document.getElementById('total-participants')) {
+                    document.getElementById('total-participants').textContent = data.total_participantes;
+                }
+
+                if (document.getElementById('response-count')) {
+                    document.getElementById('response-count').textContent = data.respuestas_pregunta;
+                }
+
+                // Update question number
+                if (document.getElementById('current-num')) {
+                    document.getElementById('current-num').textContent = data.pregunta_actual + 1;
+                }
+
+                // Update option counts
+                if (data.estadisticas && data.estadisticas.distribucion) {
+                    const dist = data.estadisticas.distribucion;
+                    if (document.getElementById('count-a')) document.getElementById('count-a').textContent = dist.A || 0;
+                    if (document.getElementById('count-b')) document.getElementById('count-b').textContent = dist.B || 0;
+                    if (document.getElementById('count-c')) document.getElementById('count-c').textContent = dist.C || 0;
+                    if (document.getElementById('count-d')) document.getElementById('count-d').textContent = dist.D || 0;
+                }
+
+                // Navigation buttons
+                if (document.getElementById('btn-anterior')) {
+                    document.getElementById('btn-anterior').disabled = data.pregunta_actual === 0;
+                }
+                if (document.getElementById('btn-siguiente')) {
+                    document.getElementById('btn-siguiente').disabled = data.pregunta_actual >= data.total_preguntas - 1;
+                }
+
+                // Update ranking
+                actualizarRanking(data.ranking);
+
+                // Update participants
+                actualizarParticipantes(data.participantes);
+
+                setTimeout(poll, 1500);
+            })
+            .catch(err => {
+                console.error(err);
+                setTimeout(poll, 3000);
+            });
+    }
+
+    function generarQR() {
+        const url = '{{ request.scheme }}://{{ request.get_host }}/encuestas/{{ encuesta.codigo }}/';
+        const qrImg = document.getElementById('qr-code');
+        if (qrImg) {
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        poll();
+        generarQR();
+    });
+</script>
+{% endblock %}

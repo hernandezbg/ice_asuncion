@@ -1,0 +1,368 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block title %}Resultados - {{ encuesta.titulo }}{% endblock %}
+
+{% block page_title %}Resultados: {{ encuesta.titulo }}{% endblock %}
+{% block page_subtitle %}Resultados finales de la votacion{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-action {
+        padding: 0.625rem 1.25rem;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-action.primary {
+        background: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+        color: white;
+    }
+
+    .btn-action.secondary {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .summary-section {
+        background: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        color: white;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .summary-section h3 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .general-stats {
+        display: flex;
+        justify-content: center;
+        gap: 3rem;
+        flex-wrap: wrap;
+    }
+
+    .general-stat {
+        text-align: center;
+    }
+
+    .general-stat .value {
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+
+    .general-stat .label {
+        opacity: 0.8;
+        font-size: 0.875rem;
+    }
+
+    .questions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 1.5rem;
+    }
+
+    @media (max-width: 500px) {
+        .questions-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .question-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 1.5rem;
+    }
+
+    .question-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .question-number {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+        color: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .question-text {
+        font-weight: 600;
+        color: #1e293b;
+        flex: 1;
+    }
+
+    .results-bars {
+        margin-bottom: 1rem;
+    }
+
+    .result-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .result-bar:last-child {
+        margin-bottom: 0;
+    }
+
+    .bar-letter {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        font-weight: 700;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .bar-letter.a { background: #ef4444; }
+    .bar-letter.b { background: #3b82f6; }
+    .bar-letter.c { background: #eab308; }
+    .bar-letter.d { background: #22c55e; }
+
+    .bar-container {
+        flex: 1;
+        height: 36px;
+        background: #f1f5f9;
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .bar-fill {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        padding-left: 0.75rem;
+        transition: width 0.5s ease;
+    }
+
+    .bar-fill.a { background: linear-gradient(90deg, #fecaca, #ef4444); }
+    .bar-fill.b { background: linear-gradient(90deg, #bfdbfe, #3b82f6); }
+    .bar-fill.c { background: linear-gradient(90deg, #fde68a, #eab308); }
+    .bar-fill.d { background: linear-gradient(90deg, #bbf7d0, #22c55e); }
+
+    .bar-text {
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: white;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .bar-info {
+        min-width: 80px;
+        text-align: right;
+    }
+
+    .bar-votes {
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 0.875rem;
+    }
+
+    .bar-percent {
+        font-size: 0.7rem;
+        color: #64748b;
+    }
+
+    .winner-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        background: #fef3c7;
+        color: #92400e;
+        padding: 0.375rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-top: 0.75rem;
+    }
+
+    .total-votes {
+        text-align: center;
+        color: #64748b;
+        font-size: 0.875rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .chart-container {
+        height: 200px;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="results-header">
+    <a href="{% url 'encuestas:panel_lista' %}" class="btn-action secondary">
+        <i class="bi bi-arrow-left"></i> Volver
+    </a>
+    <div class="header-actions">
+        <a href="{% url 'encuestas:panel_exportar' encuesta_id=encuesta.id %}" class="btn-action primary">
+            <i class="bi bi-download"></i> Exportar CSV
+        </a>
+    </div>
+</div>
+
+<div class="summary-section">
+    <h3><i class="bi bi-bar-chart-fill me-2"></i>Resumen de Votacion</h3>
+    <div class="general-stats">
+        <div class="general-stat">
+            <div class="value">{{ resultados_preguntas|length }}</div>
+            <div class="label">Preguntas</div>
+        </div>
+        <div class="general-stat">
+            <div class="value">{{ encuesta.total_participantes }}</div>
+            <div class="label">Votantes</div>
+        </div>
+    </div>
+</div>
+
+<div class="questions-grid">
+    {% for item in resultados_preguntas %}
+    <div class="question-card">
+        <div class="question-header">
+            <span class="question-number">{{ forloop.counter }}</span>
+            <span class="question-text">{{ item.pregunta.texto }}</span>
+        </div>
+
+        <div class="results-bars">
+            {% for option in item.ranking %}
+            <div class="result-bar">
+                <span class="bar-letter {{ option.letra|lower }}">{{ option.letra }}</span>
+                <div class="bar-container">
+                    <div class="bar-fill {{ option.letra|lower }}"
+                         style="width: {% if item.total > 0 %}{{ option.votos|floatformat:0 }}%{% else %}0{% endif %}; min-width: {% if option.votos > 0 %}20%{% else %}0{% endif %}">
+                        <span class="bar-text">{{ option.texto }}</span>
+                    </div>
+                </div>
+                <div class="bar-info">
+                    <div class="bar-votes">{{ option.votos }}</div>
+                    <div class="bar-percent">
+                        {% if item.total > 0 %}
+                        {% widthratio option.votos item.total 100 %}%
+                        {% else %}
+                        0%
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if item.ranking %}
+        {% with winner=item.ranking.0 %}
+        {% if winner.votos > 0 %}
+        <div class="winner-badge">
+            <i class="bi bi-trophy-fill"></i>
+            Ganador: {{ winner.letra }} - {{ winner.texto|truncatechars:30 }} ({{ winner.votos }} votos)
+        </div>
+        {% endif %}
+        {% endwith %}
+        {% endif %}
+
+        <div class="total-votes">
+            <i class="bi bi-people-fill me-1"></i>
+            {{ item.total }} voto{{ item.total|pluralize:"s" }} en total
+        </div>
+
+        <div class="chart-container">
+            <canvas id="chart-{{ forloop.counter }}"></canvas>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const questionsData = [
+        {% for item in resultados_preguntas %}
+        {
+            labels: [{% for opt in item.ranking %}'{{ opt.letra }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            data: [{% for opt in item.ranking %}{{ opt.votos }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            texts: [{% for opt in item.ranking %}'{{ opt.texto|truncatechars:20|escapejs }}'{% if not forloop.last %}, {% endif %}{% endfor %}]
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    const colors = {
+        'A': 'rgba(239, 68, 68, 0.8)',
+        'B': 'rgba(59, 130, 246, 0.8)',
+        'C': 'rgba(234, 179, 8, 0.8)',
+        'D': 'rgba(34, 197, 94, 0.8)'
+    };
+
+    questionsData.forEach((qData, index) => {
+        const ctx = document.getElementById(`chart-${index + 1}`);
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: qData.texts,
+                    datasets: [{
+                        data: qData.data,
+                        backgroundColor: qData.labels.map(l => colors[l]),
+                        borderWidth: 0,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 8,
+                                font: { size: 10 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado - {{ encuesta.titulo }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 100%);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .result-header {
+            padding: 2rem;
+            text-align: center;
+            color: white;
+        }
+
+        .result-header.winner {
+            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+        }
+
+        .result-header.podium {
+            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+        }
+
+        .result-header.regular {
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+        }
+
+        .trophy-icon {
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .position-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .position-badge.gold {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            box-shadow: 0 10px 30px rgba(251, 191, 36, 0.4);
+        }
+
+        .position-badge.silver {
+            background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+            color: #475569;
+        }
+
+        .position-badge.bronze {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        }
+
+        .result-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-header .participant-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin: 1rem auto 0.5rem;
+        }
+
+        .result-header .participant-name {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            margin-top: 1rem;
+            border-radius: 12px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .ranking-title {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ranking-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+
+        .ranking-item.current {
+            background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
+            border: 2px solid #3b82f6;
+        }
+
+        .ranking-item.first {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        }
+
+        .ranking-item.second {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        }
+
+        .ranking-item.third {
+            background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+        }
+
+        .ranking-position {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+
+        .ranking-position.first { background: #fbbf24; color: white; }
+        .ranking-position.second { background: #94a3b8; color: white; }
+        .ranking-position.third { background: #f97316; color: white; }
+        .ranking-position.regular { background: #e2e8f0; color: #64748b; }
+
+        .ranking-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .ranking-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .ranking-name {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ranking-points {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #7c3aed;
+        }
+
+        .thank-you {
+            text-align: center;
+            padding: 1.5rem;
+            color: white;
+        }
+
+        .thank-you i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        @keyframes confetti {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            animation: confetti 3s ease-out infinite;
+        }
+    </style>
+</head>
+<body>
+    {% if es_ganador %}
+    <div id="confetti-container"></div>
+    {% endif %}
+
+    <div class="container">
+        <div class="card">
+            <div class="result-header {% if es_ganador %}winner{% elif resultado.posicion <= 3 %}podium{% else %}regular{% endif %}">
+                {% if es_ganador %}
+                <i class="bi bi-trophy-fill trophy-icon"></i>
+                <h1>Ganador!</h1>
+                {% elif resultado.posicion == 2 %}
+                <div class="position-badge silver">#2</div>
+                <h1>Segundo Lugar!</h1>
+                {% elif resultado.posicion == 3 %}
+                <div class="position-badge bronze">#3</div>
+                <h1>Tercer Lugar!</h1>
+                {% else %}
+                <div class="position-badge">#{{ resultado.posicion }}</div>
+                <h1>{{ encuesta.titulo }}</h1>
+                {% endif %}
+
+                <p>Trivia finalizada</p>
+
+                <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ participante.session_id|slice:':8' }}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+                     alt="{{ participante.nombre }}"
+                     class="participant-avatar">
+                <div class="participant-name">{{ participante.nombre }}</div>
+
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ resultado.puntos }}</div>
+                        <div class="stat-label">Puntos</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ resultado.correctas }}/{{ resultado.total_preguntas }}</div>
+                        <div class="stat-label">Correctas</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">#{{ resultado.posicion }}</div>
+                        <div class="stat-label">Posicion</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="ranking-title">
+                    <i class="bi bi-bar-chart-fill"></i>
+                    Ranking Final (Top 10)
+                </div>
+                <div class="ranking-list">
+                    {% for p in ranking %}
+                    <div class="ranking-item {% if p.session_id == participante.session_id %}current{% elif forloop.counter == 1 %}first{% elif forloop.counter == 2 %}second{% elif forloop.counter == 3 %}third{% endif %}">
+                        <div class="ranking-position {% if forloop.counter == 1 %}first{% elif forloop.counter == 2 %}second{% elif forloop.counter == 3 %}third{% else %}regular{% endif %}">
+                            {{ forloop.counter }}
+                        </div>
+                        <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ p.session_id|slice:':8' }}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+                             alt="{{ p.nombre }}"
+                             class="ranking-avatar">
+                        <div class="ranking-info">
+                            <div class="ranking-name">{{ p.nombre }}</div>
+                        </div>
+                        <div class="ranking-points">{{ p.puntos_totales }} pts</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="thank-you">
+            <i class="bi bi-controller"></i>
+            <p>Gracias por participar en esta trivia!</p>
+        </div>
+    </div>
+
+    {% if es_ganador %}
+    <script>
+        // Confetti animation for winner
+        function createConfetti() {
+            const container = document.getElementById('confetti-container');
+            const colors = ['#fbbf24', '#f59e0b', '#ef4444', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899'];
+
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
+                container.appendChild(confetti);
+            }
+        }
+        createConfetti();
+    </script>
+    {% endif %}
+</body>
+</html>

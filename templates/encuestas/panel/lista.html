@@ -59,6 +59,19 @@
     .estado-en_vivo { background: #dcfce7; color: #166534; }
     .estado-finalizada { background: #fef3c7; color: #92400e; }
 
+    .tipo-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+
+    .tipo-opinion { background: #e0e7ff; color: #3730a3; }
+    .tipo-trivia { background: #dbeafe; color: #1e40af; }
+    .tipo-votacion { background: #ffe4e6; color: #be123c; }
+
     .encuesta-stats {
         display: flex;
         gap: 2rem;
@@ -172,7 +185,14 @@
     <div class="encuesta-card">
         <div class="encuesta-header">
             <div>
-                <h3 class="encuesta-titulo">{{ encuesta.titulo }}</h3>
+                <h3 class="encuesta-titulo">
+                    {{ encuesta.titulo }}
+                    <span class="tipo-badge tipo-{{ encuesta.tipo }}">
+                        {% if encuesta.tipo == 'opinion' %}<i class="bi bi-chat-heart me-1"></i>Opinion
+                        {% elif encuesta.tipo == 'trivia' %}<i class="bi bi-controller me-1"></i>Trivia
+                        {% else %}<i class="bi bi-hand-index-thumb me-1"></i>Votacion{% endif %}
+                    </span>
+                </h3>
                 <span class="estado-badge estado-{{ encuesta.estado }}">
                     {% if encuesta.estado == 'borrador' %}<i class="bi bi-pencil me-1"></i>
                     {% elif encuesta.estado == 'activa' %}<i class="bi bi-clock me-1"></i>

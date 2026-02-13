@@ -1,0 +1,445 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block title %}Resultados - {{ encuesta.titulo }}{% endblock %}
+
+{% block page_title %}Resultados: {{ encuesta.titulo }}{% endblock %}
+{% block page_subtitle %}Resultados finales de la trivia{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-action {
+        padding: 0.625rem 1.25rem;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-action.primary {
+        background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 100%);
+        color: white;
+    }
+
+    .btn-action.secondary {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .podium-section {
+        background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        color: white;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .podium-section h3 {
+        font-size: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .podium {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .podium-place {
+        text-align: center;
+    }
+
+    .podium-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        margin: 0 auto 0.5rem;
+        background: white;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .podium-place.first .podium-avatar {
+        width: 100px;
+        height: 100px;
+    }
+
+    .podium-name {
+        font-weight: 700;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .podium-points {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #fbbf24;
+    }
+
+    .podium-stand {
+        width: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 800;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .podium-place.first .podium-stand {
+        width: 120px;
+        height: 100px;
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    }
+
+    .podium-place.second .podium-stand {
+        height: 70px;
+        background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+        color: #475569;
+    }
+
+    .podium-place.third .podium-stand {
+        height: 50px;
+        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    }
+
+    .general-stats {
+        display: flex;
+        justify-content: center;
+        gap: 3rem;
+        flex-wrap: wrap;
+    }
+
+    .general-stat {
+        text-align: center;
+    }
+
+    .general-stat .value {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .general-stat .label {
+        opacity: 0.8;
+        font-size: 0.875rem;
+    }
+
+    .ranking-section {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .ranking-section h4 {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+    }
+
+    .ranking-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .ranking-table th {
+        text-align: left;
+        padding: 0.75rem;
+        background: #f8fafc;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+
+    .ranking-table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .ranking-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .ranking-position {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: 0.875rem;
+    }
+
+    .ranking-position.gold { background: #fbbf24; color: white; }
+    .ranking-position.silver { background: #94a3b8; color: white; }
+    .ranking-position.bronze { background: #f97316; color: white; }
+    .ranking-position.regular { background: #e2e8f0; color: #64748b; }
+
+    .ranking-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        margin-right: 0.75rem;
+        vertical-align: middle;
+    }
+
+    .ranking-name {
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .ranking-points {
+        font-weight: 700;
+        color: #7c3aed;
+        font-size: 1.1rem;
+    }
+
+    .ranking-correctas {
+        color: #22c55e;
+        font-weight: 600;
+    }
+
+    .questions-section {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 1.5rem;
+    }
+
+    .questions-section h4 {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+    }
+
+    .question-result {
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+
+    .question-result:last-child {
+        margin-bottom: 0;
+    }
+
+    .question-result-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .question-number {
+        width: 28px;
+        height: 28px;
+        background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 100%);
+        color: white;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.875rem;
+        margin-right: 0.75rem;
+    }
+
+    .question-text {
+        font-weight: 600;
+        color: #1e293b;
+        flex: 1;
+    }
+
+    .question-stats {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .question-stat {
+        text-align: center;
+    }
+
+    .question-stat .value {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .question-stat .value.correct { color: #22c55e; }
+    .question-stat .value.incorrect { color: #ef4444; }
+
+    .question-stat .label {
+        font-size: 0.7rem;
+        color: #64748b;
+    }
+
+    .correct-answer {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        background: #dcfce7;
+        color: #166534;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="results-header">
+    <a href="{% url 'encuestas:panel_lista' %}" class="btn-action secondary">
+        <i class="bi bi-arrow-left"></i> Volver
+    </a>
+    <div class="header-actions">
+        <a href="{% url 'encuestas:panel_exportar' encuesta_id=encuesta.id %}" class="btn-action primary">
+            <i class="bi bi-download"></i> Exportar CSV
+        </a>
+    </div>
+</div>
+
+<div class="podium-section">
+    <h3><i class="bi bi-trophy-fill me-2"></i>Podio Final</h3>
+
+    <div class="podium">
+        {% if ranking|length >= 2 %}
+        <div class="podium-place second">
+            <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ ranking.1.session_id|slice:':8' }}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+                 class="podium-avatar">
+            <div class="podium-name">{{ ranking.1.nombre }}</div>
+            <div class="podium-points">{{ ranking.1.puntos_totales }} pts</div>
+            <div class="podium-stand">2</div>
+        </div>
+        {% endif %}
+
+        {% if ranking|length >= 1 %}
+        <div class="podium-place first">
+            <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ ranking.0.session_id|slice:':8' }}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+                 class="podium-avatar">
+            <div class="podium-name">{{ ranking.0.nombre }}</div>
+            <div class="podium-points">{{ ranking.0.puntos_totales }} pts</div>
+            <div class="podium-stand">1</div>
+        </div>
+        {% endif %}
+
+        {% if ranking|length >= 3 %}
+        <div class="podium-place third">
+            <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ ranking.2.session_id|slice:':8' }}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+                 class="podium-avatar">
+            <div class="podium-name">{{ ranking.2.nombre }}</div>
+            <div class="podium-points">{{ ranking.2.puntos_totales }} pts</div>
+            <div class="podium-stand">3</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="general-stats">
+        <div class="general-stat">
+            <div class="value">{{ encuesta.total_preguntas }}</div>
+            <div class="label">Preguntas</div>
+        </div>
+        <div class="general-stat">
+            <div class="value">{{ ranking|length }}</div>
+            <div class="label">Participantes</div>
+        </div>
+    </div>
+</div>
+
+<div class="ranking-section">
+    <h4><i class="bi bi-bar-chart-fill me-2"></i>Ranking Completo</h4>
+    <div class="table-responsive">
+        <table class="ranking-table">
+            <thead>
+                <tr>
+                    <th>Posicion</th>
+                    <th>Participante</th>
+                    <th>Puntos</th>
+                    <th>Correctas</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in ranking %}
+                <tr>
+                    <td>
+                        <span class="ranking-position {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% else %}regular{% endif %}">
+                            {{ forloop.counter }}
+                        </span>
+                    </td>
+                    <td>
+                        <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ p.session_id|slice:':8' }}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+                             class="ranking-avatar">
+                        <span class="ranking-name">{{ p.nombre }}</span>
+                    </td>
+                    <td class="ranking-points">{{ p.puntos_totales }} pts</td>
+                    <td class="ranking-correctas">{{ p.respuestas_correctas }}/{{ encuesta.total_preguntas }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted">No hay participantes</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="questions-section">
+    <h4><i class="bi bi-list-check me-2"></i>Estadisticas por Pregunta</h4>
+
+    {% for item in resultados_preguntas %}
+    <div class="question-result">
+        <div class="question-result-header">
+            <div class="d-flex align-items-center">
+                <span class="question-number">{{ forloop.counter }}</span>
+                <span class="question-text">{{ item.pregunta.texto|truncatechars:80 }}</span>
+            </div>
+            <span class="correct-answer">
+                <i class="bi bi-check-circle-fill"></i>
+                Respuesta: {{ item.pregunta.respuesta_correcta }}
+            </span>
+        </div>
+        <div class="question-stats">
+            <div class="question-stat">
+                <div class="value correct">{{ item.correctas }}</div>
+                <div class="label">Correctas</div>
+            </div>
+            <div class="question-stat">
+                <div class="value incorrect">{{ item.incorrectas }}</div>
+                <div class="label">Incorrectas</div>
+            </div>
+            <div class="question-stat">
+                <div class="value">{{ item.porcentaje_acierto }}%</div>
+                <div class="label">Acierto</div>
+            </div>
+            <div class="question-stat">
+                <div class="value">{{ item.total }}</div>
+                <div class="label">Total</div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

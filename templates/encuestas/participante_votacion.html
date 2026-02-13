@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ encuesta.titulo }} - Votacion</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            padding: 1rem 0;
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .user-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .user-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .progress {
+            height: 8px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .progress-bar {
+            background: white;
+            border-radius: 10px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-top: 1rem;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .question-number {
+            display: inline-block;
+            background: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+
+        .question-image {
+            width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .option-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+            background: #f8fafc;
+            border: 3px solid #e2e8f0;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .option-btn:hover:not(.disabled) {
+            border-color: #f97316;
+            background: #fff7ed;
+            transform: translateX(5px);
+        }
+
+        .option-btn.selected {
+            border-color: #f97316;
+            background: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+            color: white;
+            transform: scale(0.98);
+        }
+
+        .option-btn.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .option-letter {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e2e8f0;
+            color: #64748b;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .option-btn.selected .option-letter {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .option-text {
+            font-size: 1rem;
+            line-height: 1.3;
+            font-weight: 500;
+        }
+
+        .waiting-response {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .waiting-response i {
+            font-size: 4rem;
+            color: #22c55e;
+        }
+
+        .waiting-response h3 {
+            color: #1e293b;
+            margin: 1rem 0 0.5rem;
+        }
+
+        .waiting-response p {
+            color: #64748b;
+        }
+
+        .vote-confirmation {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .vote-confirmation i {
+            font-size: 4rem;
+            color: #f97316;
+        }
+
+        .vote-confirmation h3 {
+            color: #1e293b;
+            margin: 1rem 0 0.5rem;
+        }
+
+        .participant-info {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{ encuesta.titulo }}</h1>
+            <div class="user-header">
+                <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ participante.session_id|slice:':8' }}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+                     alt="{{ participante.nombre }}"
+                     class="user-avatar">
+                <span class="user-name">{{ participante.nombre }}</span>
+            </div>
+            <div class="progress-info">
+                <span id="progress-text">Pregunta {{ pregunta_num }} de {{ total_preguntas }}</span>
+            </div>
+            <div class="progress">
+                <div class="progress-bar" id="progress-bar" style="width: {{ pregunta_num|divisibleby:total_preguntas }}%"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body" id="question-container">
+                {% if pregunta %}
+                    {% if ya_respondio %}
+                    <div class="waiting-response">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <h3>Voto registrado</h3>
+                        <p>Esperando la siguiente pregunta...</p>
+                    </div>
+                    {% else %}
+                    <div class="question-number">
+                        Pregunta {{ pregunta_num }} de {{ total_preguntas }}
+                    </div>
+
+                    {% if pregunta.imagen_url %}
+                    <img src="{{ pregunta.imagen_url }}" alt="Imagen de la pregunta" class="question-image">
+                    {% endif %}
+
+                    <p class="question-text" id="question-text">{{ pregunta.texto }}</p>
+
+                    <div class="options-container" id="options-container">
+                        {% if pregunta.opcion_a %}
+                        <button class="option-btn" data-option="A" onclick="selectOption(this, 'A')">
+                            <span class="option-letter">A</span>
+                            <span class="option-text">{{ pregunta.opcion_a }}</span>
+                        </button>
+                        {% endif %}
+                        {% if pregunta.opcion_b %}
+                        <button class="option-btn" data-option="B" onclick="selectOption(this, 'B')">
+                            <span class="option-letter">B</span>
+                            <span class="option-text">{{ pregunta.opcion_b }}</span>
+                        </button>
+                        {% endif %}
+                        {% if pregunta.opcion_c %}
+                        <button class="option-btn" data-option="C" onclick="selectOption(this, 'C')">
+                            <span class="option-letter">C</span>
+                            <span class="option-text">{{ pregunta.opcion_c }}</span>
+                        </button>
+                        {% endif %}
+                        {% if pregunta.opcion_d %}
+                        <button class="option-btn" data-option="D" onclick="selectOption(this, 'D')">
+                            <span class="option-letter">D</span>
+                            <span class="option-text">{{ pregunta.opcion_d }}</span>
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% else %}
+                <div class="waiting-response">
+                    <i class="bi bi-hourglass-split" style="color: #f59e0b;"></i>
+                    <h3>Esperando...</h3>
+                    <p>El presentador esta preparando la siguiente pregunta.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="participant-info">
+        <i class="bi bi-hand-index-thumb me-1"></i> Votacion en vivo
+    </div>
+
+    <script>
+        let currentQuestion = {{ encuesta.pregunta_actual }};
+        let isAnswered = {% if ya_respondio %}true{% else %}false{% endif %};
+        const csrfToken = '{{ csrf_token }}';
+        const sessionId = '{{ participante.session_id }}';
+
+        function selectOption(btn, option) {
+            if (btn.classList.contains('disabled') || isAnswered) return;
+
+            // Deshabilitar todos los botones
+            document.querySelectorAll('.option-btn').forEach(b => {
+                b.classList.add('disabled');
+            });
+            btn.classList.add('selected');
+
+            // Enviar voto
+            fetch('{% url "encuestas:responder" session_id=participante.session_id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: `opcion=${option}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    isAnswered = true;
+                    showVoteConfirmation(option);
+                } else {
+                    alert(data.error || 'Error al enviar voto');
+                    document.querySelectorAll('.option-btn').forEach(b => {
+                        b.classList.remove('disabled', 'selected');
+                    });
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                document.querySelectorAll('.option-btn').forEach(b => {
+                    b.classList.remove('disabled', 'selected');
+                });
+            });
+        }
+
+        function showVoteConfirmation(option) {
+            document.getElementById('question-container').innerHTML = `
+                <div class="vote-confirmation">
+                    <i class="bi bi-check2-circle"></i>
+                    <h3>Voto registrado!</h3>
+                    <p>Tu eleccion: <strong>Opcion ${option}</strong></p>
+                    <p class="text-muted mt-2">Esperando la siguiente pregunta...</p>
+                </div>
+            `;
+        }
+
+        function showWaiting() {
+            document.getElementById('question-container').innerHTML = `
+                <div class="waiting-response">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <h3>Voto registrado</h3>
+                    <p>Esperando la siguiente pregunta...</p>
+                </div>
+            `;
+        }
+
+        function updateQuestion(data) {
+            if (data.estado === 'finalizada') {
+                window.location.href = '{% url "encuestas:resultado_participante" session_id=participante.session_id %}';
+                return;
+            }
+
+            if (data.estado !== 'en_vivo') {
+                return;
+            }
+
+            if (data.pregunta_actual !== currentQuestion) {
+                currentQuestion = data.pregunta_actual;
+                isAnswered = data.pregunta ? data.pregunta.ya_respondio : false;
+
+                // Actualizar progreso
+                const progress = ((currentQuestion + 1) / data.total_preguntas) * 100;
+                document.getElementById('progress-bar').style.width = progress + '%';
+                document.getElementById('progress-text').textContent = `Pregunta ${currentQuestion + 1} de ${data.total_preguntas}`;
+
+                if (data.pregunta && !isAnswered) {
+                    // Construir opciones
+                    let optionsHtml = '';
+                    data.pregunta.opciones.forEach(op => {
+                        optionsHtml += `
+                            <button class="option-btn" data-option="${op.letra}" onclick="selectOption(this, '${op.letra}')">
+                                <span class="option-letter">${op.letra}</span>
+                                <span class="option-text">${op.texto}</span>
+                            </button>
+                        `;
+                    });
+
+                    let imageHtml = '';
+                    if (data.pregunta.imagen_url) {
+                        imageHtml = `<img src="${data.pregunta.imagen_url}" alt="Imagen" class="question-image">`;
+                    }
+
+                    document.getElementById('question-container').innerHTML = `
+                        <div class="question-number">
+                            Pregunta ${currentQuestion + 1} de ${data.total_preguntas}
+                        </div>
+                        ${imageHtml}
+                        <p class="question-text">${data.pregunta.texto}</p>
+                        <div class="options-container" id="options-container">
+                            ${optionsHtml}
+                        </div>
+                    `;
+                } else if (isAnswered) {
+                    showWaiting();
+                }
+            }
+        }
+
+        // Long polling
+        function poll() {
+            fetch('{% url "encuestas:poll_participante" session_id=participante.session_id %}')
+                .then(response => response.json())
+                .then(data => {
+                    updateQuestion(data);
+                    setTimeout(poll, 1500);
+                })
+                .catch(err => {
+                    console.error(err);
+                    setTimeout(poll, 3000);
+                });
+        }
+
+        poll();
+    </script>
+</body>
+</html>

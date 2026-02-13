@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado - {{ encuesta.titulo }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .result-header {
+            background: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .result-header i {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-header .participant-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin: 1rem auto 0.5rem;
+        }
+
+        .result-header .participant-name {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .question-result {
+            margin-bottom: 1.5rem;
+        }
+
+        .question-result:last-child {
+            margin-bottom: 0;
+        }
+
+        .question-title {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .question-text {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.75rem;
+        }
+
+        .result-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .result-bar-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .result-bar-letter {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .result-bar-letter.a { background: #fee2e2; color: #ef4444; }
+        .result-bar-letter.b { background: #dbeafe; color: #3b82f6; }
+        .result-bar-letter.c { background: #fef3c7; color: #eab308; }
+        .result-bar-letter.d { background: #dcfce7; color: #22c55e; }
+
+        .result-bar-container {
+            flex: 1;
+            background: #f1f5f9;
+            border-radius: 6px;
+            height: 28px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .result-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            padding-left: 0.5rem;
+            transition: width 0.5s ease;
+        }
+
+        .result-bar-fill.a { background: linear-gradient(90deg, #fecaca, #ef4444); }
+        .result-bar-fill.b { background: linear-gradient(90deg, #bfdbfe, #3b82f6); }
+        .result-bar-fill.c { background: linear-gradient(90deg, #fde68a, #eab308); }
+        .result-bar-fill.d { background: linear-gradient(90deg, #bbf7d0, #22c55e); }
+
+        .result-bar-text {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .result-bar-votes {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            min-width: 45px;
+            text-align: right;
+        }
+
+        .winner-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 0.25rem 0.5rem;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .thank-you {
+            text-align: center;
+            padding: 1.5rem;
+            color: white;
+        }
+
+        .thank-you i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="result-header">
+                <i class="bi bi-bar-chart-fill"></i>
+                <h1>{{ encuesta.titulo }}</h1>
+                <p>Resultados de la votacion</p>
+
+                <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ participante.session_id|slice:':8' }}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+                     alt="{{ participante.nombre }}"
+                     class="participant-avatar">
+                <div class="participant-name">{{ participante.nombre }}</div>
+            </div>
+        </div>
+
+        {% for item in resultados_preguntas %}
+        <div class="card">
+            <div class="card-body">
+                <div class="question-result">
+                    <div class="question-title">
+                        <i class="bi bi-chat-square-text me-1"></i>
+                        Pregunta {{ forloop.counter }}
+                    </div>
+                    <div class="question-text">{{ item.pregunta.texto }}</div>
+
+                    <div class="result-bars">
+                        {% for option in item.stats.ranking %}
+                        {% with total=item.stats.total %}
+                        <div class="result-bar-item">
+                            <span class="result-bar-letter {{ option.letra|lower }}">{{ option.letra }}</span>
+                            <div class="result-bar-container">
+                                <div class="result-bar-fill {{ option.letra|lower }}"
+                                     style="width: {% if total > 0 %}{{ option.votos|divisibleby:total|floatformat:0 }}%{% else %}0%{% endif %}; min-width: {% if option.votos > 0 %}20%{% else %}0{% endif %}">
+                                    <span class="result-bar-text">{{ option.texto }}</span>
+                                </div>
+                            </div>
+                            <span class="result-bar-votes">
+                                {{ option.votos }} votos
+                                {% if forloop.first and option.votos > 0 %}
+                                <span class="winner-badge"><i class="bi bi-trophy-fill"></i></span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% endwith %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="thank-you">
+            <i class="bi bi-hand-thumbs-up-fill"></i>
+            <p>Gracias por votar!</p>
+        </div>
+    </div>
+</body>
+</html>
