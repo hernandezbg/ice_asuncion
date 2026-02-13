@@ -177,14 +177,40 @@
             font-size: 0.875rem;
             backdrop-filter: blur(10px);
         }
+
+        .user-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .user-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>{{ encuesta.titulo }}</h1>
+            <div class="user-header">
+                <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ participante.session_id|slice:':8' }}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+                     alt="{{ participante.nombre }}"
+                     class="user-avatar">
+                <span class="user-name">{{ participante.nombre }}</span>
+            </div>
             <div class="progress-info">
-                <span>{{ participante.nombre }}</span>
                 <span id="progress-text">Pregunta {{ pregunta_num }} de {{ total_preguntas }}</span>
             </div>
             <div class="progress">
