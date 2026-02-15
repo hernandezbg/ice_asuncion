@@ -446,7 +446,7 @@
             <div class="qr-container">
                 <img id="qr-code" src="" alt="QR Code" class="qr-image">
             </div>
-            <div class="url-display">{{ request.scheme }}://{{ request.get_host }}/encuestas/{{ encuesta.codigo }}/</div>
+            <div class="url-display">{{ request.scheme }}://{{ request.get_host }}/e/{{ encuesta.codigo }}/</div>
         </div>
 
         <div class="info-card">
@@ -564,7 +564,7 @@
     }
 
     function iniciarEncuesta() {
-        fetch(`/encuestas/panel/${encuestaId}/presentador/iniciar/`, {
+        fetch(`/e/panel/${encuestaId}/presentador/iniciar/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken
@@ -582,7 +582,7 @@
     }
 
     function siguientePregunta() {
-        fetch(`/encuestas/panel/${encuestaId}/presentador/siguiente/`, {
+        fetch(`/e/panel/${encuestaId}/presentador/siguiente/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken
@@ -603,7 +603,7 @@
     }
 
     function anteriorPregunta() {
-        fetch(`/encuestas/panel/${encuestaId}/presentador/anterior/`, {
+        fetch(`/e/panel/${encuestaId}/presentador/anterior/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken
@@ -624,7 +624,7 @@
     }
 
     function toggleResultados() {
-        fetch(`/encuestas/panel/${encuestaId}/presentador/mostrar-resultados/`, {
+        fetch(`/e/panel/${encuestaId}/presentador/mostrar-resultados/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken
@@ -649,7 +649,7 @@
     function finalizarEncuesta() {
         if (!confirm('¿Seguro que quieres finalizar la encuesta?')) return;
 
-        fetch(`/encuestas/panel/${encuestaId}/presentador/finalizar/`, {
+        fetch(`/e/panel/${encuestaId}/presentador/finalizar/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken
@@ -658,13 +658,13 @@
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                window.location.href = `/encuestas/panel/${encuestaId}/resultados/`;
+                window.location.href = `/e/panel/${encuestaId}/resultados/`;
             }
         });
     }
 
     function poll() {
-        const url = `/encuestas/panel/${encuestaId}/presentador/poll/?auto_avanzar=${autoAvanzar}`;
+        const url = `/e/panel/${encuestaId}/presentador/poll/?auto_avanzar=${autoAvanzar}`;
         fetch(url)
             .then(r => r.json())
             .then(data => {
@@ -742,7 +742,7 @@
 
     // Generar QR Code
     function generarQR() {
-        const url = '{{ request.scheme }}://{{ request.get_host }}/encuestas/{{ encuesta.codigo }}/';
+        const url = '{{ request.scheme }}://{{ request.get_host }}/e/{{ encuesta.codigo }}/';
         const qrImg = document.getElementById('qr-code');
         if (qrImg) {
             // Usar API de QR Server (gratuita, sin límites)
