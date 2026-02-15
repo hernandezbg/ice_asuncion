@@ -332,6 +332,39 @@
             color: #1e40af;
         }
 
+        /* Sidebar Colapsado */
+        .sidebar.collapsed {
+            width: 0;
+            overflow: hidden;
+            padding: 0;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        /* Botón Toggle Sidebar */
+        .btn-toggle-sidebar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 10px;
+            color: #475569;
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 1rem;
+        }
+
+        .btn-toggle-sidebar:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
@@ -342,7 +375,15 @@
                 transform: translateX(0);
             }
 
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+            }
+
             .main-content {
+                margin-left: 0;
+            }
+
+            .main-content.expanded {
                 margin-left: 0;
             }
 
@@ -352,6 +393,10 @@
 
             .content-area {
                 padding: 1rem;
+            }
+
+            .btn-toggle-sidebar {
+                display: none;
             }
         }
 
@@ -771,9 +816,14 @@
     <main class="main-content">
         <!-- Top Bar -->
         <div class="top-bar">
-            <div class="top-bar-left">
-                <h5>{% block page_title %}Panel de Control{% endblock %}</h5>
-                <p>{% block page_subtitle %}Bienvenido al sistema de gestión{% endblock %}</p>
+            <div class="d-flex align-items-center">
+                <button class="btn-toggle-sidebar" id="toggleSidebar" title="Ocultar/Mostrar menú">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="top-bar-left">
+                    <h5>{% block page_title %}Panel de Control{% endblock %}</h5>
+                    <p>{% block page_subtitle %}Bienvenido al sistema de gestión{% endblock %}</p>
+                </div>
             </div>
             <div class="top-bar-actions">
                 <a href="/" target="_blank" class="btn-top-action">
@@ -809,6 +859,31 @@
         // Mobile Sidebar Toggle
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const mainContent = document.querySelector('.main-content');
+        const toggleSidebarBtn = document.getElementById('toggleSidebar');
+
+        // Toggle sidebar en desktop
+        toggleSidebarBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+
+            // Cambiar icono
+            const icon = this.querySelector('i');
+            if (sidebar.classList.contains('collapsed')) {
+                icon.className = 'bi bi-layout-sidebar-inset';
+                localStorage.setItem('sidebarCollapsed', 'true');
+            } else {
+                icon.className = 'bi bi-list';
+                localStorage.setItem('sidebarCollapsed', 'false');
+            }
+        });
+
+        // Restaurar estado del sidebar
+        if (localStorage.getItem('sidebarCollapsed') === 'true' && window.innerWidth > 768) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+            toggleSidebarBtn.querySelector('i').className = 'bi bi-layout-sidebar-inset';
+        }
 
         sidebarOverlay.addEventListener('click', function() {
             sidebar.classList.remove('show');
