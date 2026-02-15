@@ -1,11 +1,20 @@
 import csv
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
 from django.db.models import Avg, Count
+
+
+def superuser_required(view_func):
+    """Decorador que requiere que el usuario sea superusuario."""
+    decorated_view = user_passes_test(
+        lambda u: u.is_authenticated and u.is_superuser,
+        login_url='/panel/login/'
+    )(view_func)
+    return decorated_view
 
 from .models import Encuesta, Pregunta, Participante, Respuesta
 from .forms import (EncuestaForm, PreguntaOpinionForm, PreguntaTriviaForm,
@@ -307,7 +316,7 @@ def resultado_participante(request, session_id):
 # VISTAS DE PANEL (ADMIN)
 # =============================================================================
 
-@login_required
+@superuser_required
 def panel_lista(request):
     """Lista de encuestas para administradores."""
     encuestas = Encuesta.objects.all()
@@ -317,7 +326,7 @@ def panel_lista(request):
     })
 
 
-@login_required
+@superuser_required
 def panel_crear(request):
     """Crear nueva encuesta."""
     if request.method == 'POST':
@@ -334,7 +343,7 @@ def panel_crear(request):
     })
 
 
-@login_required
+@superuser_required
 def panel_editar(request, encuesta_id):
     """Editar encuesta existente."""
     encuesta = get_object_or_404(Encuesta, id=encuesta_id)
@@ -355,7 +364,7 @@ def panel_editar(request, encuesta_id):
     })
 
 
-@login_required
+@superuser_required
 def panel_eliminar(request, encuesta_id):
     """Eliminar encuesta."""
     encuesta = get_object_or_404(Encuesta, id=encuesta_id)
@@ -371,7 +380,7 @@ def panel_eliminar(request, encuesta_id):
     })
 
 
-@login_required
+@superuser_required
 def panel_preguntas(request, encuesta_id):
     """Gestión de preguntas de una encuesta."""
     encuesta = get_object_or_404(Encuesta, id=encuesta_id)
@@ -412,7 +421,7 @@ def panel_preguntas(request, encuesta_id):
     })
 
 
-@login_required
+@superuser_required
 @require_POST
 def panel_pregunta_eliminar(request, encuesta_id, pregunta_id):
     """Eliminar pregunta."""
@@ -430,7 +439,7 @@ def panel_pregunta_eliminar(request, encuesta_id, pregunta_id):
     return redirect('encuestas:panel_preguntas', encuesta_id=encuesta.id)
 
 
-@login_required
+@superuser_required
 @require_POST
 def panel_pregunta_mover(request, encuesta_id, pregunta_id):
     """Mover pregunta arriba o abajo."""
@@ -453,7 +462,7 @@ def panel_pregunta_mover(request, encuesta_id, pregunta_id):
     return redirect('encuestas:panel_preguntas', encuesta_id=encuesta.id)
 
 
-@login_required
+@superuser_required
 @require_POST
 def panel_activar(request, encuesta_id):
     """Activar encuesta (permite que participantes se unan)."""
@@ -478,7 +487,7 @@ def panel_activar(request, encuesta_id):
     return redirect('encuestas:panel_lista')
 
 
-@login_required
+@superuser_required
 def panel_presentador(request, encuesta_id):
     """Vista del presentador para controlar la encuesta en vivo."""
     encuesta = get_object_or_404(Encuesta, id=encuesta_id)
@@ -498,7 +507,7 @@ def panel_presentador(request, encuesta_id):
     })
 
 
-@login_required
+@superuser_required
 @require_POST
 def panel_iniciar(request, encuesta_id):
     """Inicia la encuesta en vivo."""
@@ -521,7 +530,7 @@ def panel_iniciar(request, encuesta_id):
     return JsonResponse({'success': True, 'mensaje': 'Encuesta iniciada'})
 
 
-@login_required
+@superuser_required
 @require_POST
 def panel_siguiente(request, encuesta_id):
     """Avanza a la siguiente pregunta."""
@@ -556,7 +565,7 @@ def panel_siguiente(request, encuesta_id):
         })
 
 
-@login_required
+@superuser_required
 @require_POST
 def panel_anterior(request, encuesta_id):
     """Retrocede a la pregunta anterior."""
@@ -582,7 +591,7 @@ def panel_anterior(request, encuesta_id):
         })
 
 
-@login_required
+@superuser_required
 @require_POST
 def panel_mostrar_resultados(request, encuesta_id):
     """Toggle mostrar/ocultar resultados en tiempo real."""
@@ -597,7 +606,7 @@ def panel_mostrar_resultados(request, encuesta_id):
     })
 
 
-@login_required
+@superuser_required
 @require_POST
 def panel_finalizar(request, encuesta_id):
     """Finaliza la encuesta."""
@@ -609,7 +618,7 @@ def panel_finalizar(request, encuesta_id):
     return JsonResponse({'success': True, 'mensaje': 'Encuesta finalizada'})
 
 
-@login_required
+@superuser_required
 @require_POST
 def panel_reiniciar(request, encuesta_id):
     """Reinicia la encuesta (elimina respuestas y participantes)."""
@@ -632,7 +641,7 @@ def panel_reiniciar(request, encuesta_id):
     return redirect('encuestas:panel_lista')
 
 
-@login_required
+@superuser_required
 @require_GET
 def panel_poll(request, encuesta_id):
     """Long polling para actualizar resultados del presentador."""
@@ -733,7 +742,7 @@ def panel_poll(request, encuesta_id):
     })
 
 
-@login_required
+@superuser_required
 def panel_resultados(request, encuesta_id):
     """Vista de resultados finales de la encuesta."""
     encuesta = get_object_or_404(Encuesta, id=encuesta_id)
@@ -808,7 +817,7 @@ def panel_resultados(request, encuesta_id):
         })
 
 
-@login_required
+@superuser_required
 def panel_exportar(request, encuesta_id):
     """Exportar resultados a CSV."""
     encuesta = get_object_or_404(Encuesta, id=encuesta_id)
