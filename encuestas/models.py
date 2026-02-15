@@ -83,15 +83,40 @@ class Encuesta(models.Model):
     def interpretar_porcentaje(self, porcentaje):
         """Interpreta un porcentaje según los rangos configurados."""
         if porcentaje >= self.rango_excelente:
-            return {'nivel': 'Excelente', 'color': 'success', 'icono': 'star-fill'}
+            return {
+                'nivel': 'Excelente',
+                'color': 'success',
+                'icono': 'star-fill',
+                'mensaje': 'Su iglesia es saludable.'
+            }
         elif porcentaje >= self.rango_bueno:
-            return {'nivel': 'Bueno', 'color': 'primary', 'icono': 'hand-thumbs-up-fill'}
+            return {
+                'nivel': 'Bueno',
+                'color': 'primary',
+                'icono': 'hand-thumbs-up-fill',
+                'mensaje': 'Su iglesia va en camino a ser saludable.'
+            }
         elif porcentaje >= self.rango_regular:
-            return {'nivel': 'Regular', 'color': 'warning', 'icono': 'dash-circle-fill'}
+            return {
+                'nivel': 'Regular',
+                'color': 'warning',
+                'icono': 'dash-circle-fill',
+                'mensaje': 'No se detenga ahora; sus esfuerzos están comenzando a dar fruto.'
+            }
         elif porcentaje >= self.rango_bajo:
-            return {'nivel': 'Bajo', 'color': 'orange', 'icono': 'exclamation-triangle-fill'}
+            return {
+                'nivel': 'Bajo',
+                'color': 'orange',
+                'icono': 'exclamation-triangle-fill',
+                'mensaje': 'Necesita esforzarse un poco, pero ya ha comenzado. ¿Cuál será su siguiente paso?'
+            }
         else:
-            return {'nivel': 'Crítico', 'color': 'danger', 'icono': 'x-circle-fill'}
+            return {
+                'nivel': 'Crítico',
+                'color': 'danger',
+                'icono': 'x-circle-fill',
+                'mensaje': 'Su iglesia no es muy saludable. Pero no se rinda ante la desesperación. Es tiempo de que los líderes se humillen delante de Dios en pos de una dirección renovada.'
+            }
 
     def ranking_participantes(self):
         """Retorna ranking de participantes ordenado por puntos (para trivia)."""
