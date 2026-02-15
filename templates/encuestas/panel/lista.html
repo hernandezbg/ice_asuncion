@@ -267,11 +267,9 @@
                 </form>
             {% endif %}
 
-            {% if encuesta.estado == 'borrador' %}
-            <a href="{% url 'encuestas:panel_eliminar' encuesta_id=encuesta.id %}" class="btn-action danger">
+            <a href="{% url 'encuestas:panel_eliminar' encuesta_id=encuesta.id %}" class="btn-action danger" title="Eliminar encuesta">
                 <i class="bi bi-trash"></i>
             </a>
-            {% endif %}
         </div>
     </div>
     {% endfor %}
