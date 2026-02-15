@@ -12,7 +12,7 @@ urlpatterns = [
     path('panel/', include('panel.urls')),  # Panel de administración personalizado
     path('miembros/', include('miembros.urls')),  # Actualización de datos de miembros
     path('chat/', include('chat.urls')),  # Chat con agente IA
-    path('encuestas/', include('encuestas.urls')),  # Encuestas en vivo tipo Kahoot
+    path('e/', include('encuestas.urls')),  # Encuestas en vivo (URL corta)
     path('', include('contenido.urls')),  # URLs del sitio público
 ]
 

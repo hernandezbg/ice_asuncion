@@ -1,14 +1,17 @@
 import uuid
 import random
-import string
 from django.db import models
 from django.utils import timezone
 
 
+# Letras fáciles de distinguir (sin I, L, O, 0, 1)
+LETRAS_CODIGO = 'ABCDEFGHJKMNPQRSTUVWXYZ'
+
+
 def generar_codigo():
-    """Genera un código único de 6 caracteres alfanuméricos (mayúsculas)."""
+    """Genera un código único de 4 caracteres usando letras fáciles de distinguir."""
     while True:
-        codigo = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        codigo = ''.join(random.choices(LETRAS_CODIGO, k=4))
         if not Encuesta.objects.filter(codigo=codigo).exists():
             return codigo
 
@@ -31,7 +34,7 @@ class Encuesta(models.Model):
 
     titulo = models.CharField(max_length=200)
     descripcion = models.TextField(blank=True)
-    codigo = models.CharField(max_length=6, unique=True, default=generar_codigo)
+    codigo = models.CharField(max_length=4, unique=True, default=generar_codigo)
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='opinion')
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='borrador')
 
