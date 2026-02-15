@@ -224,6 +224,71 @@
         font-weight: 700;
         color: #1e293b;
     }
+
+    .interpretacion-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .interpretacion-card h4 {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 1rem;
+    }
+
+    .puntuacion-rangos {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .rango-item {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        background: #f8fafc;
+        font-size: 0.9rem;
+        color: #64748b;
+        transition: all 0.3s ease;
+    }
+
+    .rango-numero {
+        font-weight: 600;
+        margin-right: 0.25rem;
+    }
+
+    .rango-item.activo {
+        font-weight: 700;
+        color: #1e293b;
+        border-left: 4px solid;
+    }
+
+    .rango-item.activo.success {
+        background: #dcfce7;
+        border-color: #22c55e;
+    }
+
+    .rango-item.activo.primary {
+        background: #dbeafe;
+        border-color: #3b82f6;
+    }
+
+    .rango-item.activo.warning {
+        background: #fef3c7;
+        border-color: #f59e0b;
+    }
+
+    .rango-item.activo.orange {
+        background: #ffedd5;
+        border-color: #f97316;
+    }
+
+    .rango-item.activo.danger {
+        background: #fee2e2;
+        border-color: #ef4444;
+    }
 </style>
 {% endblock %}
 
@@ -259,6 +324,32 @@
         <div class="general-stat">
             <div class="value">{{ participantes|length }}</div>
             <div class="label">Participantes</div>
+        </div>
+    </div>
+</div>
+
+<div class="interpretacion-card">
+    <h4><i class="bi bi-clipboard-check me-2"></i>Interpretación del Puntaje</h4>
+    <div class="puntuacion-rangos">
+        <div class="rango-item {% if porcentaje_general >= encuesta.rango_excelente %}activo success{% endif %}">
+            <span class="rango-numero">{{ encuesta.rango_excelente }}-100:</span>
+            <span class="rango-texto">Su iglesia es saludable.</span>
+        </div>
+        <div class="rango-item {% if porcentaje_general >= encuesta.rango_bueno and porcentaje_general < encuesta.rango_excelente %}activo primary{% endif %}">
+            <span class="rango-numero">{{ encuesta.rango_bueno }}-{{ encuesta.rango_excelente|add:"-1" }}:</span>
+            <span class="rango-texto">Su iglesia va en camino a ser saludable.</span>
+        </div>
+        <div class="rango-item {% if porcentaje_general >= encuesta.rango_regular and porcentaje_general < encuesta.rango_bueno %}activo warning{% endif %}">
+            <span class="rango-numero">{{ encuesta.rango_regular }}-{{ encuesta.rango_bueno|add:"-1" }}:</span>
+            <span class="rango-texto">No se detenga ahora; sus esfuerzos están comenzando a dar fruto.</span>
+        </div>
+        <div class="rango-item {% if porcentaje_general >= encuesta.rango_bajo and porcentaje_general < encuesta.rango_regular %}activo orange{% endif %}">
+            <span class="rango-numero">{{ encuesta.rango_bajo }}-{{ encuesta.rango_regular|add:"-1" }}:</span>
+            <span class="rango-texto">Necesita esforzarse un poco, pero ya ha comenzado. ¿Cuál será su siguiente paso?</span>
+        </div>
+        <div class="rango-item {% if porcentaje_general < encuesta.rango_bajo %}activo danger{% endif %}">
+            <span class="rango-numero">Menos de {{ encuesta.rango_bajo }}:</span>
+            <span class="rango-texto">Su iglesia no es muy saludable. Pero no se rinda ante la desesperación. Es tiempo de que los líderes se humillen delante de Dios en pos de una dirección renovada.</span>
         </div>
     </div>
 </div>
