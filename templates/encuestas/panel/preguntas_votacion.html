@@ -129,6 +129,15 @@
         background: #fecaca;
     }
 
+    .btn-icon.edit {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .btn-icon.edit:hover {
+        background: #bfdbfe;
+    }
+
     .add-pregunta-card {
         background: white;
         border-radius: 16px;
@@ -292,6 +301,9 @@
                     </button>
                 </form>
                 {% endif %}
+                <a href="{% url 'encuestas:panel_pregunta_editar' encuesta_id=encuesta.id pregunta_id=pregunta.id %}" class="btn-icon edit" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                </a>
                 <form action="{% url 'encuestas:panel_pregunta_eliminar' encuesta_id=encuesta.id pregunta_id=pregunta.id %}" method="post" style="display: inline;" onsubmit="return confirm('¿Eliminar esta pregunta?');">
                     {% csrf_token %}
                     <button type="submit" class="btn-icon delete" title="Eliminar">

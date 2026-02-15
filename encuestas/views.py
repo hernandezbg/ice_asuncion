@@ -440,6 +440,36 @@ def panel_pregunta_eliminar(request, encuesta_id, pregunta_id):
 
 
 @superuser_required
+def panel_pregunta_editar(request, encuesta_id, pregunta_id):
+    """Editar pregunta existente."""
+    encuesta = get_object_or_404(Encuesta, id=encuesta_id)
+    pregunta = get_object_or_404(Pregunta, id=pregunta_id, encuesta=encuesta)
+
+    # Seleccionar formulario según tipo
+    if encuesta.tipo == 'trivia':
+        FormClass = PreguntaTriviaForm
+    elif encuesta.tipo == 'votacion':
+        FormClass = PreguntaVotacionForm
+    else:
+        FormClass = PreguntaOpinionForm
+
+    if request.method == 'POST':
+        form = FormClass(request.POST, instance=pregunta)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Pregunta actualizada.')
+            return redirect('encuestas:panel_preguntas', encuesta_id=encuesta.id)
+    else:
+        form = FormClass(instance=pregunta)
+
+    return render(request, 'encuestas/panel/pregunta_editar.html', {
+        'encuesta': encuesta,
+        'pregunta': pregunta,
+        'form': form
+    })
+
+
+@superuser_required
 @require_POST
 def panel_pregunta_mover(request, encuesta_id, pregunta_id):
     """Mover pregunta arriba o abajo."""

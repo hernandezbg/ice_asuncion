@@ -1,0 +1,197 @@
+{% extends 'panel/base_panel.html' %}
+
+{% block title %}Editar Pregunta - {{ encuesta.titulo }}{% endblock %}
+
+{% block page_title %}Editar Pregunta{% endblock %}
+{% block page_subtitle %}{{ encuesta.titulo }}{% endblock %}
+
+{% block content %}
+<style>
+    .edit-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 2rem;
+        max-width: 700px;
+    }
+
+    .edit-card h4 {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+    }
+
+    .etiquetas-grid {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.75rem;
+        align-items: center;
+        margin-top: 1rem;
+    }
+
+    .etiqueta-label {
+        width: 30px;
+        height: 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.875rem;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid #f1f5f9;
+    }
+
+    .btn-submit {
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-submit.primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-submit.primary:hover {
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-submit.secondary {
+        background: #f1f5f9;
+        color: #475569;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-submit.secondary:hover {
+        background: #e2e8f0;
+    }
+
+    .opciones-grid {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.75rem;
+        align-items: center;
+        margin-top: 1rem;
+    }
+
+    .opcion-label {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.875rem;
+        color: white;
+    }
+
+    .opcion-label.a { background: #ef4444; }
+    .opcion-label.b { background: #3b82f6; }
+    .opcion-label.c { background: #eab308; }
+    .opcion-label.d { background: #22c55e; }
+</style>
+
+<div class="edit-card">
+    <h4><i class="bi bi-pencil-square me-2"></i>Editar Pregunta #{{ pregunta.orden|add:1 }}</h4>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Texto de la pregunta</label>
+            {{ form.texto }}
+        </div>
+
+        {% if encuesta.tipo == 'opinion' %}
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Etiquetas de la escala</label>
+            <p class="text-muted small">Personaliza las etiquetas para cada valor de la escala 1-5</p>
+
+            <div class="etiquetas-grid">
+                <span class="etiqueta-label">1</span>
+                {{ form.etiqueta_1 }}
+
+                <span class="etiqueta-label">2</span>
+                {{ form.etiqueta_2 }}
+
+                <span class="etiqueta-label">3</span>
+                {{ form.etiqueta_3 }}
+
+                <span class="etiqueta-label">4</span>
+                {{ form.etiqueta_4 }}
+
+                <span class="etiqueta-label">5</span>
+                {{ form.etiqueta_5 }}
+            </div>
+        </div>
+        {% elif encuesta.tipo == 'trivia' %}
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Opciones de respuesta</label>
+            <p class="text-muted small">Define las opciones y marca la correcta</p>
+
+            <div class="opciones-grid">
+                <span class="opcion-label a">A</span>
+                {{ form.opcion_a }}
+
+                <span class="opcion-label b">B</span>
+                {{ form.opcion_b }}
+
+                <span class="opcion-label c">C</span>
+                {{ form.opcion_c }}
+
+                <span class="opcion-label d">D</span>
+                {{ form.opcion_d }}
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Respuesta correcta</label>
+            {{ form.respuesta_correcta }}
+        </div>
+        {% elif encuesta.tipo == 'votacion' %}
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Opciones para votar</label>
+            <p class="text-muted small">Define las opciones disponibles</p>
+
+            <div class="opciones-grid">
+                <span class="opcion-label a">A</span>
+                {{ form.opcion_a }}
+
+                <span class="opcion-label b">B</span>
+                {{ form.opcion_b }}
+
+                <span class="opcion-label c">C</span>
+                {{ form.opcion_c }}
+
+                <span class="opcion-label d">D</span>
+                {{ form.opcion_d }}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="form-actions">
+            <button type="submit" class="btn-submit primary">
+                <i class="bi bi-check-lg me-2"></i>Guardar Cambios
+            </button>
+            <a href="{% url 'encuestas:panel_preguntas' encuesta_id=encuesta.id %}" class="btn-submit secondary">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

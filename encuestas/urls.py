@@ -10,6 +10,7 @@ urlpatterns = [
     path('panel/<int:encuesta_id>/editar/', views.panel_editar, name='panel_editar'),
     path('panel/<int:encuesta_id>/eliminar/', views.panel_eliminar, name='panel_eliminar'),
     path('panel/<int:encuesta_id>/preguntas/', views.panel_preguntas, name='panel_preguntas'),
+    path('panel/<int:encuesta_id>/preguntas/<int:pregunta_id>/editar/', views.panel_pregunta_editar, name='panel_pregunta_editar'),
     path('panel/<int:encuesta_id>/preguntas/<int:pregunta_id>/eliminar/', views.panel_pregunta_eliminar, name='panel_pregunta_eliminar'),
     path('panel/<int:encuesta_id>/preguntas/<int:pregunta_id>/mover/', views.panel_pregunta_mover, name='panel_pregunta_mover'),
     path('panel/<int:encuesta_id>/activar/', views.panel_activar, name='panel_activar'),
