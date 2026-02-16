@@ -3,58 +3,68 @@ from encuestas.models import Encuesta, Pregunta
 
 
 class Command(BaseCommand):
-    help = 'Crea la encuesta predefinida "Salud de la Iglesia" con sus preguntas'
+    help = 'Crea la encuesta "¿Cuál es nuestra esencia?" con 20 preguntas'
 
     def handle(self, *args, **options):
-        # Verificar si ya existe
-        if Encuesta.objects.filter(titulo__icontains='Salud de la Iglesia').exists():
-            self.stdout.write(self.style.WARNING('Ya existe una encuesta de Salud de la Iglesia'))
-            return
-
         # Crear la encuesta
         encuesta = Encuesta.objects.create(
-            titulo='Evaluacion de Salud de la Iglesia',
-            descripcion='Encuesta para evaluar diferentes aspectos de la salud y funcionamiento de nuestra iglesia.',
-            estado='borrador'
+            titulo='¿Cuál es nuestra esencia?',
+            descripcion='Midiendo nuestra iglesia a partir de sus fundamentos. Efesios 2:19-22; Mateo 28:19, 20',
+            tipo='opinion',
+            estado='borrador',
+            rango_excelente=85,
+            rango_bueno=70,
+            rango_regular=55,
+            rango_bajo=40,
         )
 
-        # Etiquetas por defecto para Salud de la Iglesia
+        # Etiquetas para todas las preguntas
         etiquetas = {
-            'etiqueta_1': 'Todavia no hemos pensado en eso',
+            'etiqueta_1': 'Todavía no hemos pensado en eso',
             'etiqueta_2': 'Apenas comenzando',
             'etiqueta_3': 'En progreso',
             'etiqueta_4': 'Bien encaminados',
             'etiqueta_5': 'En excelente forma',
         }
 
-        # Preguntas de Salud de la Iglesia
+        # Lista de preguntas
         preguntas = [
-            'Nuestra iglesia tiene una vision clara y compartida por todos los miembros.',
-            'Los lideres de nuestra iglesia sirven con humildad y transparencia.',
-            'Tenemos programas efectivos para discipular a los nuevos creyentes.',
-            'La adoracion en nuestros servicios es genuina y participativa.',
-            'Existe un ambiente de comunion y familia entre los miembros.',
-            'Nuestra iglesia esta comprometida con la evangelizacion local.',
-            'Apoyamos activamente misiones nacionales e internacionales.',
-            'Los jovenes y ninos tienen espacios adecuados para su crecimiento espiritual.',
-            'La ensenanza biblica es solida y aplicable a la vida diaria.',
-            'Nuestra iglesia responde a las necesidades sociales de la comunidad.',
-            'Los miembros estan involucrados en algun ministerio o servicio.',
-            'Existe un sistema efectivo de cuidado pastoral para los miembros.',
-            'La comunicacion interna de la iglesia es clara y oportuna.',
-            'Los recursos financieros se administran con integridad y sabiduria.',
-            'Nuestra iglesia promueve la oracion como prioridad.',
+            '¿Tenemos una visión común clara?',
+            '¿Nuestro culto de adoración pública glorifica a Dios?',
+            '¿Se contempla la Palabra de Dios como la base de autoridad?',
+            '¿Nuestras celebraciones públicas inspiran la adoración verdadera?',
+            '¿Presenta nuestra iglesia un mensaje poderoso del evangelio?',
+            '¿Existe un equilibrio entre evangelismo y edificación?',
+            '¿La vida de nuestra iglesia se nutre de la oración colectiva?',
+            '¿Existe un esfuerzo concertado para llevar a las personas hacia la madurez?',
+            '¿Les tendemos la mano a las personas que nos visitan?',
+            '¿Está nuestra iglesia consciente del mundo a su alrededor?',
+            '¿Procuramos activamente el cumplimiento de la Gran Comisión?',
+            '¿Formamos líderes?',
+            '¿Nuestros líderes toman en serio sus responsabilidades?',
+            '¿Tiene nuestra iglesia estructuras apropiadas y ejerce una administración sabia?',
+            '¿Tiene nuestra congregación un sentido de comunidad?',
+            '¿Practicamos la responsabilidad y ejercemos la integridad?',
+            '¿Practicamos el amor redentor?',
+            '¿Se practica abiertamente la confesión?',
+            '¿Nos interrelacionamos con otras congregaciones?',
+            '¿Vivimos como personas con esperanza?',
         ]
 
-        for i, texto in enumerate(preguntas):
+        # Crear las preguntas
+        for orden, texto in enumerate(preguntas):
             Pregunta.objects.create(
                 encuesta=encuesta,
                 texto=texto,
-                orden=i,
+                orden=orden,
                 **etiquetas
             )
 
-        self.stdout.write(self.style.SUCCESS(
-            f'Encuesta "{encuesta.titulo}" creada exitosamente con {len(preguntas)} preguntas.'
-        ))
-        self.stdout.write(self.style.SUCCESS(f'Codigo de acceso: {encuesta.codigo}'))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'Encuesta "{encuesta.titulo}" creada con código: {encuesta.codigo}'
+            )
+        )
+        self.stdout.write(
+            self.style.SUCCESS(f'Se crearon {len(preguntas)} preguntas.')
+        )
