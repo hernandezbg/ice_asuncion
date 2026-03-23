@@ -257,6 +257,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{% url 'escuela:acceso' %}" style="color: #2e7d32;">
+                            <i class="bi bi-book"></i> Escuela
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         {% if user.is_authenticated %}
                         <a class="nav-link btn btn-primary text-white px-3" href="{% url 'panel:dashboard' %}">
                             <i class="bi bi-speedometer2"></i> Panel

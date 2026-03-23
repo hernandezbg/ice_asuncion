@@ -70,4 +70,9 @@ urlpatterns = [
 
     # Configuración (DatosICE)
     path('configuracion/', views.datosice_editar, name='datosice_editar'),
+
+    # Escuela Biblica
+    path('escuela/', views.escuela_alumnos_lista, name='escuela_alumnos'),
+    path('escuela/clases/', views.escuela_clases_lista, name='escuela_clases'),
+    path('escuela/clases/<int:pk>/codigo/', views.escuela_clase_actualizar_codigo, name='escuela_clase_codigo'),
 ]

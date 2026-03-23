@@ -1,0 +1,855 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if es_nuevo %}Agregar alumno{% else %}Editar alumno{% endif %} - {{ clase.nombre }}{% endblock %}
+
+{% block extra_css %}
+.form-container {
+    max-width: 550px;
+    margin: 30px auto;
+}
+
+.form-card {
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.form-header {
+    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+}
+
+.form-body {
+    padding: 1.5rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #2e7d32;
+    box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
+}
+
+.form-control, .form-select {
+    padding: 0.65rem 0.85rem;
+    font-size: 1rem;
+    border-radius: 10px;
+}
+
+.form-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.35rem;
+}
+
+.required-field::after {
+    content: " *";
+    color: #dc3545;
+}
+
+.btn-guardar {
+    padding: 0.75rem;
+    font-weight: 600;
+    font-size: 1.05rem;
+    border-radius: 12px;
+    background: #2e7d32;
+    border-color: #2e7d32;
+}
+
+.btn-guardar:hover {
+    background: #1b5e20;
+    border-color: #1b5e20;
+}
+
+.btn-guardar-otro {
+    padding: 0.75rem;
+    font-weight: 600;
+    font-size: 1.05rem;
+    border-radius: 12px;
+    border-color: #2e7d32;
+    color: #2e7d32;
+}
+
+.btn-guardar-otro:hover {
+    background: rgba(46, 125, 50, 0.1);
+    border-color: #2e7d32;
+    color: #1b5e20;
+}
+
+.edad-preview {
+    display: inline-block;
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-top: 0.35rem;
+}
+
+/* Autocompletado */
+.sugerencias-container {
+    position: relative;
+}
+
+.sugerencias-lista {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 2px solid #2e7d32;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    display: none;
+}
+
+.sugerencia-item {
+    padding: 0.7rem 0.85rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.15s ease;
+}
+
+.sugerencia-item:last-child {
+    border-bottom: none;
+}
+
+.sugerencia-item:hover, .sugerencia-item.active {
+    background: #e8f5e9;
+}
+
+.sugerencia-nombre {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1e293b;
+}
+
+.sugerencia-detalle {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 0.1rem;
+}
+
+.sugerencia-header {
+    padding: 0.4rem 0.85rem;
+    background: #f8f9fa;
+    font-size: 0.75rem;
+    color: #2e7d32;
+    font-weight: 600;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-cerrar-sugerencias {
+    background: none;
+    border: 1px solid #dc3545;
+    color: #dc3545;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-cerrar-sugerencias:hover {
+    background: #dc3545;
+    color: white;
+}
+
+/* Fecha display */
+.fecha-display {
+    display: flex;
+    align-items: center;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #495057;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.fecha-display:hover {
+    border-color: #2e7d32;
+}
+
+.fecha-display.has-value {
+    color: #1e293b;
+    font-weight: 500;
+}
+
+/* Picker modal */
+.picker-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 2000;
+}
+
+.picker-overlay.show { display: block; }
+
+.picker-modal {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: white;
+    border-radius: 16px 16px 0 0;
+    z-index: 2001;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.picker-modal.show { display: block; }
+
+.picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.picker-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #1e293b;
+}
+
+.picker-btn-cancel {
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+}
+
+.picker-btn-ok {
+    background: none;
+    border: none;
+    color: #2e7d32;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+}
+
+.picker-body {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+}
+
+.picker-columns {
+    display: flex;
+    height: 100%;
+}
+
+.picker-column {
+    flex: 1;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    position: relative;
+}
+
+.picker-column::-webkit-scrollbar { display: none; }
+
+.picker-cell {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: #adb5bd;
+    scroll-snap-align: center;
+    transition: color 0.15s, font-weight 0.15s;
+    user-select: none;
+    cursor: pointer;
+}
+
+.picker-cell.selected {
+    color: #1e293b;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.picker-cell.near {
+    color: #6c757d;
+}
+
+.picker-highlight {
+    position: absolute;
+    top: 50%;
+    left: 1rem;
+    right: 1rem;
+    height: 44px;
+    transform: translateY(-50%);
+    border-top: 2px solid #2e7d32;
+    border-bottom: 2px solid #2e7d32;
+    pointer-events: none;
+    border-radius: 4px;
+}
+
+@media (max-width: 576px) {
+    .form-container {
+        margin: 15px auto;
+    }
+    .form-body {
+        padding: 1.25rem;
+    }
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-container">
+        <div class="card form-card">
+            <div class="form-header">
+                <h4 class="mb-0">
+                    {% if es_nuevo %}
+                    <i class="bi bi-person-plus me-2"></i>Agregar alumno
+                    {% else %}
+                    <i class="bi bi-pencil-square me-2"></i>Editar alumno
+                    {% endif %}
+                </h4>
+                <small class="opacity-75">{{ clase.emoji }} {{ clase.nombre }}</small>
+            </div>
+
+            <div class="form-body">
+                {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}" role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {% if duplicado %}
+                <div class="alert alert-warning" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>{{ duplicado.nombres }} {{ duplicado.apellidos }}</strong> ya esta registrado en <strong>{{ duplicado.clase }}</strong>.
+                    <br><small>Si es otra persona con el mismo nombre, confirma para guardarlo igual.</small>
+                </div>
+                {% endif %}
+
+                <form method="post" id="formAlumno">
+                    {% csrf_token %}
+
+                    {% if duplicado %}
+                    <input type="hidden" name="confirmar_duplicado" value="1">
+                    {% endif %}
+
+                    <!-- Nombres con autocompletado -->
+                    <div class="mb-3 sugerencias-container">
+                        <label for="nombres" class="form-label required-field">Nombres</label>
+                        <input type="text"
+                               class="form-control"
+                               id="nombres"
+                               name="nombres"
+                               value="{% if form_data.nombres %}{{ form_data.nombres }}{% elif alumno %}{{ alumno.nombres }}{% endif %}"
+                               required
+                               autocomplete="off"
+                               {% if not duplicado %}autofocus{% endif %}
+                               placeholder="Empieza a escribir para buscar...">
+                        <div class="sugerencias-lista" id="sugerenciasLista"></div>
+                    </div>
+
+                    <!-- Apellidos -->
+                    <div class="mb-3 sugerencias-container">
+                        <label for="apellidos" class="form-label required-field">Apellidos</label>
+                        <input type="text"
+                               class="form-control"
+                               id="apellidos"
+                               name="apellidos"
+                               value="{% if form_data.apellidos %}{{ form_data.apellidos }}{% elif alumno %}{{ alumno.apellidos }}{% endif %}"
+                               required
+                               autocomplete="off"
+                               placeholder="Empieza a escribir para buscar...">
+                        <div class="sugerencias-lista" id="sugerenciasListaApellidos"></div>
+                    </div>
+
+                    <!-- Fecha de nacimiento - picker -->
+                    <div class="mb-3">
+                        <label class="form-label">Fecha de nacimiento</label>
+                        <!-- Hidden inputs para el form -->
+                        <input type="hidden" id="nacimiento_dia" name="nacimiento_dia"
+                               value="{% if form_data.nacimiento_dia %}{{ form_data.nacimiento_dia }}{% elif alumno and alumno.fecha_nacimiento %}{{ alumno.fecha_nacimiento.day }}{% endif %}">
+                        <input type="hidden" id="nacimiento_mes" name="nacimiento_mes"
+                               value="{% if form_data.nacimiento_mes %}{{ form_data.nacimiento_mes }}{% elif alumno and alumno.fecha_nacimiento %}{{ alumno.fecha_nacimiento.month }}{% endif %}">
+                        <input type="hidden" id="nacimiento_anio" name="nacimiento_anio"
+                               value="{% if form_data.nacimiento_anio %}{{ form_data.nacimiento_anio }}{% elif alumno and alumno.fecha_nacimiento %}{{ alumno.fecha_nacimiento.year }}{% endif %}">
+                        <!-- Boton que abre el picker -->
+                        <div class="fecha-display" id="fechaDisplay" onclick="abrirPicker()">
+                            <i class="bi bi-calendar3 me-2"></i>
+                            <span id="fechaTexto">Seleccionar fecha...</span>
+                        </div>
+                        <div id="edadPreview" class="mt-1" style="display: none;">
+                            <span class="edad-preview"><i class="bi bi-cake me-1"></i><span id="edadValor"></span></span>
+                        </div>
+                    </div>
+
+                    <!-- Modal Picker de Fecha -->
+                    <div class="picker-overlay" id="pickerOverlay" onclick="cerrarPicker()"></div>
+                    <div class="picker-modal" id="pickerModal">
+                        <div class="picker-header">
+                            <button type="button" class="picker-btn-cancel" onclick="cerrarPicker()">Cancelar</button>
+                            <span class="picker-title">Fecha de nacimiento</span>
+                            <button type="button" class="picker-btn-ok" onclick="confirmarFecha()">Listo</button>
+                        </div>
+                        <div class="picker-body">
+                            <div class="picker-columns">
+                                <div class="picker-column" id="pickerDia"></div>
+                                <div class="picker-column" id="pickerMes"></div>
+                                <div class="picker-column" id="pickerAnio"></div>
+                            </div>
+                            <div class="picker-highlight"></div>
+                        </div>
+                    </div>
+
+                    <!-- Grado/Nivel -->
+                    <div class="mb-3">
+                        <label for="grado_nivel" class="form-label">Grado / Nivel</label>
+                        <select class="form-select" id="grado_nivel" name="grado_nivel">
+                            {% for value, label in grado_choices %}
+                            <option value="{{ value }}" {% if form_data.grado_nivel == value %}selected{% elif alumno and alumno.grado_nivel == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div class="mb-4">
+                        <label for="observaciones" class="form-label">Observaciones</label>
+                        <textarea class="form-control"
+                                  id="observaciones"
+                                  name="observaciones"
+                                  rows="2"
+                                  placeholder="Alergias, datos adicionales...">{% if form_data.observaciones %}{{ form_data.observaciones }}{% elif alumno and alumno.observaciones %}{{ alumno.observaciones }}{% endif %}</textarea>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="d-grid gap-2">
+                        {% if duplicado %}
+                        <button type="submit" class="btn btn-warning btn-guardar" style="background: #e65100; border-color: #e65100; color: white;">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Guardar de todas formas
+                        </button>
+                        <a href="{% url 'escuela:alumno_crear' %}" class="btn btn-outline-secondary btn-guardar-otro">
+                            <i class="bi bi-arrow-left me-1"></i>Cancelar
+                        </a>
+                        {% else %}
+                        <button type="submit" class="btn btn-primary btn-guardar">
+                            <i class="bi bi-check-lg me-1"></i>
+                            {% if es_nuevo %}Guardar{% else %}Guardar cambios{% endif %}
+                        </button>
+
+                        {% if es_nuevo %}
+                        <button type="submit" name="guardar_otro" class="btn btn-outline-success btn-guardar-otro">
+                            <i class="bi bi-plus-circle me-1"></i>Guardar y cargar otro
+                        </button>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <a href="{% url 'escuela:lista_alumnos' %}" class="text-muted">
+                            <i class="bi bi-arrow-left me-1"></i>Volver a la lista
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var hiddenDia = document.getElementById('nacimiento_dia');
+    var hiddenMes = document.getElementById('nacimiento_mes');
+    var hiddenAnio = document.getElementById('nacimiento_anio');
+    var fechaTexto = document.getElementById('fechaTexto');
+    var fechaDisplay = document.getElementById('fechaDisplay');
+
+    var MESES = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    var anioActual = new Date().getFullYear();
+
+    // Mostrar fecha inicial si existe
+    actualizarFechaDisplay();
+    calcularEdad();
+
+    function actualizarFechaDisplay() {
+        var d = parseInt(hiddenDia.value);
+        var m = parseInt(hiddenMes.value);
+        var a = parseInt(hiddenAnio.value);
+        if (d && m && a) {
+            fechaTexto.textContent = d + ' de ' + MESES[m] + ' de ' + a;
+            fechaDisplay.classList.add('has-value');
+        } else {
+            fechaTexto.textContent = 'Seleccionar fecha...';
+            fechaDisplay.classList.remove('has-value');
+        }
+    }
+
+    function calcularEdad() {
+        var dia = parseInt(hiddenDia.value);
+        var mes = parseInt(hiddenMes.value);
+        var anio = parseInt(hiddenAnio.value);
+        var preview = document.getElementById('edadPreview');
+        var valor = document.getElementById('edadValor');
+
+        if (dia && mes && anio) {
+            var hoy = new Date();
+            var edad = hoy.getFullYear() - anio;
+            var m = (hoy.getMonth() + 1) - mes;
+            if (m < 0 || (m === 0 && hoy.getDate() < dia)) {
+                edad--;
+            }
+            valor.textContent = edad + ' años';
+            preview.style.display = 'block';
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+
+    // === PICKER DE FECHA ===
+    var pickerDia, pickerMes, pickerAnio;
+    var CELL_H = 44;
+    var VISIBLE = 5; // celdas visibles
+    var PAD = Math.floor(VISIBLE / 2); // padding arriba y abajo
+
+    function diasEnMes(mes, anio) {
+        if (!mes) return 31;
+        return new Date(anio || 2024, mes, 0).getDate();
+    }
+
+    function buildColumn(container, items, selectedVal) {
+        container.innerHTML = '';
+        // Padding arriba
+        for (var p = 0; p < PAD; p++) {
+            var pad = document.createElement('div');
+            pad.className = 'picker-cell';
+            pad.innerHTML = '&nbsp;';
+            container.appendChild(pad);
+        }
+        // Items
+        var selectedIndex = -1;
+        items.forEach(function(item, i) {
+            var cell = document.createElement('div');
+            cell.className = 'picker-cell';
+            cell.textContent = item.label;
+            cell.dataset.value = item.value;
+            if (String(item.value) === String(selectedVal)) {
+                selectedIndex = i;
+            }
+            cell.addEventListener('click', function() {
+                container.scrollTo({ top: i * CELL_H, behavior: 'smooth' });
+            });
+            container.appendChild(cell);
+        });
+        // Padding abajo
+        for (var p = 0; p < PAD; p++) {
+            var pad = document.createElement('div');
+            pad.className = 'picker-cell';
+            pad.innerHTML = '&nbsp;';
+            container.appendChild(pad);
+        }
+
+        // Scroll a seleccionado
+        if (selectedIndex >= 0) {
+            container.scrollTop = selectedIndex * CELL_H;
+        }
+
+        return items;
+    }
+
+    function getSelectedIndex(container) {
+        return Math.round(container.scrollTop / CELL_H);
+    }
+
+    function updateHighlights(container, items) {
+        var idx = getSelectedIndex(container);
+        var cells = container.querySelectorAll('.picker-cell');
+        cells.forEach(function(cell, i) {
+            var itemIdx = i - PAD;
+            cell.classList.remove('selected', 'near');
+            if (itemIdx === idx) {
+                cell.classList.add('selected');
+            } else if (Math.abs(itemIdx - idx) === 1) {
+                cell.classList.add('near');
+            }
+        });
+        return idx >= 0 && idx < items.length ? items[idx] : null;
+    }
+
+    function attachScrollHandler(container, items, onChange) {
+        var scrollTimer;
+        container.addEventListener('scroll', function() {
+            clearTimeout(scrollTimer);
+            updateHighlights(container, items);
+            scrollTimer = setTimeout(function() {
+                // Snap al mas cercano
+                var idx = getSelectedIndex(container);
+                idx = Math.max(0, Math.min(idx, items.length - 1));
+                container.scrollTo({ top: idx * CELL_H, behavior: 'smooth' });
+                updateHighlights(container, items);
+                if (onChange) onChange(items[idx]);
+            }, 100);
+        });
+    }
+
+    window.abrirPicker = function() {
+        var overlay = document.getElementById('pickerOverlay');
+        var modal = document.getElementById('pickerModal');
+        overlay.classList.add('show');
+        modal.classList.add('show');
+
+        var colDia = document.getElementById('pickerDia');
+        var colMes = document.getElementById('pickerMes');
+        var colAnio = document.getElementById('pickerAnio');
+
+        var curDia = parseInt(hiddenDia.value) || 1;
+        var curMes = parseInt(hiddenMes.value) || 1;
+        var curAnio = parseInt(hiddenAnio.value) || 2010;
+
+        // Meses
+        var mesesItems = [];
+        for (var m = 1; m <= 12; m++) {
+            mesesItems.push({ value: m, label: MESES[m] });
+        }
+        pickerMes = buildColumn(colMes, mesesItems, curMes);
+        attachScrollHandler(colMes, mesesItems, function() { actualizarDias(); });
+
+        // Años
+        var aniosItems = [];
+        for (var a = anioActual; a >= 1920; a--) {
+            aniosItems.push({ value: a, label: String(a) });
+        }
+        pickerAnio = buildColumn(colAnio, aniosItems, curAnio);
+        attachScrollHandler(colAnio, aniosItems, function() { actualizarDias(); });
+
+        // Dias
+        actualizarDias(curDia);
+
+        // Delay para que el scroll se posicione bien
+        setTimeout(function() {
+            updateHighlights(colDia, pickerDia);
+            updateHighlights(colMes, mesesItems);
+            updateHighlights(colAnio, aniosItems);
+        }, 50);
+    };
+
+    function actualizarDias(selDia) {
+        var colDia = document.getElementById('pickerDia');
+        var colMes = document.getElementById('pickerMes');
+        var colAnio = document.getElementById('pickerAnio');
+
+        var mesItem = updateHighlights(colMes, pickerMes);
+        var anioItem = updateHighlights(colAnio, pickerAnio);
+        var mes = mesItem ? mesItem.value : 1;
+        var anio = anioItem ? anioItem.value : 2024;
+        var maxDias = diasEnMes(mes, anio);
+
+        // Preservar dia actual si no se pasa
+        if (!selDia) {
+            var diaItem = pickerDia ? updateHighlights(colDia, pickerDia) : null;
+            selDia = diaItem ? Math.min(diaItem.value, maxDias) : 1;
+        }
+        selDia = Math.min(selDia, maxDias);
+
+        var diasItems = [];
+        for (var d = 1; d <= maxDias; d++) {
+            diasItems.push({ value: d, label: String(d) });
+        }
+        pickerDia = buildColumn(colDia, diasItems, selDia);
+        attachScrollHandler(colDia, diasItems, null);
+
+        setTimeout(function() {
+            updateHighlights(colDia, pickerDia);
+        }, 50);
+    }
+
+    window.confirmarFecha = function() {
+        var colDia = document.getElementById('pickerDia');
+        var colMes = document.getElementById('pickerMes');
+        var colAnio = document.getElementById('pickerAnio');
+
+        var diaItem = updateHighlights(colDia, pickerDia);
+        var mesItem = updateHighlights(colMes, pickerMes);
+        var anioItem = updateHighlights(colAnio, pickerAnio);
+
+        if (diaItem && mesItem && anioItem) {
+            hiddenDia.value = diaItem.value;
+            hiddenMes.value = mesItem.value;
+            hiddenAnio.value = anioItem.value;
+            actualizarFechaDisplay();
+            calcularEdad();
+        }
+
+        cerrarPicker();
+    };
+
+    window.cerrarPicker = function() {
+        document.getElementById('pickerOverlay').classList.remove('show');
+        document.getElementById('pickerModal').classList.remove('show');
+    };
+
+    // === AUTOCOMPLETADO DESDE HERMANOS ===
+    var inputNombres = document.getElementById('nombres');
+    var inputApellidos = document.getElementById('apellidos');
+    var sugerenciasNombres = document.getElementById('sugerenciasLista');
+    var sugerenciasApellidos = document.getElementById('sugerenciasListaApellidos');
+    var timeoutBusqueda = null;
+    var indiceSugerencia = -1;
+    var listaActiva = null;
+    var autocompletadoDesactivado = false;
+
+    inputNombres.addEventListener('input', function() {
+        buscarHermanos(this.value, sugerenciasNombres);
+    });
+
+    inputApellidos.addEventListener('input', function() {
+        buscarHermanos(this.value, sugerenciasApellidos);
+    });
+
+    function buscarHermanos(texto, listaDom) {
+        clearTimeout(timeoutBusqueda);
+        if (autocompletadoDesactivado) return;
+        var q = texto.trim();
+        if (q.length < 2) { cerrarSugerencias(); return; }
+
+        timeoutBusqueda = setTimeout(function() {
+            fetch('{% url "escuela:buscar_hermanos" %}?q=' + encodeURIComponent(q))
+                .then(function(r) { return r.json(); })
+                .then(function(data) { mostrarSugerencias(data, listaDom); });
+        }, 300);
+    }
+
+    function mostrarSugerencias(datos, listaDom) {
+        cerrarSugerencias();
+        if (datos.length === 0) return;
+
+        listaActiva = listaDom;
+        indiceSugerencia = -1;
+        var html = '<div class="sugerencia-header">'
+            + '<span><i class="bi bi-people me-1"></i>Miembros encontrados</span>'
+            + '<button type="button" class="btn-cerrar-sugerencias" onclick="cerrarYContinuar()">No, es nuevo <i class="bi bi-x"></i></button>'
+            + '</div>';
+        datos.forEach(function(h, i) {
+            var detalle = '';
+            if (h.edad !== null) detalle += h.edad + ' años';
+            if (h.fecha_nacimiento) detalle += (detalle ? ' · ' : '') + 'Nac: ' + formatearFecha(h.fecha_nacimiento);
+
+            html += '<div class="sugerencia-item" data-index="' + i + '"'
+                + ' data-apellidos="' + escapeHtml(h.apellidos) + '"'
+                + ' data-nombres="' + escapeHtml(h.nombres) + '"'
+                + ' data-fecha="' + (h.fecha_nacimiento || '') + '">'
+                + '<div class="sugerencia-nombre">' + escapeHtml(h.nombres) + ' ' + escapeHtml(h.apellidos) + '</div>'
+                + (detalle ? '<div class="sugerencia-detalle">' + detalle + '</div>' : '')
+                + '</div>';
+        });
+
+        listaDom.innerHTML = html;
+        listaDom.style.display = 'block';
+
+        listaDom.querySelectorAll('.sugerencia-item').forEach(function(item) {
+            item.addEventListener('click', function() { seleccionarSugerencia(this); });
+        });
+    }
+
+    function seleccionarSugerencia(item) {
+        inputNombres.value = item.dataset.nombres;
+        inputApellidos.value = item.dataset.apellidos;
+
+        if (item.dataset.fecha) {
+            var partes = item.dataset.fecha.split('-');
+            hiddenAnio.value = parseInt(partes[0]);
+            hiddenMes.value = parseInt(partes[1]);
+            hiddenDia.value = parseInt(partes[2]);
+            actualizarFechaDisplay();
+            calcularEdad();
+        }
+
+        cerrarSugerencias();
+        document.getElementById('grado_nivel').focus();
+    }
+
+    function cerrarSugerencias() {
+        sugerenciasNombres.style.display = 'none';
+        sugerenciasNombres.innerHTML = '';
+        sugerenciasApellidos.style.display = 'none';
+        sugerenciasApellidos.innerHTML = '';
+        indiceSugerencia = -1;
+        listaActiva = null;
+    }
+
+    window.cerrarYContinuar = function() {
+        cerrarSugerencias();
+        autocompletadoDesactivado = true;
+        inputApellidos.focus();
+    };
+
+    inputNombres.addEventListener('keydown', manejarTeclas);
+    inputApellidos.addEventListener('keydown', manejarTeclas);
+
+    function manejarTeclas(e) {
+        if (!listaActiva) return;
+        var items = listaActiva.querySelectorAll('.sugerencia-item');
+        if (items.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            indiceSugerencia = Math.min(indiceSugerencia + 1, items.length - 1);
+            actualizarActiveSugerencia(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            indiceSugerencia = Math.max(indiceSugerencia - 1, 0);
+            actualizarActiveSugerencia(items);
+        } else if (e.key === 'Enter' && indiceSugerencia >= 0) {
+            e.preventDefault();
+            seleccionarSugerencia(items[indiceSugerencia]);
+        } else if (e.key === 'Escape') {
+            cerrarSugerencias();
+        }
+    }
+
+    function actualizarActiveSugerencia(items) {
+        items.forEach(function(item, i) {
+            item.classList.toggle('active', i === indiceSugerencia);
+        });
+        if (indiceSugerencia >= 0 && items[indiceSugerencia]) {
+            items[indiceSugerencia].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.sugerencias-container')) {
+            cerrarSugerencias();
+        }
+    });
+
+    function formatearFecha(fechaStr) {
+        var partes = fechaStr.split('-');
+        return partes[2] + '/' + partes[1] + '/' + partes[0];
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+});
+</script>
+{% endblock %}

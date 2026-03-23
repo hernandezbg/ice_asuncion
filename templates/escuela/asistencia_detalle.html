@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+
+{% block title %}Asistencia {{ fecha|date:"d/m/Y" }} - {{ clase.nombre }}{% endblock %}
+
+{% block extra_css %}
+.detalle-container {
+    max-width: 550px;
+    margin: 30px auto;
+}
+
+.detalle-card {
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.detalle-header {
+    background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+}
+
+.detalle-body {
+    padding: 1.25rem;
+}
+
+.stats-resumen {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.stat-box {
+    text-align: center;
+    padding: 0.75rem;
+    border-radius: 12px;
+}
+
+.stat-box.total { background: #e3f2fd; color: #1565c0; }
+.stat-box.pres { background: #e8f5e9; color: #2e7d32; }
+.stat-box.aus { background: #fce4ec; color: #c62828; }
+
+.stat-box strong {
+    display: block;
+    font-size: 1.5rem;
+}
+
+.stat-box small {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.edit-hint {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.edit-hint i {
+    color: #1565c0;
+}
+
+.seccion-titulo {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.5rem 0;
+    margin-top: 0.75rem;
+    border-bottom: 2px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.seccion-titulo.presentes { color: #2e7d32; }
+.seccion-titulo.ausentes { color: #c62828; }
+
+.alumno-asist {
+    display: flex;
+    align-items: center;
+    padding: 0.7rem 0.5rem;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 0.95rem;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+}
+
+.alumno-asist:hover {
+    background: #f8f9fa;
+}
+
+.alumno-asist:last-child {
+    border-bottom: none;
+}
+
+.alumno-asist .icono {
+    font-size: 1.2rem;
+    margin-right: 0.75rem;
+    width: 24px;
+    text-align: center;
+}
+
+.alumno-asist.presente .icono { color: #4caf50; }
+.alumno-asist.ausente .icono { color: #ef5350; }
+
+.alumno-asist .nombre-alumno {
+    flex: 1;
+}
+
+.alumno-asist .edad {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-left: 0.5rem;
+}
+
+.alumno-asist .cambiar-hint {
+    font-size: 0.75rem;
+    color: #90a4ae;
+    margin-left: 0.5rem;
+}
+
+/* Feedback al cambiar */
+.alumno-asist.cambiando {
+    opacity: 0.6;
+}
+
+.alumno-asist.cambio-ok {
+    animation: flashOk 0.5s ease;
+}
+
+@keyframes flashOk {
+    0% { background: transparent; }
+    30% { background: #e8f5e9; }
+    100% { background: transparent; }
+}
+
+.acciones-detalle {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+}
+
+.acciones-detalle a {
+    flex: 1;
+    text-align: center;
+    padding: 0.65rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+@media (max-width: 576px) {
+    .detalle-container { margin: 15px auto; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="detalle-container">
+        <div class="card detalle-card">
+            <div class="detalle-header">
+                <h4 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>Domingo {{ fecha|date:"d/m/Y" }}</h4>
+                <small class="opacity-75">{{ clase.emoji }} {{ clase.nombre }}</small>
+            </div>
+
+            <div class="detalle-body">
+                <!-- Resumen -->
+                <div class="stats-resumen" id="statsResumen">
+                    <div class="stat-box total">
+                        <strong id="statPct">{{ porcentaje }}%</strong>
+                        <small>Asistencia</small>
+                    </div>
+                    <div class="stat-box pres">
+                        <strong id="statPresentes">{{ presentes|length }}</strong>
+                        <small>Presentes</small>
+                    </div>
+                    <div class="stat-box aus">
+                        <strong id="statAusentes">{{ ausentes|length }}</strong>
+                        <small>Ausentes</small>
+                    </div>
+                </div>
+
+                <div class="edit-hint">
+                    <i class="bi bi-hand-index-thumb me-1"></i>Toca un alumno para cambiar su asistencia
+                </div>
+
+                <!-- Lista unificada ordenada alfabeticamente -->
+                <div id="listaAsistencia">
+                    {% for r in presentes %}
+                    <div class="alumno-asist presente" data-id="{{ r.alumno.id }}" data-presente="true" onclick="toggleAsistencia(this)">
+                        <span class="icono"><i class="bi bi-check-circle-fill"></i></span>
+                        <span class="nombre-alumno">{{ r.alumno.nombres }} {{ r.alumno.apellidos }}</span>
+                        {% if r.alumno.edad is not None %}
+                        <span class="edad">{{ r.alumno.edad }}a</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% for r in ausentes %}
+                    <div class="alumno-asist ausente" data-id="{{ r.alumno.id }}" data-presente="false" onclick="toggleAsistencia(this)">
+                        <span class="icono"><i class="bi bi-x-circle-fill"></i></span>
+                        <span class="nombre-alumno">{{ r.alumno.nombres }} {{ r.alumno.apellidos }}</span>
+                        {% if r.alumno.edad is not None %}
+                        <span class="edad">{{ r.alumno.edad }}a</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Acciones -->
+                <div class="acciones-detalle">
+                    <a href="{% url 'escuela:asistencia_historial' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Historial
+                    </a>
+                    <a href="{% url 'escuela:lista_alumnos' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-people me-1"></i>Alumnos
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var fecha = '{{ fecha|date:"Y-m-d" }}';
+var csrfToken = '{{ csrf_token }}';
+
+function toggleAsistencia(elem) {
+    var alumnoId = parseInt(elem.dataset.id);
+    var estaPresente = elem.dataset.presente === 'true';
+    var nuevoEstado = !estaPresente;
+
+    // Feedback visual inmediato
+    elem.classList.add('cambiando');
+
+    // Actualizar en servidor
+    fetch('{% url "escuela:asistencia_registrar" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+            alumno_id: alumnoId,
+            fecha: fecha,
+            presente: nuevoEstado
+        })
+    }).then(function(r) {
+        return r.json();
+    }).then(function(data) {
+        if (data.ok) {
+            // Actualizar visual
+            elem.dataset.presente = String(nuevoEstado);
+            elem.classList.remove('cambiando', 'presente', 'ausente');
+            elem.classList.add(nuevoEstado ? 'presente' : 'ausente');
+            elem.querySelector('.icono').innerHTML = nuevoEstado
+                ? '<i class="bi bi-check-circle-fill"></i>'
+                : '<i class="bi bi-x-circle-fill"></i>';
+
+            elem.classList.add('cambio-ok');
+            setTimeout(function() { elem.classList.remove('cambio-ok'); }, 500);
+
+            // Actualizar contadores
+            actualizarStats();
+        }
+    }).catch(function() {
+        elem.classList.remove('cambiando');
+    });
+}
+
+function actualizarStats() {
+    var items = document.querySelectorAll('.alumno-asist');
+    var presentes = 0, ausentes = 0;
+    items.forEach(function(item) {
+        if (item.dataset.presente === 'true') presentes++;
+        else ausentes++;
+    });
+    var total = presentes + ausentes;
+    var pct = total > 0 ? Math.round(presentes * 100 / total) : 0;
+
+    document.getElementById('statPresentes').textContent = presentes;
+    document.getElementById('statAusentes').textContent = ausentes;
+    document.getElementById('statPct').textContent = pct + '%';
+}
+</script>
+{% endblock %}

@@ -13,6 +13,7 @@ from .models import Visita
 from .forms import HermanoForm, NoticiaForm, MensajeForm, PaginaForm, SeccionForm, SliderForm, OfrendaForm, DatosIceForm
 from contenido.models import Noticia, Mensaje, Pagina, Galeria, Slider, DatosIce, Seccion, Ofrenda
 from miembros.models import Hermano, Provincia, EstadoCivil, Clase, Grupo, Don
+from escuela.models import ClaseEscuela, Alumno
 
 
 def es_staff(user):
@@ -1100,3 +1101,90 @@ def cambiar_password(request):
             return redirect('panel:dashboard')
 
     return render(request, 'panel/cambiar_password.html')
+
+
+# ========== ESCUELA BIBLICA ==========
+@login_required
+@user_passes_test(es_staff)
+def escuela_alumnos_lista(request):
+    """Lista de todos los alumnos de la escuela biblica"""
+    busqueda = request.GET.get('q', '')
+    clase_id = request.GET.get('clase', '')
+
+    alumnos = Alumno.objects.filter(activo=True).select_related('clase')
+
+    if busqueda:
+        alumnos = alumnos.filter(
+            Q(apellidos__icontains=busqueda) | Q(nombres__icontains=busqueda)
+        )
+
+    if clase_id:
+        alumnos = alumnos.filter(clase_id=clase_id)
+
+    clases = ClaseEscuela.objects.filter(activo=True)
+
+    # Stats por clase
+    stats_clases = []
+    for clase in clases:
+        count = Alumno.objects.filter(clase=clase, activo=True).count()
+        stats_clases.append({'clase': clase, 'count': count})
+
+    paginator = Paginator(alumnos, 50)
+    page = request.GET.get('page')
+    alumnos_page = paginator.get_page(page)
+
+    context = {
+        'alumnos': alumnos_page,
+        'clases': clases,
+        'stats_clases': stats_clases,
+        'total_alumnos': Alumno.objects.filter(activo=True).count(),
+        'busqueda': busqueda,
+        'clase_filtro': clase_id,
+    }
+    return render(request, 'panel/escuela_alumnos.html', context)
+
+
+@login_required
+@user_passes_test(es_staff)
+def escuela_clases_lista(request):
+    """Lista de clases de la escuela biblica"""
+    clases = ClaseEscuela.objects.all()
+
+    clases_data = []
+    for clase in clases:
+        clases_data.append({
+            'clase': clase,
+            'total_alumnos': Alumno.objects.filter(clase=clase, activo=True).count(),
+        })
+
+    return render(request, 'panel/escuela_clases.html', {
+        'clases_data': clases_data,
+    })
+
+
+@login_required
+@user_passes_test(es_staff)
+@require_POST
+def escuela_clase_actualizar_codigo(request, pk):
+    """Actualizar codigo de acceso de una clase via AJAX"""
+    from django.http import JsonResponse
+    clase = get_object_or_404(ClaseEscuela, pk=pk)
+
+    import json
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'JSON invalido'}, status=400)
+
+    nuevo_codigo = data.get('codigo', '').strip().upper()
+    if not nuevo_codigo:
+        return JsonResponse({'error': 'El codigo no puede estar vacio'}, status=400)
+
+    # Verificar que no exista en otra clase
+    duplicado = ClaseEscuela.objects.filter(codigo_acceso__iexact=nuevo_codigo).exclude(pk=pk).first()
+    if duplicado:
+        return JsonResponse({'error': f'El codigo ya esta en uso por {duplicado.nombre}'}, status=400)
+
+    clase.codigo_acceso = nuevo_codigo
+    clase.save()
+    return JsonResponse({'ok': True, 'codigo': nuevo_codigo})

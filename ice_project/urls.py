@@ -13,6 +13,7 @@ urlpatterns = [
     path('miembros/', include('miembros.urls')),  # Actualización de datos de miembros
     path('chat/', include('chat.urls')),  # Chat con agente IA
     path('e/', include('encuestas.urls')),  # Encuestas en vivo (URL corta)
+    path('escuela/', include('escuela.urls')),  # Escuela Biblica
     path('', include('contenido.urls')),  # URLs del sitio público
 ]
 

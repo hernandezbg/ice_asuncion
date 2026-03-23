@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ clase.nombre }} - Escuela Biblica{% endblock %}
+
+{% block extra_css %}
+.lista-container {
+    max-width: 700px;
+    margin: 30px auto;
+}
+
+.lista-card {
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.lista-header {
+    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+}
+
+.lista-header .clase-emoji {
+    font-size: 1.5rem;
+}
+
+.lista-body {
+    padding: 1rem;
+}
+
+.btn-agregar {
+    background: #2e7d32;
+    border-color: #2e7d32;
+    font-weight: 600;
+    padding: 0.75rem;
+    font-size: 1.05rem;
+    border-radius: 12px;
+}
+
+.btn-agregar:hover {
+    background: #1b5e20;
+    border-color: #1b5e20;
+}
+
+.alumno-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.alumno-item:hover {
+    border-color: #2e7d32;
+    background-color: rgba(46, 125, 50, 0.03);
+}
+
+.alumno-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.alumno-nombre {
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 0.95rem;
+}
+
+.alumno-detalle {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-top: 0.15rem;
+}
+
+.alumno-acciones {
+    display: flex;
+    gap: 0.35rem;
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+}
+
+.alumno-acciones .btn {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.85rem;
+    border-radius: 8px;
+}
+
+.stats-bar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    background: #f8f9fa;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+}
+
+.stat-item strong {
+    display: block;
+    font-size: 1.3rem;
+    color: #2e7d32;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--text-light);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.4;
+}
+
+.maestros-info {
+    font-size: 0.85rem;
+    opacity: 0.85;
+}
+
+@media (max-width: 576px) {
+    .lista-container {
+        margin: 15px auto;
+    }
+    .alumno-item {
+        padding: 0.75rem;
+    }
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="lista-container">
+        <div class="card lista-card">
+            <div class="lista-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">
+                            <span class="clase-emoji">{{ clase.emoji }}</span> {{ clase.nombre }}
+                        </h4>
+                        <div class="maestros-info mt-1">
+                            <i class="bi bi-person-badge me-1"></i>{{ clase.maestros }}
+                            {% if clase.descripcion %}
+                            <span class="ms-2">| {{ clase.descripcion }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <a href="{% url 'escuela:salir' %}" class="btn btn-outline-light btn-sm" title="Salir">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="lista-body">
+                <!-- Stats -->
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <strong>{{ alumnos|length }}</strong>
+                        alumno{{ alumnos|length|pluralize:"s" }}
+                    </div>
+                    <div class="stat-item">
+                        <strong>{{ clase.rango_edad }}</strong>
+                        rango de edad
+                    </div>
+                </div>
+
+                <!-- Botones de accion -->
+                <a href="{% url 'escuela:alumno_crear' %}" class="btn btn-primary btn-agregar w-100 mb-2">
+                    <i class="bi bi-plus-circle me-2"></i>Agregar alumno
+                </a>
+
+                {% if alumnos|length >= 5 %}
+                <a href="{% url 'escuela:asistencia_inicio' %}" class="btn btn-outline-primary w-100 mb-3" style="border-radius:12px;padding:0.65rem;font-weight:600;border-color:#1565c0;color:#1565c0;">
+                    <i class="bi bi-clipboard-check me-2"></i>Pasar asistencia
+                </a>
+                {% endif %}
+
+                <!-- Mensajes -->
+                {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show py-2" role="alert">
+                    <small>{{ message }}</small>
+                    <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                <!-- Lista de alumnos -->
+                {% if alumnos %}
+                    {% for alumno in alumnos %}
+                    <div class="alumno-item">
+                        <div class="alumno-info">
+                            <div class="alumno-nombre">{{ alumno.nombres }} {{ alumno.apellidos }}</div>
+                            <div class="alumno-detalle">
+                                {% if alumno.edad is not None %}
+                                    {{ alumno.edad }} años
+                                {% endif %}
+                                {% if alumno.get_grado_nivel_display and alumno.grado_nivel %}
+                                    {% if alumno.edad is not None %} · {% endif %}
+                                    {{ alumno.get_grado_nivel_display }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="alumno-acciones">
+                            <a href="{% url 'escuela:alumno_editar' alumno.id %}"
+                               class="btn btn-outline-primary" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'escuela:alumno_eliminar' alumno.id %}"
+                               class="btn btn-outline-danger" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-people"></i>
+                        <p>No hay alumnos registrados todavia.</p>
+                        <p class="mb-0">Toca <strong>"Agregar alumno"</strong> para empezar.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

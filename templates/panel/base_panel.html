@@ -677,6 +677,11 @@
                 <i class="bi bi-file-text-fill"></i>
                 <span>Páginas</span>
             </a>
+            <a href="{% url 'panel:escuela_alumnos' %}" class="sidebar-nav-item {% if 'escuela' in request.path %}active{% endif %}">
+                <i class="bi bi-book-fill"></i>
+                <span>Escuela Biblica</span>
+            </a>
+
             {% if user.is_superuser %}
             <div class="nav-section-title">Contenido Web</div>
             <a href="{% url 'panel:secciones_lista' %}" class="sidebar-nav-item {% if 'secciones' in request.path %}active{% endif %}">
@@ -762,6 +767,12 @@
                 <span class="fab-menu-label">Encuestas</span>
             </a>
             {% endif %}
+            <a href="{% url 'panel:escuela_alumnos' %}" class="fab-menu-item">
+                <div class="fab-menu-icon" style="background: #2e7d32;">
+                    <i class="bi bi-book-fill"></i>
+                </div>
+                <span class="fab-menu-label">Escuela</span>
+            </a>
             <a href="{% url 'panel:noticias_lista' %}" class="fab-menu-item">
                 <div class="fab-menu-icon noticias">
                     <i class="bi bi-newspaper"></i>

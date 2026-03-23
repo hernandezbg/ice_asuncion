@@ -1,0 +1,424 @@
+{% extends 'base.html' %}
+
+{% block title %}Asistencia {{ fecha|date:"d/m/Y" }} - {{ clase.nombre }}{% endblock %}
+
+{% block extra_css %}
+.asist-container {
+    max-width: 500px;
+    margin: 30px auto;
+}
+
+.asist-card {
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.asist-header {
+    background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+}
+
+.asist-body {
+    padding: 1.5rem;
+}
+
+/* Progreso */
+.progress-bar-custom {
+    height: 6px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+    margin-top: 0.75rem;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #4caf50;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+.progress-text {
+    font-size: 0.8rem;
+    opacity: 0.85;
+    margin-top: 0.3rem;
+}
+
+/* Tarjeta alumno */
+.alumno-card {
+    text-align: center;
+    padding: 2rem 1rem;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.alumno-card .icono-persona {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #e3f2fd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: #1565c0;
+    margin-bottom: 1rem;
+}
+
+.alumno-card .nombre {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.alumno-card .detalle {
+    font-size: 0.9rem;
+    color: #64748b;
+}
+
+/* Botones presente/ausente */
+.botones-asistencia {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.btn-presente, .btn-ausente {
+    padding: 1.25rem;
+    border: none;
+    border-radius: 16px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-presente {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.btn-presente:hover, .btn-presente:active {
+    background: #4caf50;
+    color: white;
+    transform: scale(1.03);
+}
+
+.btn-ausente {
+    background: #fce4ec;
+    color: #c62828;
+}
+
+.btn-ausente:hover, .btn-ausente:active {
+    background: #ef5350;
+    color: white;
+    transform: scale(1.03);
+}
+
+.btn-presente i, .btn-ausente i {
+    font-size: 2rem;
+}
+
+/* Estado ya registrado */
+.estado-previo {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.estado-presente {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.estado-ausente {
+    background: #fce4ec;
+    color: #c62828;
+}
+
+/* Resumen final */
+.resumen-card {
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+.resumen-card .icono-ok {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #e8f5e9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: #4caf50;
+    margin: 0 auto 1rem;
+}
+
+.resumen-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.resumen-stat {
+    padding: 1rem;
+    border-radius: 12px;
+}
+
+.resumen-stat.presentes {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.resumen-stat.ausentes {
+    background: #fce4ec;
+    color: #c62828;
+}
+
+.resumen-stat strong {
+    display: block;
+    font-size: 2rem;
+}
+
+/* Transicion entre alumnos */
+.alumno-card {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Navegacion */
+.nav-alumnos {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn-nav {
+    background: none;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    color: #64748b;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-nav:hover {
+    border-color: #1565c0;
+    color: #1565c0;
+}
+
+.btn-nav:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+@media (max-width: 576px) {
+    .asist-container { margin: 15px auto; }
+    .alumno-card .nombre { font-size: 1.2rem; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="asist-container">
+        <div class="card asist-card">
+            <div class="asist-header">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="mb-0"><i class="bi bi-clipboard-check me-1"></i> Asistencia</h5>
+                        <small class="opacity-75">{{ clase.emoji }} {{ clase.nombre }} · Dom {{ fecha|date:"d/m/Y" }}</small>
+                    </div>
+                    <a href="{% url 'escuela:asistencia_inicio' %}" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                </div>
+                <div class="progress-bar-custom">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="progressText">0 / {{ total }}</div>
+            </div>
+
+            <div class="asist-body" id="contenidoPrincipal">
+                <!-- Se llena con JS -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var alumnos = {{ alumnos_json|safe }};
+    var fecha = '{{ fecha|date:"Y-m-d" }}';
+    var total = alumnos.length;
+    var indiceActual = 0;
+    var resultados = {}; // alumno_id -> true/false
+    var csrfToken = '{{ csrf_token }}';
+
+    // Inicializar con estados existentes
+    alumnos.forEach(function(a) {
+        if (a.estado !== null) {
+            resultados[a.id] = a.estado;
+        }
+    });
+
+    // Buscar primer alumno sin registrar
+    for (var i = 0; i < alumnos.length; i++) {
+        if (alumnos[i].estado === null) {
+            indiceActual = i;
+            break;
+        }
+        if (i === alumnos.length - 1) {
+            indiceActual = alumnos.length; // todos registrados
+        }
+    }
+
+    mostrarAlumno();
+
+    function mostrarAlumno() {
+        var registrados = Object.keys(resultados).length;
+        actualizarProgreso(registrados);
+
+        if (indiceActual >= total) {
+            mostrarResumen();
+            return;
+        }
+
+        var a = alumnos[indiceActual];
+        var estadoPrevio = '';
+        if (a.estado !== null || resultados[a.id] !== undefined) {
+            var presente = resultados[a.id] !== undefined ? resultados[a.id] : a.estado;
+            if (presente) {
+                estadoPrevio = '<div class="estado-previo estado-presente"><i class="bi bi-check-circle me-1"></i>Ya registrado: Presente</div>';
+            } else {
+                estadoPrevio = '<div class="estado-previo estado-ausente"><i class="bi bi-x-circle me-1"></i>Ya registrado: Ausente</div>';
+            }
+        }
+
+        var edadTexto = a.edad !== null ? a.edad + ' años' : '';
+
+        var html = '<div class="alumno-card" key="' + a.id + '">'
+            + '<div class="icono-persona"><i class="bi bi-person-fill"></i></div>'
+            + '<div class="nombre">' + a.nombres + ' ' + a.apellidos + '</div>'
+            + '<div class="detalle">' + edadTexto + '</div>'
+            + estadoPrevio
+            + '</div>'
+            + '<div class="botones-asistencia">'
+            + '<button class="btn-presente" onclick="registrar(true)"><i class="bi bi-check-circle-fill"></i>Presente</button>'
+            + '<button class="btn-ausente" onclick="registrar(false)"><i class="bi bi-x-circle-fill"></i>Ausente</button>'
+            + '</div>'
+            + '<div class="nav-alumnos">'
+            + '<button class="btn-nav" onclick="anterior()" ' + (indiceActual === 0 ? 'disabled' : '') + '><i class="bi bi-chevron-left me-1"></i>Anterior</button>'
+            + '<span style="font-size:0.85rem;color:#64748b;">' + (indiceActual + 1) + ' / ' + total + '</span>'
+            + '<button class="btn-nav" onclick="siguiente()">Saltar<i class="bi bi-chevron-right ms-1"></i></button>'
+            + '</div>';
+
+        document.getElementById('contenidoPrincipal').innerHTML = html;
+    }
+
+    function actualizarProgreso(registrados) {
+        var pct = Math.round(registrados * 100 / total);
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('progressText').textContent = registrados + ' / ' + total;
+    }
+
+    window.registrar = function(presente) {
+        var a = alumnos[indiceActual];
+
+        // Guardar localmente
+        resultados[a.id] = presente;
+        a.estado = presente;
+
+        // Enviar al servidor
+        fetch('{% url "escuela:asistencia_registrar" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                alumno_id: a.id,
+                fecha: fecha,
+                presente: presente
+            })
+        });
+
+        // Avanzar al siguiente
+        indiceActual++;
+        mostrarAlumno();
+    };
+
+    window.anterior = function() {
+        if (indiceActual > 0) {
+            indiceActual--;
+            mostrarAlumno();
+        }
+    };
+
+    window.siguiente = function() {
+        indiceActual++;
+        mostrarAlumno();
+    };
+
+    function mostrarResumen() {
+        var presentes = 0, ausentes = 0;
+        Object.values(resultados).forEach(function(v) {
+            if (v) presentes++;
+            else ausentes++;
+        });
+        var totalReg = presentes + ausentes;
+        var pct = totalReg > 0 ? Math.round(presentes * 100 / totalReg) : 0;
+
+        actualizarProgreso(totalReg);
+
+        var html = '<div class="resumen-card">'
+            + '<div class="icono-ok"><i class="bi bi-check-lg"></i></div>'
+            + '<h4>Asistencia completa</h4>'
+            + '<p class="text-muted">Domingo ' + formatFecha(fecha) + '</p>'
+            + '<div class="resumen-stats">'
+            + '<div class="resumen-stat presentes"><strong>' + presentes + '</strong>Presentes</div>'
+            + '<div class="resumen-stat ausentes"><strong>' + ausentes + '</strong>Ausentes</div>'
+            + '</div>'
+            + '<p style="font-size:1.5rem;font-weight:700;color:#1565c0;">' + pct + '% de asistencia</p>'
+            + '<div class="d-grid gap-2 mt-3">'
+            + '<a href="{% url "escuela:asistencia_inicio" %}" class="btn btn-primary" style="background:#1565c0;border-color:#1565c0;border-radius:12px;padding:0.75rem;">Volver a asistencias</a>'
+            + '<a href="{% url "escuela:lista_alumnos" %}" class="btn btn-outline-secondary" style="border-radius:12px;padding:0.75rem;">Ir a la lista</a>'
+            + '</div>'
+            + '</div>';
+
+        document.getElementById('contenidoPrincipal').innerHTML = html;
+    }
+
+    function formatFecha(fechaStr) {
+        var p = fechaStr.split('-');
+        return p[2] + '/' + p[1] + '/' + p[0];
+    }
+});
+</script>
+{% endblock %}

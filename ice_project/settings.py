@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'panel',
     'chat',
     'encuestas',
+    'escuela',
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}Escuela Biblica - ICE Asuncion{% endblock %}
+
+{% block extra_css %}
+.access-container {
+    max-width: 500px;
+    margin: 40px auto;
+}
+
+.access-card {
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.access-header {
+    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
+
+.access-header i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.access-body {
+    padding: 2rem;
+}
+
+.form-control:focus {
+    border-color: #2e7d32;
+    box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
+}
+
+.btn-acceder {
+    width: 100%;
+    padding: 0.75rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    background: #2e7d32;
+    border-color: #2e7d32;
+}
+
+.btn-acceder:hover {
+    background: #1b5e20;
+    border-color: #1b5e20;
+}
+
+#codigo {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.clases-info {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-top: 1.5rem;
+}
+
+.clases-info h6 {
+    color: #2e7d32;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+
+.clase-badge {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin: 0.2rem;
+    background: white;
+    border: 1px solid #e0e0e0;
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="access-container">
+        <div class="card access-card">
+            <div class="access-header">
+                <i class="bi bi-book"></i>
+                <h3 class="mb-0">Escuela Biblica</h3>
+                <p class="mb-0 mt-2 opacity-75">Registro de alumnos 2025</p>
+            </div>
+
+            <div class="access-body">
+                {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-4">
+                        <label for="codigo" class="form-label fw-semibold">Codigo de acceso de tu clase</label>
+                        <input type="text"
+                               class="form-control form-control-lg"
+                               id="codigo"
+                               name="codigo"
+                               placeholder="CODIGO"
+                               required
+                               autocomplete="off"
+                               autofocus>
+                        <small class="text-muted">Ingresa el codigo que te dieron para tu clase</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-acceder">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Ingresar
+                    </button>
+                </form>
+
+                {% if clases %}
+                <div class="clases-info">
+                    <h6><i class="bi bi-people me-2"></i>Clases disponibles</h6>
+                    <div>
+                        {% for clase in clases %}
+                        <span class="clase-badge">{{ clase.emoji }} {{ clase.nombre }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="{% url 'home' %}" class="text-muted">
+                <i class="bi bi-arrow-left me-1"></i>Volver al inicio
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('codigo').addEventListener('input', function(e) {
+    this.value = this.value.toUpperCase();
+});
+</script>
+{% endblock %}
