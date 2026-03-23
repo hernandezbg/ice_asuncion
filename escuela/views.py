@@ -254,9 +254,10 @@ def _domingo_mas_reciente():
 
 
 def _domingos_disponibles(n=8):
-    """Devuelve los ultimos N domingos"""
+    """Devuelve el proximo domingo + los ultimos N domingos"""
     domingo = _domingo_mas_reciente()
-    domingos = []
+    proximo = domingo + timedelta(weeks=1)
+    domingos = [proximo]
     for i in range(n):
         domingos.append(domingo - timedelta(weeks=i))
     return domingos

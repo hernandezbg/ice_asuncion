@@ -429,16 +429,6 @@
                         </select>
                     </div>
 
-                    <!-- Observaciones -->
-                    <div class="mb-4">
-                        <label for="observaciones" class="form-label">Observaciones</label>
-                        <textarea class="form-control"
-                                  id="observaciones"
-                                  name="observaciones"
-                                  rows="2"
-                                  placeholder="Alergias, datos adicionales...">{% if form_data.observaciones %}{{ form_data.observaciones }}{% elif alumno and alumno.observaciones %}{{ alumno.observaciones }}{% endif %}</textarea>
-                    </div>
-
                     <!-- Botones -->
                     <div class="d-grid gap-2">
                         {% if duplicado %}
