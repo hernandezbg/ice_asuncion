@@ -40,3 +40,4 @@ twilio==9.3.7
 
 # HTTP requests
 requests==2.32.3
+openpyxl==3.1.5

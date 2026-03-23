@@ -16,5 +16,6 @@ urlpatterns = [
     path('asistencia/<str:fecha_str>/', views.asistencia_pasar, name='asistencia_pasar'),
     path('asistencia-historial/', views.asistencia_historial, name='asistencia_historial'),
     path('asistencia-detalle/<str:fecha_str>/', views.asistencia_detalle, name='asistencia_detalle'),
+    path('exportar-excel/', views.exportar_excel, name='exportar_excel'),
     path('salir/', views.cerrar_sesion, name='salir'),
 ]

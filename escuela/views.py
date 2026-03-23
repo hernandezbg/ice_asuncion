@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.db.models import Q
 import unicodedata
 
@@ -459,6 +459,147 @@ def asistencia_detalle(request, fecha_str):
         'total': total,
         'porcentaje': porcentaje,
     })
+
+
+def exportar_excel(request):
+    """
+    Exportar planilla Excel con alumnos y asistencia por domingo
+    """
+    clase_id = request.session.get('escuela_clase_id')
+    if not clase_id:
+        return redirect('escuela:acceso')
+
+    clase = get_object_or_404(ClaseEscuela, id=clase_id, activo=True)
+    alumnos = Alumno.objects.filter(clase=clase, activo=True).order_by('apellidos', 'nombres')
+
+    # Obtener todos los domingos con asistencia, ordenados de mas viejo a mas nuevo
+    fechas = list(
+        Asistencia.objects.filter(clase=clase)
+        .values_list('fecha', flat=True)
+        .distinct()
+        .order_by('fecha')
+    )
+
+    # Armar diccionario de asistencias: {(alumno_id, fecha): presente}
+    asistencias = {}
+    for a in Asistencia.objects.filter(clase=clase):
+        asistencias[(a.alumno_id, a.fecha)] = a.presente
+
+    import openpyxl
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = clase.nombre
+
+    # Estilos
+    header_font = Font(bold=True, color='FFFFFF', size=11)
+    header_fill = PatternFill(start_color='2E7D32', end_color='2E7D32', fill_type='solid')
+    fecha_fill = PatternFill(start_color='1565C0', end_color='1565C0', fill_type='solid')
+    presente_fill = PatternFill(start_color='E8F5E9', end_color='E8F5E9', fill_type='solid')
+    ausente_fill = PatternFill(start_color='FCE4EC', end_color='FCE4EC', fill_type='solid')
+    center = Alignment(horizontal='center', vertical='center')
+    thin_border = Border(
+        left=Side(style='thin', color='CCCCCC'),
+        right=Side(style='thin', color='CCCCCC'),
+        top=Side(style='thin', color='CCCCCC'),
+        bottom=Side(style='thin', color='CCCCCC'),
+    )
+
+    # Titulo
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=3 + len(fechas))
+    title_cell = ws.cell(row=1, column=1,
+                         value=f'{clase.emoji} {clase.nombre} - Escuela Bíblica 2025')
+    title_cell.font = Font(bold=True, size=14, color='2E7D32')
+    title_cell.alignment = Alignment(horizontal='center')
+
+    # Subtitulo
+    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=3 + len(fechas))
+    sub_cell = ws.cell(row=2, column=1,
+                       value=f'Maestros: {clase.maestros} | Rango: {clase.rango_edad()}')
+    sub_cell.font = Font(size=10, color='666666')
+    sub_cell.alignment = Alignment(horizontal='center')
+
+    # Encabezados
+    row = 4
+    headers = ['Apellidos', 'Nombres', 'Edad']
+    for col, h in enumerate(headers, 1):
+        cell = ws.cell(row=row, column=col, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center
+        cell.border = thin_border
+
+    # Encabezados de fechas
+    for i, fecha in enumerate(fechas):
+        cell = ws.cell(row=row, column=4 + i, value=fecha.strftime('%d/%m'))
+        cell.font = Font(bold=True, color='FFFFFF', size=9)
+        cell.fill = fecha_fill
+        cell.alignment = center
+        cell.border = thin_border
+
+    # Datos
+    for idx, alumno in enumerate(alumnos):
+        r = row + 1 + idx
+        ws.cell(row=r, column=1, value=alumno.apellidos).border = thin_border
+        ws.cell(row=r, column=2, value=alumno.nombres).border = thin_border
+
+        edad_cell = ws.cell(row=r, column=3, value=alumno.edad())
+        edad_cell.alignment = center
+        edad_cell.border = thin_border
+
+        for i, fecha in enumerate(fechas):
+            key = (alumno.id, fecha)
+            cell = ws.cell(row=r, column=4 + i)
+            cell.alignment = center
+            cell.border = thin_border
+
+            if key in asistencias:
+                if asistencias[key]:
+                    cell.value = 'P'
+                    cell.fill = presente_fill
+                    cell.font = Font(bold=True, color='2E7D32')
+                else:
+                    cell.value = 'A'
+                    cell.fill = ausente_fill
+                    cell.font = Font(bold=True, color='C62828')
+            else:
+                cell.value = '-'
+                cell.font = Font(color='AAAAAA')
+
+    # Fila de totales
+    if fechas and alumnos:
+        r_total = row + 1 + len(alumnos)
+        ws.cell(row=r_total, column=1, value='TOTAL PRESENTES').font = Font(bold=True)
+        ws.cell(row=r_total, column=1).border = thin_border
+        ws.cell(row=r_total, column=2).border = thin_border
+        ws.cell(row=r_total, column=3).border = thin_border
+
+        for i, fecha in enumerate(fechas):
+            presentes = sum(1 for a in alumnos if asistencias.get((a.id, fecha)) is True)
+            total_reg = sum(1 for a in alumnos if (a.id, fecha) in asistencias)
+            cell = ws.cell(row=r_total, column=4 + i)
+            cell.value = f'{presentes}/{total_reg}' if total_reg > 0 else '-'
+            cell.font = Font(bold=True)
+            cell.alignment = center
+            cell.border = thin_border
+
+    # Anchos de columna
+    ws.column_dimensions['A'].width = 20
+    ws.column_dimensions['B'].width = 20
+    ws.column_dimensions['C'].width = 8
+    for i in range(len(fechas)):
+        col_letter = openpyxl.utils.get_column_letter(4 + i)
+        ws.column_dimensions[col_letter].width = 8
+
+    # Respuesta HTTP
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    nombre_archivo = f'escuela_{clase.nombre.lower().replace(" ", "_")}.xlsx'
+    response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
+    wb.save(response)
+    return response
 
 
 def cerrar_sesion(request):
