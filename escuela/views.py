@@ -76,7 +76,7 @@ def lista_alumnos(request):
         return redirect('escuela:acceso')
 
     clase = get_object_or_404(ClaseEscuela, id=clase_id, activo=True)
-    alumnos = Alumno.objects.filter(clase=clase, activo=True)
+    alumnos = list(Alumno.objects.filter(clase=clase, activo=True).order_by('apellidos', 'nombres'))
 
     # Detectar cumpleañeros de los ultimos 7 dias
     hoy = date.today()
@@ -88,6 +88,9 @@ def lista_alumnos(request):
                 if dia.month == alumno.fecha_nacimiento.month and dia.day == alumno.fecha_nacimiento.day:
                     cumple_ids.add(alumno.id)
                     break
+
+    # Ordenar: cumpleañeros primero, luego alfabetico
+    alumnos.sort(key=lambda a: (a.id not in cumple_ids, a.apellidos.lower(), a.nombres.lower()))
 
     return render(request, 'escuela/lista_alumnos.html', {
         'clase': clase,
