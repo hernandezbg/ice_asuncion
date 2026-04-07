@@ -110,6 +110,17 @@
 .alumno-asist.presente .icono { color: #4caf50; }
 .alumno-asist.ausente .icono { color: #ef5350; }
 
+.alumno-asist .cumple-emoji {
+    font-size: 1.1rem;
+    margin-right: 0.4rem;
+    animation: bounceCumple 1s ease infinite;
+}
+
+@keyframes bounceCumple {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
 .alumno-asist .nombre-alumno {
     flex: 1;
 }
@@ -197,6 +208,7 @@
                     {% for r in presentes %}
                     <div class="alumno-asist presente" data-id="{{ r.alumno.id }}" data-presente="true" onclick="toggleAsistencia(this)">
                         <span class="icono"><i class="bi bi-check-circle-fill"></i></span>
+                        {% if r.alumno.id in cumple_ids %}<span class="cumple-emoji">🎁</span>{% endif %}
                         <span class="nombre-alumno">{{ r.alumno.nombres }} {{ r.alumno.apellidos }}</span>
                         {% if r.alumno.edad is not None %}
                         <span class="edad">{{ r.alumno.edad }}a</span>
@@ -206,6 +218,7 @@
                     {% for r in ausentes %}
                     <div class="alumno-asist ausente" data-id="{{ r.alumno.id }}" data-presente="false" onclick="toggleAsistencia(this)">
                         <span class="icono"><i class="bi bi-x-circle-fill"></i></span>
+                        {% if r.alumno.id in cumple_ids %}<span class="cumple-emoji">🎁</span>{% endif %}
                         <span class="nombre-alumno">{{ r.alumno.nombres }} {{ r.alumno.apellidos }}</span>
                         {% if r.alumno.edad is not None %}
                         <span class="edad">{{ r.alumno.edad }}a</span>

@@ -70,6 +70,29 @@
     margin-bottom: 1rem;
 }
 
+/* Cumpleaños */
+.alumno-card .icono-persona.cumple {
+    background: linear-gradient(135deg, #fff9c4 0%, #ffe082 100%);
+    color: #f57f17;
+    animation: pulseCumple 1.5s ease infinite;
+}
+
+.cumple-badge {
+    font-size: 1.8rem;
+    animation: bounceCumple 1s ease infinite;
+    margin-bottom: 0.5rem;
+}
+
+@keyframes pulseCumple {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); }
+    50% { transform: scale(1.05); box-shadow: 0 0 20px 5px rgba(255, 193, 7, 0.3); }
+}
+
+@keyframes bounceCumple {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
 .alumno-card .nombre {
     font-size: 1.4rem;
     font-weight: 700;
@@ -322,11 +345,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         var edadTexto = a.edad !== null ? a.edad + ' años' : '';
+        var esCumple = a.cumple === true;
 
         var html = '<div class="alumno-card" key="' + a.id + '">'
-            + '<div class="icono-persona"><i class="bi bi-person-fill"></i></div>'
+            + (esCumple ? '<div class="cumple-badge">🎁</div>' : '')
+            + '<div class="icono-persona' + (esCumple ? ' cumple' : '') + '"><i class="bi bi-' + (esCumple ? 'gift-fill' : 'person-fill') + '"></i></div>'
             + '<div class="nombre">' + a.nombres + ' ' + a.apellidos + '</div>'
-            + '<div class="detalle">' + edadTexto + '</div>'
+            + '<div class="detalle">' + edadTexto + (esCumple ? ' · 🎂 ¡Feliz cumple!' : '') + '</div>'
             + estadoPrevio
             + '</div>'
             + '<div class="botones-asistencia">'

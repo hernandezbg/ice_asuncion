@@ -253,6 +253,18 @@ def _domingo_mas_reciente():
     return hoy - timedelta(days=dias_desde_domingo)
 
 
+def _es_cumple_semana(fecha_nacimiento, fecha_domingo):
+    """Verifica si el cumpleaños cae en la semana del domingo (lunes a domingo)"""
+    if not fecha_nacimiento:
+        return False
+    lunes = fecha_domingo - timedelta(days=6)
+    for i in range(7):
+        dia = lunes + timedelta(days=i)
+        if dia.month == fecha_nacimiento.month and dia.day == fecha_nacimiento.day:
+            return True
+    return False
+
+
 def _domingos_disponibles(n=8):
     """Devuelve el proximo domingo + los ultimos N domingos"""
     domingo = _domingo_mas_reciente()
@@ -333,6 +345,7 @@ def asistencia_pasar(request, fecha_str):
             'apellidos': alumno.apellidos,
             'edad': alumno.edad(),
             'estado': asistencias_existentes.get(alumno.id),  # None, True o False
+            'cumple': _es_cumple_semana(alumno.fecha_nacimiento, fecha),
         })
 
     return render(request, 'escuela/asistencia_pasar.html', {
@@ -442,9 +455,18 @@ def asistencia_detalle(request, fecha_str):
     except ValueError:
         return redirect('escuela:asistencia_historial')
 
-    registros = (Asistencia.objects.filter(clase=clase, fecha=fecha)
-                 .select_related('alumno')
-                 .order_by('alumno__apellidos', 'alumno__nombres'))
+    registros = list(Asistencia.objects.filter(clase=clase, fecha=fecha)
+                     .select_related('alumno')
+                     .order_by('alumno__apellidos', 'alumno__nombres'))
+
+    # Marcar cumpleañeros
+    cumple_ids = set()
+    for r in registros:
+        if _es_cumple_semana(r.alumno.fecha_nacimiento, fecha):
+            cumple_ids.add(r.alumno.id)
+
+    # Ordenar: cumpleañeros primero, luego alfabetico
+    registros.sort(key=lambda r: (r.alumno.id not in cumple_ids, r.alumno.apellidos.lower(), r.alumno.nombres.lower()))
 
     presentes = [r for r in registros if r.presente]
     ausentes = [r for r in registros if not r.presente]
@@ -458,6 +480,7 @@ def asistencia_detalle(request, fecha_str):
         'ausentes': ausentes,
         'total': total,
         'porcentaje': porcentaje,
+        'cumple_ids': cumple_ids,
     })
 
 
