@@ -207,7 +207,7 @@
                     {% for alumno in alumnos %}
                     <div class="alumno-item">
                         <div class="alumno-info">
-                            <div class="alumno-nombre">{{ alumno.nombres }} {{ alumno.apellidos }}</div>
+                            <div class="alumno-nombre">{% if alumno.id in cumple_ids %}🎁 {% endif %}{{ alumno.nombres }} {{ alumno.apellidos }}</div>
                             <div class="alumno-detalle">
                                 {% if alumno.edad is not None %}
                                     {{ alumno.edad }} años

@@ -78,9 +78,21 @@ def lista_alumnos(request):
     clase = get_object_or_404(ClaseEscuela, id=clase_id, activo=True)
     alumnos = Alumno.objects.filter(clase=clase, activo=True)
 
+    # Detectar cumpleañeros de los ultimos 7 dias
+    hoy = date.today()
+    cumple_ids = set()
+    for alumno in alumnos:
+        if alumno.fecha_nacimiento:
+            for i in range(7):
+                dia = hoy - timedelta(days=i)
+                if dia.month == alumno.fecha_nacimiento.month and dia.day == alumno.fecha_nacimiento.day:
+                    cumple_ids.add(alumno.id)
+                    break
+
     return render(request, 'escuela/lista_alumnos.html', {
         'clase': clase,
         'alumnos': alumnos,
+        'cumple_ids': cumple_ids,
     })
 
 
