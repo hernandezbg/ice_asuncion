@@ -209,7 +209,7 @@
                     <div class="alumno-asist presente" data-id="{{ r.alumno.id }}" data-presente="true" onclick="toggleAsistencia(this)">
                         <span class="icono"><i class="bi bi-check-circle-fill"></i></span>
                         {% if r.alumno.id in cumple_ids %}<span class="cumple-emoji">🎁</span>{% endif %}
-                        <span class="nombre-alumno">{{ r.alumno.nombres }} {{ r.alumno.apellidos }}</span>
+                        <span class="nombre-alumno">{{ r.alumno.apellidos }}, {{ r.alumno.nombres }}</span>
                         {% if r.alumno.edad is not None %}
                         <span class="edad">{{ r.alumno.edad }}a</span>
                         {% endif %}
@@ -219,7 +219,7 @@
                     <div class="alumno-asist ausente" data-id="{{ r.alumno.id }}" data-presente="false" onclick="toggleAsistencia(this)">
                         <span class="icono"><i class="bi bi-x-circle-fill"></i></span>
                         {% if r.alumno.id in cumple_ids %}<span class="cumple-emoji">🎁</span>{% endif %}
-                        <span class="nombre-alumno">{{ r.alumno.nombres }} {{ r.alumno.apellidos }}</span>
+                        <span class="nombre-alumno">{{ r.alumno.apellidos }}, {{ r.alumno.nombres }}</span>
                         {% if r.alumno.edad is not None %}
                         <span class="edad">{{ r.alumno.edad }}a</span>
                         {% endif %}
