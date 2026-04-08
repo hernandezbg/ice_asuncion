@@ -13,7 +13,7 @@ from .models import Visita
 from .forms import HermanoForm, NoticiaForm, MensajeForm, PaginaForm, SeccionForm, SliderForm, OfrendaForm, DatosIceForm
 from contenido.models import Noticia, Mensaje, Pagina, Galeria, Slider, DatosIce, Seccion, Ofrenda
 from miembros.models import Hermano, Provincia, EstadoCivil, Clase, Grupo, Don
-from escuela.models import ClaseEscuela, Alumno
+from escuela.models import ClaseEscuela, Alumno, Asistencia
 
 
 def es_staff(user):
@@ -1188,3 +1188,86 @@ def escuela_clase_actualizar_codigo(request, pk):
     clase.codigo_acceso = nuevo_codigo
     clase.save()
     return JsonResponse({'ok': True, 'codigo': nuevo_codigo})
+
+
+@login_required
+@user_passes_test(es_staff)
+def escuela_asistencia_dashboard(request):
+    """Dashboard de asistencia de todas las clases"""
+    from datetime import date, timedelta
+
+    clases = ClaseEscuela.objects.filter(activo=True)
+
+    # Obtener ultimos 12 domingos con asistencia registrada
+    fechas = list(
+        Asistencia.objects.values_list('fecha', flat=True)
+        .distinct()
+        .order_by('-fecha')[:12]
+    )
+
+    # Domingo seleccionado (por defecto el mas reciente)
+    fecha_sel = request.GET.get('fecha', '')
+    if fecha_sel:
+        try:
+            from datetime import datetime
+            fecha_seleccionada = datetime.strptime(fecha_sel, '%Y-%m-%d').date()
+        except ValueError:
+            fecha_seleccionada = fechas[0] if fechas else date.today()
+    else:
+        fecha_seleccionada = fechas[0] if fechas else date.today()
+
+    # Datos por clase para el domingo seleccionado
+    clases_data = []
+    total_presentes = 0
+    total_ausentes = 0
+    total_alumnos_global = 0
+
+    for clase in clases:
+        total_alumnos = Alumno.objects.filter(clase=clase, activo=True).count()
+        registros = Asistencia.objects.filter(clase=clase, fecha=fecha_seleccionada)
+        presentes = registros.filter(presente=True).count()
+        ausentes = registros.filter(presente=False).count()
+        total_reg = presentes + ausentes
+        porcentaje = round(presentes * 100 / total_reg) if total_reg > 0 else 0
+
+        clases_data.append({
+            'clase': clase,
+            'total_alumnos': total_alumnos,
+            'presentes': presentes,
+            'ausentes': ausentes,
+            'total_reg': total_reg,
+            'porcentaje': porcentaje,
+            'sin_registro': total_reg == 0,
+        })
+
+        total_presentes += presentes
+        total_ausentes += ausentes
+        total_alumnos_global += total_alumnos
+
+    total_registrados = total_presentes + total_ausentes
+    porcentaje_global = round(total_presentes * 100 / total_registrados) if total_registrados > 0 else 0
+
+    # Tendencia: porcentaje de asistencia por domingo (ultimos domingos)
+    tendencia = []
+    for fecha in reversed(fechas):
+        regs = Asistencia.objects.filter(fecha=fecha)
+        pres = regs.filter(presente=True).count()
+        tot = regs.count()
+        tendencia.append({
+            'fecha': fecha,
+            'porcentaje': round(pres * 100 / tot) if tot > 0 else 0,
+            'presentes': pres,
+            'total': tot,
+        })
+
+    return render(request, 'panel/escuela_asistencia.html', {
+        'clases_data': clases_data,
+        'fechas': fechas,
+        'fecha_seleccionada': fecha_seleccionada,
+        'total_presentes': total_presentes,
+        'total_ausentes': total_ausentes,
+        'total_registrados': total_registrados,
+        'total_alumnos_global': total_alumnos_global,
+        'porcentaje_global': porcentaje_global,
+        'tendencia': tendencia,
+    })
