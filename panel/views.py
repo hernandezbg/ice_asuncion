@@ -1260,6 +1260,76 @@ def escuela_asistencia_dashboard(request):
             'total': tot,
         })
 
+    # Ranking por mes: meses disponibles y ranking de clases
+    import json
+    meses_disponibles = list(
+        Asistencia.objects.dates('fecha', 'month', order='DESC')
+    )
+    NOMBRES_MES = {
+        1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+        5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+        9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre',
+    }
+    meses_opciones = [
+        {'valor': m.strftime('%Y-%m'), 'texto': f'{NOMBRES_MES[m.month]} {m.year}'}
+        for m in meses_disponibles
+    ]
+
+    mes_sel = request.GET.get('mes', '')
+    if mes_sel:
+        try:
+            anio_m, mes_m = mes_sel.split('-')
+            mes_filtro_anio, mes_filtro_mes = int(anio_m), int(mes_m)
+        except (ValueError, AttributeError):
+            mes_filtro_anio = meses_disponibles[0].year if meses_disponibles else date.today().year
+            mes_filtro_mes = meses_disponibles[0].month if meses_disponibles else date.today().month
+            mes_sel = f'{mes_filtro_anio}-{mes_filtro_mes:02d}'
+    else:
+        if meses_disponibles:
+            mes_filtro_anio = meses_disponibles[0].year
+            mes_filtro_mes = meses_disponibles[0].month
+            mes_sel = f'{mes_filtro_anio}-{mes_filtro_mes:02d}'
+        else:
+            mes_filtro_anio = date.today().year
+            mes_filtro_mes = date.today().month
+            mes_sel = f'{mes_filtro_anio}-{mes_filtro_mes:02d}'
+
+    COLOR_MAP = {
+        'verde': '#4caf50',
+        'azul': '#1565c0',
+        'amarilla': '#fdd835',
+        'turquesa': '#00bcd4',
+        'celeste': '#03a9f4',
+        'naranja': '#ff9800',
+        'rosa': '#e91e63',
+        'violeta': '#9c27b0',
+        'albiceleste': '#4fc3f7',
+        'dorada': '#ffc107',
+        'gris': '#9e9e9e',
+    }
+
+    ranking = []
+    for clase in clases:
+        regs = Asistencia.objects.filter(
+            clase=clase,
+            fecha__year=mes_filtro_anio,
+            fecha__month=mes_filtro_mes,
+        )
+        pres = regs.filter(presente=True).count()
+        tot = regs.count()
+        if tot > 0:
+            ranking.append({
+                'nombre': f'{clase.emoji} {clase.nombre}',
+                'porcentaje': round(pres * 100 / tot),
+                'presentes': pres,
+                'total': tot,
+                'color': COLOR_MAP.get(clase.color, '#9e9e9e'),
+            })
+
+    ranking.sort(key=lambda x: x['porcentaje'], reverse=True)
+
+    mes_texto = f'{NOMBRES_MES.get(mes_filtro_mes, "")} {mes_filtro_anio}'
+
     return render(request, 'panel/escuela_asistencia.html', {
         'clases_data': clases_data,
         'fechas': fechas,
@@ -1270,4 +1340,8 @@ def escuela_asistencia_dashboard(request):
         'total_alumnos_global': total_alumnos_global,
         'porcentaje_global': porcentaje_global,
         'tendencia': tendencia,
+        'ranking_json': json.dumps(ranking),
+        'meses_opciones': meses_opciones,
+        'mes_sel': mes_sel,
+        'mes_texto': mes_texto,
     })
