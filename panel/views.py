@@ -1317,14 +1317,13 @@ def escuela_asistencia_dashboard(request):
         )
         pres = regs.filter(presente=True).count()
         tot = regs.count()
-        if tot > 0:
-            ranking.append({
-                'nombre': f'{clase.emoji} {clase.nombre}',
-                'porcentaje': round(pres * 100 / tot),
-                'presentes': pres,
-                'total': tot,
-                'color': COLOR_MAP.get(clase.color, '#9e9e9e'),
-            })
+        ranking.append({
+            'nombre': f'{clase.emoji} {clase.nombre}',
+            'porcentaje': round(pres * 100 / tot) if tot > 0 else 0,
+            'presentes': pres,
+            'total': tot,
+            'color': COLOR_MAP.get(clase.color, '#9e9e9e'),
+        })
 
     ranking.sort(key=lambda x: x['porcentaje'], reverse=True)
 
