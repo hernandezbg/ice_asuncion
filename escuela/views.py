@@ -313,10 +313,14 @@ def asistencia_inicio(request):
     domingos_info = []
     for domingo in domingos:
         registros = Asistencia.objects.filter(clase=clase, fecha=domingo).count()
+        # Contar solo alumnos que existian en esa fecha
+        alumnos_fecha = Alumno.objects.filter(
+            clase=clase, activo=True, fecha_creacion__date__lte=domingo
+        ).count()
         domingos_info.append({
             'fecha': domingo,
             'registros': registros,
-            'completa': registros >= total_alumnos,
+            'completa': registros >= alumnos_fecha and alumnos_fecha > 0,
         })
 
     return render(request, 'escuela/asistencia_inicio.html', {
@@ -352,7 +356,10 @@ def asistencia_pasar(request, fecha_str):
         messages.warning(request, 'Este domingo no hay clases de escuela bíblica.')
         return redirect('escuela:asistencia_inicio')
 
-    alumnos = list(Alumno.objects.filter(clase=clase, activo=True).order_by('apellidos', 'nombres'))
+    # Solo alumnos que existian en esa fecha
+    alumnos = list(Alumno.objects.filter(
+        clase=clase, activo=True, fecha_creacion__date__lte=fecha
+    ).order_by('apellidos', 'nombres'))
 
     if len(alumnos) < 5:
         return redirect('escuela:lista_alumnos')
@@ -424,6 +431,10 @@ def asistencia_registrar(request):
 
     clase = get_object_or_404(ClaseEscuela, id=clase_id, activo=True)
     alumno = get_object_or_404(Alumno, id=alumno_id, clase=clase)
+
+    # Bloquear si el alumno no existia en esa fecha
+    if alumno.fecha_creacion.date() > fecha:
+        return JsonResponse({'error': 'Alumno registrado despues de esta fecha'}, status=400)
 
     # Crear o actualizar
     asistencia, created = Asistencia.objects.update_or_create(
