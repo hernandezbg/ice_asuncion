@@ -281,10 +281,10 @@ def _es_cumple_semana(fecha_nacimiento, fecha_domingo):
 
 
 def _domingos_disponibles(n=8):
-    """Devuelve el proximo domingo + los ultimos N domingos, excluyendo domingos sin clases"""
+    """Devuelve el domingo actual (si es hoy) + los ultimos N domingos, excluyendo domingos sin clases"""
+    hoy = date.today()
     domingo = _domingo_mas_reciente()
-    proximo = domingo + timedelta(weeks=1)
-    candidatos = [proximo]
+    candidatos = []
     for i in range(n):
         candidatos.append(domingo - timedelta(weeks=i))
 
@@ -340,6 +340,11 @@ def asistencia_pasar(request, fecha_str):
         from datetime import datetime
         fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
     except ValueError:
+        return redirect('escuela:asistencia_inicio')
+
+    # Bloquear domingos futuros
+    if fecha > date.today():
+        messages.warning(request, 'No se puede cargar asistencia de un domingo futuro.')
         return redirect('escuela:asistencia_inicio')
 
     # Bloquear domingos excluidos
@@ -408,6 +413,10 @@ def asistencia_registrar(request):
         fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
     except ValueError:
         return JsonResponse({'error': 'Fecha invalida'}, status=400)
+
+    # Bloquear domingos futuros
+    if fecha > date.today():
+        return JsonResponse({'error': 'No se puede cargar asistencia futura'}, status=400)
 
     # Bloquear domingos excluidos
     if DomingoExcluido.objects.filter(fecha=fecha).exists():
