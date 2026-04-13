@@ -115,3 +115,20 @@ class Asistencia(models.Model):
     def __str__(self):
         estado = 'Presente' if self.presente else 'Ausente'
         return f"{self.alumno} - {self.fecha} - {estado}"
+
+
+class DomingoExcluido(models.Model):
+    """
+    Domingos en los que no se dictan clases (domingos especiales)
+    """
+    fecha = models.DateField(unique=True, verbose_name='Fecha (domingo)')
+    motivo = models.CharField(max_length=200, verbose_name='Motivo',
+                               help_text='Ej: Santa Cena, Culto especial, etc.')
+
+    class Meta:
+        verbose_name = 'Domingo excluido'
+        verbose_name_plural = 'Domingos excluidos'
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f"{self.fecha.strftime('%d/%m/%Y')} - {self.motivo}"

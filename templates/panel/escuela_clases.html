@@ -161,9 +161,12 @@
 {% endblock %}
 
 {% block content %}
-<div class="mb-3">
+<div class="mb-3 d-flex gap-2 flex-wrap">
     <a href="{% url 'panel:escuela_alumnos' %}" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-arrow-left me-1"></i>Volver a alumnos
+    </a>
+    <a href="{% url 'panel:escuela_domingos_excluidos' %}" class="btn btn-outline-warning btn-sm">
+        <i class="bi bi-calendar-x me-1"></i>Domingos excluidos
     </a>
 </div>
 

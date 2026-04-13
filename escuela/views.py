@@ -6,7 +6,7 @@ import unicodedata
 
 import json
 
-from .models import ClaseEscuela, Alumno, Asistencia, GRADO_CHOICES
+from .models import ClaseEscuela, Alumno, Asistencia, DomingoExcluido, GRADO_CHOICES
 from miembros.models import Hermano
 from datetime import date, timedelta
 
@@ -281,13 +281,15 @@ def _es_cumple_semana(fecha_nacimiento, fecha_domingo):
 
 
 def _domingos_disponibles(n=8):
-    """Devuelve el proximo domingo + los ultimos N domingos"""
+    """Devuelve el proximo domingo + los ultimos N domingos, excluyendo domingos sin clases"""
     domingo = _domingo_mas_reciente()
     proximo = domingo + timedelta(weeks=1)
-    domingos = [proximo]
+    candidatos = [proximo]
     for i in range(n):
-        domingos.append(domingo - timedelta(weeks=i))
-    return domingos
+        candidatos.append(domingo - timedelta(weeks=i))
+
+    excluidos = set(DomingoExcluido.objects.values_list('fecha', flat=True))
+    return [d for d in candidatos if d not in excluidos]
 
 
 def asistencia_inicio(request):
@@ -338,6 +340,11 @@ def asistencia_pasar(request, fecha_str):
         from datetime import datetime
         fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
     except ValueError:
+        return redirect('escuela:asistencia_inicio')
+
+    # Bloquear domingos excluidos
+    if DomingoExcluido.objects.filter(fecha=fecha).exists():
+        messages.warning(request, 'Este domingo no hay clases de escuela bíblica.')
         return redirect('escuela:asistencia_inicio')
 
     alumnos = list(Alumno.objects.filter(clase=clase, activo=True).order_by('apellidos', 'nombres'))
@@ -401,6 +408,10 @@ def asistencia_registrar(request):
         fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
     except ValueError:
         return JsonResponse({'error': 'Fecha invalida'}, status=400)
+
+    # Bloquear domingos excluidos
+    if DomingoExcluido.objects.filter(fecha=fecha).exists():
+        return JsonResponse({'error': 'Domingo sin clases'}, status=400)
 
     clase = get_object_or_404(ClaseEscuela, id=clase_id, activo=True)
     alumno = get_object_or_404(Alumno, id=alumno_id, clase=clase)

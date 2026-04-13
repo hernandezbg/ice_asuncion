@@ -13,7 +13,7 @@ from .models import Visita
 from .forms import HermanoForm, NoticiaForm, MensajeForm, PaginaForm, SeccionForm, SliderForm, OfrendaForm, DatosIceForm
 from contenido.models import Noticia, Mensaje, Pagina, Galeria, Slider, DatosIce, Seccion, Ofrenda
 from miembros.models import Hermano, Provincia, EstadoCivil, Clase, Grupo, Don
-from escuela.models import ClaseEscuela, Alumno, Asistencia
+from escuela.models import ClaseEscuela, Alumno, Asistencia, DomingoExcluido
 
 
 def es_staff(user):
@@ -1344,3 +1344,45 @@ def escuela_asistencia_dashboard(request):
         'mes_sel': mes_sel,
         'mes_texto': mes_texto,
     })
+
+
+@login_required
+@user_passes_test(es_staff)
+def escuela_domingos_excluidos(request):
+    """Gestionar domingos sin clases"""
+    if request.method == 'POST':
+        fecha_str = request.POST.get('fecha', '').strip()
+        motivo = request.POST.get('motivo', '').strip()
+
+        if not fecha_str or not motivo:
+            messages.error(request, 'Fecha y motivo son obligatorios.')
+        else:
+            from datetime import datetime
+            try:
+                fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+                if DomingoExcluido.objects.filter(fecha=fecha).exists():
+                    messages.warning(request, f'El domingo {fecha.strftime("%d/%m/%Y")} ya esta excluido.')
+                else:
+                    DomingoExcluido.objects.create(fecha=fecha, motivo=motivo)
+                    messages.success(request, f'Domingo {fecha.strftime("%d/%m/%Y")} marcado como sin clases.')
+            except ValueError:
+                messages.error(request, 'Fecha invalida.')
+
+        return redirect('panel:escuela_domingos_excluidos')
+
+    domingos = DomingoExcluido.objects.all()
+    return render(request, 'panel/escuela_domingos_excluidos.html', {
+        'domingos': domingos,
+    })
+
+
+@login_required
+@user_passes_test(es_staff)
+@require_POST
+def escuela_domingo_excluido_eliminar(request, pk):
+    """Eliminar un domingo excluido"""
+    domingo = get_object_or_404(DomingoExcluido, pk=pk)
+    fecha_str = domingo.fecha.strftime('%d/%m/%Y')
+    domingo.delete()
+    messages.success(request, f'Domingo {fecha_str} habilitado nuevamente.')
+    return redirect('panel:escuela_domingos_excluidos')
