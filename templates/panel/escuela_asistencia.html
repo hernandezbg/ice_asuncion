@@ -368,6 +368,9 @@
         {% endfor %}
     </select>
     <div class="nav-links ms-auto">
+        <a href="{% url 'panel:escuela_domingos_excluidos' %}" class="btn-escuela-link outline" style="border-color:#e65100;color:#e65100;">
+            <i class="bi bi-calendar-x"></i>Domingos excluidos
+        </a>
         <a href="{% url 'panel:escuela_alumnos' %}" class="btn-escuela-link outline">
             <i class="bi bi-people"></i>Alumnos
         </a>
