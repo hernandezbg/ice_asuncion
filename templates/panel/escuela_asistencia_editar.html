@@ -1,0 +1,297 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Editar asistencia {{ clase.nombre }} - Panel ICE{% endblock %}
+{% block page_title %}Editar Asistencia{% endblock %}
+{% block page_subtitle %}{{ clase.emoji }} {{ clase.nombre }} - Domingo {{ fecha|date:"d/m/Y" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-container {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .stats-resumen {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-mini {
+        background: white;
+        text-align: center;
+        padding: 0.9rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .stat-mini strong {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+
+    .stat-mini small {
+        font-size: 0.75rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .stat-mini.total strong { color: #1565c0; }
+    .stat-mini.pres strong { color: #2e7d32; }
+    .stat-mini.aus strong { color: #c62828; }
+    .stat-mini.sin strong { color: #94a3b8; }
+
+    .hint-admin {
+        background: #fff3e0;
+        border-left: 4px solid #e65100;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        font-size: 0.85rem;
+        color: #bf360c;
+    }
+
+    .lista-alumnos {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        overflow: hidden;
+    }
+
+    .alumno-row {
+        display: flex;
+        align-items: center;
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        gap: 0.75rem;
+    }
+
+    .alumno-row:last-child { border-bottom: none; }
+
+    .alumno-nombre {
+        flex: 1;
+        font-weight: 500;
+        color: #1e293b;
+    }
+
+    .alumno-nombre small {
+        display: block;
+        color: #94a3b8;
+        font-size: 0.75rem;
+        font-weight: 400;
+        margin-top: 0.15rem;
+    }
+
+    .tag-nuevo {
+        display: inline-block;
+        background: #fff3e0;
+        color: #e65100;
+        padding: 0.1rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+
+    .btn-grupo {
+        display: flex;
+        gap: 0.3rem;
+    }
+
+    .btn-estado {
+        border: 2px solid transparent;
+        background: #f1f5f9;
+        color: #64748b;
+        border-radius: 8px;
+        padding: 0.4rem 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        min-width: 40px;
+    }
+
+    .btn-estado:hover {
+        transform: scale(1.05);
+    }
+
+    .btn-estado.pres.active {
+        background: #4caf50;
+        color: white;
+        border-color: #2e7d32;
+    }
+
+    .btn-estado.aus.active {
+        background: #ef5350;
+        color: white;
+        border-color: #c62828;
+    }
+
+    .btn-estado.sin.active {
+        background: #94a3b8;
+        color: white;
+        border-color: #64748b;
+    }
+
+    .alumno-row.cambiando {
+        opacity: 0.5;
+    }
+
+    .alumno-row.flash {
+        animation: flash 0.5s ease;
+    }
+
+    @keyframes flash {
+        0%, 100% { background: white; }
+        50% { background: #e8f5e9; }
+    }
+
+    .top-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-back {
+        background: transparent;
+        border: 1px solid #64748b;
+        color: #64748b;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-back:hover { background: #64748b; color: white; }
+
+    @media (max-width: 768px) {
+        .stats-resumen { grid-template-columns: repeat(2, 1fr); }
+        .alumno-row { flex-wrap: wrap; }
+        .btn-estado { padding: 0.35rem 0.6rem; font-size: 0.75rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-container">
+    <div class="top-actions">
+        <a href="{% url 'panel:escuela_asistencia' %}?fecha={{ fecha|date:'Y-m-d' }}" class="btn-back">
+            <i class="bi bi-arrow-left"></i>Volver al dashboard
+        </a>
+    </div>
+
+    <div class="hint-admin">
+        <i class="bi bi-shield-check me-1"></i>
+        <strong>Modo administrador:</strong> podes modificar asistencia de cualquier alumno, incluso los que se registraron despues de esta fecha.
+    </div>
+
+    <div class="stats-resumen">
+        <div class="stat-mini total">
+            <strong id="statTotal">{{ total }}</strong>
+            <small>Alumnos</small>
+        </div>
+        <div class="stat-mini pres">
+            <strong id="statPres">{{ presentes }}</strong>
+            <small>Presentes</small>
+        </div>
+        <div class="stat-mini aus">
+            <strong id="statAus">{{ ausentes }}</strong>
+            <small>Ausentes</small>
+        </div>
+        <div class="stat-mini sin">
+            <strong id="statSin">{{ sin_registro }}</strong>
+            <small>Sin registro</small>
+        </div>
+    </div>
+
+    <div class="lista-alumnos">
+        {% for a in alumnos %}
+        <div class="alumno-row" data-id="{{ a.id }}" data-estado="{% if a.estado is True %}true{% elif a.estado is False %}false{% else %}null{% endif %}">
+            <div class="alumno-nombre">
+                {{ a.apellidos }}, {{ a.nombres }}
+                {% if a.despues_de_fecha %}<span class="tag-nuevo" title="Alta: {{ a.fecha_alta|date:'d/m/Y' }}">Alta posterior</span>{% endif %}
+                <small>
+                    {% if a.edad is not None %}{{ a.edad }} años · {% endif %}
+                    Alta: {{ a.fecha_alta|date:"d/m/Y" }}
+                </small>
+            </div>
+            <div class="btn-grupo">
+                <button type="button" class="btn-estado pres" onclick="cambiar(this, true)">P</button>
+                <button type="button" class="btn-estado aus" onclick="cambiar(this, false)">A</button>
+                <button type="button" class="btn-estado sin" onclick="cambiar(this, null)" title="Sin registro">–</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+var csrfToken = '{{ csrf_token }}';
+var urlEndpoint = '{% url "panel:escuela_asistencia_editar" clase.id fecha|date:"Y-m-d" %}';
+
+// Inicializar estado visual
+document.querySelectorAll('.alumno-row').forEach(function(row) {
+    actualizarBotones(row);
+});
+
+function actualizarBotones(row) {
+    var estado = row.dataset.estado;
+    row.querySelectorAll('.btn-estado').forEach(function(b) { b.classList.remove('active'); });
+    if (estado === 'true') row.querySelector('.btn-estado.pres').classList.add('active');
+    else if (estado === 'false') row.querySelector('.btn-estado.aus').classList.add('active');
+    else row.querySelector('.btn-estado.sin').classList.add('active');
+}
+
+function cambiar(btn, nuevo) {
+    var row = btn.closest('.alumno-row');
+    var alumnoId = parseInt(row.dataset.id);
+
+    row.classList.add('cambiando');
+
+    fetch(urlEndpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+            alumno_id: alumnoId,
+            presente: nuevo
+        })
+    }).then(function(r) { return r.json(); })
+    .then(function(data) {
+        row.classList.remove('cambiando');
+        if (data.ok) {
+            row.dataset.estado = nuevo === null ? 'null' : String(nuevo);
+            actualizarBotones(row);
+            row.classList.add('flash');
+            setTimeout(function() { row.classList.remove('flash'); }, 500);
+            actualizarStats();
+        } else {
+            alert('Error: ' + (data.error || 'Desconocido'));
+        }
+    }).catch(function(err) {
+        row.classList.remove('cambiando');
+        alert('Error de conexion');
+    });
+}
+
+function actualizarStats() {
+    var rows = document.querySelectorAll('.alumno-row');
+    var pres = 0, aus = 0, sin = 0;
+    rows.forEach(function(r) {
+        if (r.dataset.estado === 'true') pres++;
+        else if (r.dataset.estado === 'false') aus++;
+        else sin++;
+    });
+    document.getElementById('statPres').textContent = pres;
+    document.getElementById('statAus').textContent = aus;
+    document.getElementById('statSin').textContent = sin;
+}
+</script>
+{% endblock %}

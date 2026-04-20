@@ -1427,6 +1427,77 @@ def escuela_asistencia_dashboard(request):
 
 @login_required
 @user_passes_test(es_staff)
+def escuela_asistencia_editar(request, clase_id, fecha_str):
+    """Editar asistencia de una clase en un domingo especifico (sin restricciones)"""
+    from datetime import datetime, date
+    clase = get_object_or_404(ClaseEscuela, pk=clase_id)
+
+    try:
+        fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+    except ValueError:
+        messages.error(request, 'Fecha invalida.')
+        return redirect('panel:escuela_asistencia')
+
+    # Admin ve TODOS los alumnos activos de la clase, sin filtrar por fecha_creacion
+    alumnos = list(Alumno.objects.filter(clase=clase, activo=True).order_by('apellidos', 'nombres'))
+
+    # Asistencias ya registradas
+    asistencias = {
+        a.alumno_id: a.presente
+        for a in Asistencia.objects.filter(clase=clase, fecha=fecha)
+    }
+
+    # POST: actualizar asistencias
+    if request.method == 'POST':
+        import json as _json
+        try:
+            data = _json.loads(request.body)
+            alumno_id = int(data.get('alumno_id'))
+            nuevo_estado = data.get('presente')
+
+            if nuevo_estado is None:
+                # Eliminar registro
+                Asistencia.objects.filter(alumno_id=alumno_id, fecha=fecha).delete()
+            else:
+                alumno = get_object_or_404(Alumno, pk=alumno_id, clase=clase)
+                Asistencia.objects.update_or_create(
+                    alumno=alumno, fecha=fecha,
+                    defaults={'clase': clase, 'presente': bool(nuevo_estado)}
+                )
+            return JsonResponse({'ok': True})
+        except (ValueError, KeyError, _json.JSONDecodeError) as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    # Armar lista para el template
+    alumnos_data = []
+    for a in alumnos:
+        alumnos_data.append({
+            'id': a.id,
+            'nombres': a.nombres,
+            'apellidos': a.apellidos,
+            'edad': a.edad(),
+            'estado': asistencias.get(a.id),  # None, True, False
+            'fecha_alta': a.fecha_creacion.date(),
+            'despues_de_fecha': a.fecha_creacion.date() > fecha,
+        })
+
+    presentes = sum(1 for a in alumnos_data if a['estado'] is True)
+    ausentes = sum(1 for a in alumnos_data if a['estado'] is False)
+    sin_registro = sum(1 for a in alumnos_data if a['estado'] is None)
+
+    return render(request, 'panel/escuela_asistencia_editar.html', {
+        'clase': clase,
+        'fecha': fecha,
+        'alumnos': alumnos_data,
+        'presentes': presentes,
+        'ausentes': ausentes,
+        'sin_registro': sin_registro,
+        'total': len(alumnos_data),
+    })
+
+
+@login_required
+@user_passes_test(es_staff)
 def escuela_domingos_excluidos(request):
     """Gestionar domingos sin clases"""
     if request.method == 'POST':

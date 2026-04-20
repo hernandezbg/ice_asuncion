@@ -78,6 +78,7 @@ urlpatterns = [
     path('escuela/clases/', views.escuela_clases_lista, name='escuela_clases'),
     path('escuela/clases/<int:pk>/codigo/', views.escuela_clase_actualizar_codigo, name='escuela_clase_codigo'),
     path('escuela/asistencia/', views.escuela_asistencia_dashboard, name='escuela_asistencia'),
+    path('escuela/asistencia/<int:clase_id>/<str:fecha_str>/', views.escuela_asistencia_editar, name='escuela_asistencia_editar'),
     path('escuela/domingos-excluidos/', views.escuela_domingos_excluidos, name='escuela_domingos_excluidos'),
     path('escuela/domingos-excluidos/<int:pk>/eliminar/', views.escuela_domingo_excluido_eliminar, name='escuela_domingo_excluido_eliminar'),
 ]

@@ -429,7 +429,9 @@
 
 <div class="clases-grid">
     {% for item in clases_data %}
-    <div class="clase-asist-card">
+    <a href="{% url 'panel:escuela_asistencia_editar' item.clase.id fecha_seleccionada|date:'Y-m-d' %}"
+       class="clase-asist-card" style="text-decoration:none; color:inherit; display:block; cursor:pointer;"
+       title="Editar asistencia">
         <div class="clase-asist-header">
             <span class="clase-nombre">{{ item.clase.nombre }}</span>
             <span class="clase-emoji">{{ item.clase.emoji }}</span>
@@ -440,6 +442,9 @@
                 <i class="bi bi-clock" style="font-size:1.5rem;"></i>
                 <p class="mb-0 mt-1">Sin registro</p>
                 <small>{{ item.total_alumnos }} alumnos en clase</small>
+                <div style="margin-top:0.5rem; font-size:0.75rem; color:#1565c0;">
+                    <i class="bi bi-pencil-square me-1"></i>Cargar asistencia
+                </div>
             </div>
             {% else %}
             <div class="clase-asist-stats">
@@ -461,9 +466,12 @@
                      style="width: {{ item.porcentaje }}%"></div>
             </div>
             <div class="porcentaje-texto">{{ item.porcentaje }}% de asistencia</div>
+            <div style="text-align:center; margin-top:0.4rem; font-size:0.75rem; color:#1565c0;">
+                <i class="bi bi-pencil-square me-1"></i>Editar asistencia
+            </div>
             {% endif %}
         </div>
-    </div>
+    </a>
     {% endfor %}
 </div>
 
