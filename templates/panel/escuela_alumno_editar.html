@@ -1,0 +1,198 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Editar {{ alumno }} - Panel ICE{% endblock %}
+{% block page_title %}Editar Alumno{% endblock %}
+{% block page_subtitle %}{{ alumno.nombres }} {{ alumno.apellidos }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .form-card h6 {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .form-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #475569;
+    }
+
+    .form-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .nav-links {
+        max-width: 800px;
+        margin: 0 auto 1rem;
+    }
+
+    .info-alta {
+        background: #e3f2fd;
+        border-left: 4px solid #1565c0;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: #0d47a1;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+        flex-wrap: wrap;
+    }
+
+    .btn-guardar {
+        background: #2e7d32;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.7rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .btn-guardar:hover { background: #1b5e20; }
+
+    .btn-cancelar {
+        background: transparent;
+        border: 1px solid #64748b;
+        color: #64748b;
+        border-radius: 8px;
+        padding: 0.7rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-decoration: none;
+    }
+
+    .btn-cancelar:hover { background: #64748b; color: white; }
+
+    .btn-eliminar {
+        background: #fce4ec;
+        color: #c62828;
+        border: none;
+        border-radius: 8px;
+        padding: 0.7rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .btn-eliminar:hover { background: #ef5350; color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="nav-links">
+    <a href="{% url 'panel:escuela_alumnos' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Volver a alumnos
+    </a>
+</div>
+
+<div class="form-card">
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-section">
+            <h6><i class="bi bi-person me-2"></i>Datos personales</h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Apellidos *</label>
+                    <input type="text" class="form-control" name="apellidos" value="{{ alumno.apellidos }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Nombres *</label>
+                    <input type="text" class="form-control" name="nombres" value="{{ alumno.nombres }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Fecha de nacimiento</label>
+                    <input type="date" class="form-control" name="fecha_nacimiento"
+                           value="{% if alumno.fecha_nacimiento %}{{ alumno.fecha_nacimiento|date:'Y-m-d' }}{% endif %}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Grado / Nivel</label>
+                    <select class="form-select" name="grado_nivel">
+                        {% for valor, texto in grado_choices %}
+                        <option value="{{ valor }}" {% if alumno.grado_nivel == valor %}selected{% endif %}>{{ texto }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h6><i class="bi bi-collection me-2"></i>Clase y estado</h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Clase *</label>
+                    <select class="form-select" name="clase" required>
+                        {% for c in clases %}
+                        <option value="{{ c.id }}" {% if c.id == alumno.clase_id %}selected{% endif %}>
+                            {{ c.emoji }} {{ c.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-end pb-2">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="activo" id="activoSwitch"
+                               {% if alumno.activo %}checked{% endif %}>
+                        <label class="form-check-label" for="activoSwitch">
+                            Alumno activo
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h6><i class="bi bi-calendar-event me-2"></i>Fecha de alta</h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Fecha de alta (cuando comenzo a asistir)</label>
+                    <input type="date" class="form-control" name="fecha_alta"
+                           value="{{ alumno.fecha_creacion|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-6">
+                    <div class="info-alta">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Modificar esta fecha afecta en qué domingos este alumno aparece para pasar asistencia.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-eliminar" form="form-eliminar">
+                <i class="bi bi-trash me-1"></i>Dar de baja
+            </button>
+            <div class="ms-auto d-flex gap-2">
+                <a href="{% url 'panel:escuela_alumnos' %}" class="btn-cancelar">Cancelar</a>
+                <button type="submit" class="btn-guardar">
+                    <i class="bi bi-check-lg me-1"></i>Guardar cambios
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Form separado para eliminar -->
+    <form id="form-eliminar" method="post" action="{% url 'panel:escuela_alumno_eliminar' alumno.pk %}"
+          onsubmit="return confirm('Dar de baja a {{ alumno|escapejs }}?')">
+        {% csrf_token %}
+    </form>
+</div>
+{% endblock %}

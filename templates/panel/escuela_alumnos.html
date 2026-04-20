@@ -176,6 +176,7 @@
                 <th>Edad</th>
                 <th>Grado/Nivel</th>
                 <th>Registrado</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -187,6 +188,12 @@
                 <td>{% if alumno.edad is not None %}{{ alumno.edad }} años{% else %}-{% endif %}</td>
                 <td>{% if alumno.grado_nivel %}{{ alumno.get_grado_nivel_display }}{% else %}-{% endif %}</td>
                 <td>{{ alumno.fecha_creacion|date:"d/m/Y" }}</td>
+                <td class="text-end">
+                    <a href="{% url 'panel:escuela_alumno_editar' alumno.pk %}"
+                       class="btn btn-sm btn-outline-primary" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                </td>
             </tr>
             {% endfor %}
         </tbody>

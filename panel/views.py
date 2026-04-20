@@ -1146,6 +1146,85 @@ def escuela_alumnos_lista(request):
 
 @login_required
 @user_passes_test(es_staff)
+def escuela_alumno_editar(request, pk):
+    """Editar alumno desde el panel admin, incluyendo fecha de alta"""
+    from escuela.models import GRADO_CHOICES
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    alumno = get_object_or_404(Alumno, pk=pk)
+    clases = ClaseEscuela.objects.filter(activo=True)
+
+    if request.method == 'POST':
+        apellidos = request.POST.get('apellidos', '').strip()
+        nombres = request.POST.get('nombres', '').strip()
+        fecha_nacimiento_str = request.POST.get('fecha_nacimiento', '').strip()
+        grado_nivel = request.POST.get('grado_nivel', '').strip()
+        clase_id = request.POST.get('clase', '').strip()
+        fecha_alta_str = request.POST.get('fecha_alta', '').strip()
+        activo = request.POST.get('activo') == 'on'
+
+        if not apellidos or not nombres or not clase_id:
+            messages.error(request, 'Apellidos, nombres y clase son obligatorios.')
+        else:
+            try:
+                clase_nueva = ClaseEscuela.objects.get(pk=clase_id)
+            except ClaseEscuela.DoesNotExist:
+                messages.error(request, 'Clase no valida.')
+                return render(request, 'panel/escuela_alumno_editar.html', {
+                    'alumno': alumno, 'clases': clases, 'grado_choices': GRADO_CHOICES,
+                })
+
+            fecha_nac = None
+            if fecha_nacimiento_str:
+                try:
+                    fecha_nac = datetime.strptime(fecha_nacimiento_str, '%Y-%m-%d').date()
+                except ValueError:
+                    pass
+
+            alumno.apellidos = apellidos
+            alumno.nombres = nombres
+            alumno.fecha_nacimiento = fecha_nac
+            alumno.grado_nivel = grado_nivel
+            alumno.clase = clase_nueva
+            alumno.activo = activo
+            alumno.save()
+
+            # Actualizar fecha_creacion (usa update para evitar auto_now)
+            if fecha_alta_str:
+                try:
+                    fecha_alta = datetime.strptime(fecha_alta_str, '%Y-%m-%d').date()
+                    tz = ZoneInfo('America/Argentina/Buenos_Aires')
+                    nueva_dt = datetime(fecha_alta.year, fecha_alta.month, fecha_alta.day, 10, 0, 0, tzinfo=tz)
+                    Alumno.objects.filter(pk=alumno.pk).update(fecha_creacion=nueva_dt)
+                except ValueError:
+                    pass
+
+            messages.success(request, f'{nombres} {apellidos} actualizado correctamente.')
+            return redirect('panel:escuela_alumnos')
+
+    return render(request, 'panel/escuela_alumno_editar.html', {
+        'alumno': alumno,
+        'clases': clases,
+        'grado_choices': GRADO_CHOICES,
+    })
+
+
+@login_required
+@user_passes_test(es_staff)
+@require_POST
+def escuela_alumno_eliminar(request, pk):
+    """Eliminar (desactivar) alumno desde el panel"""
+    alumno = get_object_or_404(Alumno, pk=pk)
+    nombre = f'{alumno.nombres} {alumno.apellidos}'
+    alumno.activo = False
+    alumno.save()
+    messages.success(request, f'{nombre} fue dado de baja.')
+    return redirect('panel:escuela_alumnos')
+
+
+@login_required
+@user_passes_test(es_staff)
 def escuela_clases_lista(request):
     """Lista de clases de la escuela biblica"""
     clases = ClaseEscuela.objects.all()

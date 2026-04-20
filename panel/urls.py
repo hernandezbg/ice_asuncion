@@ -73,6 +73,8 @@ urlpatterns = [
 
     # Escuela Biblica
     path('escuela/', views.escuela_alumnos_lista, name='escuela_alumnos'),
+    path('escuela/alumnos/<int:pk>/editar/', views.escuela_alumno_editar, name='escuela_alumno_editar'),
+    path('escuela/alumnos/<int:pk>/eliminar/', views.escuela_alumno_eliminar, name='escuela_alumno_eliminar'),
     path('escuela/clases/', views.escuela_clases_lista, name='escuela_clases'),
     path('escuela/clases/<int:pk>/codigo/', views.escuela_clase_actualizar_codigo, name='escuela_clase_codigo'),
     path('escuela/asistencia/', views.escuela_asistencia_dashboard, name='escuela_asistencia'),
