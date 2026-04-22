@@ -1146,6 +1146,90 @@ def escuela_alumnos_lista(request):
 
 @login_required
 @user_passes_test(es_staff)
+def escuela_alumnos_exportar_excel(request):
+    """Exportar lista completa de alumnos a Excel"""
+    from django.http import HttpResponse
+    import openpyxl
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+
+    alumnos = Alumno.objects.filter(activo=True).select_related('clase').order_by(
+        'clase__orden', 'apellidos', 'nombres'
+    )
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Alumnos Escuela Biblica'
+
+    header_font = Font(bold=True, color='FFFFFF', size=11)
+    header_fill = PatternFill(start_color='2E7D32', end_color='2E7D32', fill_type='solid')
+    center = Alignment(horizontal='center', vertical='center')
+    thin = Side(style='thin', color='CCCCCC')
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    # Titulo
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=7)
+    t = ws.cell(row=1, column=1, value='Escuela Biblica ICE - Listado de Alumnos')
+    t.font = Font(bold=True, size=14, color='2E7D32')
+    t.alignment = center
+
+    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=7)
+    s = ws.cell(row=2, column=1, value=f'Total: {alumnos.count()} alumnos activos')
+    s.font = Font(size=10, color='666666')
+    s.alignment = center
+
+    # Encabezados
+    headers = ['Apellidos', 'Nombres', 'Edad', 'Fecha de Nacimiento', 'Grado / Nivel', 'Clase', 'Fecha de Alta']
+    row = 4
+    for col, h in enumerate(headers, 1):
+        cell = ws.cell(row=row, column=col, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center
+        cell.border = border
+
+    # Datos
+    for idx, a in enumerate(alumnos):
+        r = row + 1 + idx
+        ws.cell(row=r, column=1, value=a.apellidos).border = border
+        ws.cell(row=r, column=2, value=a.nombres).border = border
+
+        edad_cell = ws.cell(row=r, column=3, value=a.edad() if a.edad() is not None else '')
+        edad_cell.alignment = center
+        edad_cell.border = border
+
+        fn = ws.cell(row=r, column=4,
+                     value=a.fecha_nacimiento.strftime('%d/%m/%Y') if a.fecha_nacimiento else '')
+        fn.alignment = center
+        fn.border = border
+
+        ws.cell(row=r, column=5, value=a.get_grado_nivel_display() if a.grado_nivel else '').border = border
+        ws.cell(row=r, column=6, value=f'{a.clase.emoji} {a.clase.nombre}').border = border
+
+        fa = ws.cell(row=r, column=7, value=a.fecha_creacion.strftime('%d/%m/%Y'))
+        fa.alignment = center
+        fa.border = border
+
+    # Anchos
+    ws.column_dimensions['A'].width = 25
+    ws.column_dimensions['B'].width = 25
+    ws.column_dimensions['C'].width = 8
+    ws.column_dimensions['D'].width = 18
+    ws.column_dimensions['E'].width = 18
+    ws.column_dimensions['F'].width = 22
+    ws.column_dimensions['G'].width = 14
+
+    from datetime import date as _d
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    nombre = f'alumnos_escuela_biblica_{_d.today().strftime("%Y%m%d")}.xlsx'
+    response['Content-Disposition'] = f'attachment; filename="{nombre}"'
+    wb.save(response)
+    return response
+
+
+@login_required
+@user_passes_test(es_staff)
 def escuela_alumno_editar(request, pk):
     """Editar alumno desde el panel admin, incluyendo fecha de alta"""
     from escuela.models import GRADO_CHOICES
