@@ -1471,20 +1471,32 @@ def escuela_asistencia_dashboard(request):
         'gris': '#9e9e9e',
     }
 
+    # Domingos del mes con asistencia registrada (excluye domingos sin clase)
+    domingos_mes = sorted(set(
+        Asistencia.objects.filter(
+            fecha__year=mes_filtro_anio, fecha__month=mes_filtro_mes
+        ).values_list('fecha', flat=True)
+    ))
+
     ranking = []
     for clase in clases:
-        regs = Asistencia.objects.filter(
+        pres = Asistencia.objects.filter(
             clase=clase,
             fecha__year=mes_filtro_anio,
             fecha__month=mes_filtro_mes,
-        )
-        pres = regs.filter(presente=True).count()
-        tot = regs.count()
+            presente=True,
+        ).count()
+        # Esperado: por cada domingo del mes, alumnos activos cuya alta sea <= ese domingo
+        esperado = 0
+        for d in domingos_mes:
+            esperado += Alumno.objects.filter(
+                clase=clase, activo=True, fecha_creacion__date__lte=d
+            ).count()
         ranking.append({
             'nombre': f'{clase.emoji} {clase.nombre}',
-            'porcentaje': round(pres * 100 / tot, 2) if tot > 0 else 0,
+            'porcentaje': round(pres * 100 / esperado, 2) if esperado > 0 else 0,
             'presentes': pres,
-            'total': tot,
+            'total': esperado,
             'color': COLOR_MAP.get(clase.color, '#9e9e9e'),
         })
 
