@@ -1482,7 +1482,7 @@ def escuela_asistencia_dashboard(request):
         tot = regs.count()
         ranking.append({
             'nombre': f'{clase.emoji} {clase.nombre}',
-            'porcentaje': round(pres * 100 / tot) if tot > 0 else 0,
+            'porcentaje': round(pres * 100 / tot, 2) if tot > 0 else 0,
             'presentes': pres,
             'total': tot,
             'color': COLOR_MAP.get(clase.color, '#9e9e9e'),

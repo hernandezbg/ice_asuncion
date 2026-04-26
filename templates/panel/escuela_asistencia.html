@@ -509,7 +509,7 @@ for (var i = 0; i < Math.min(3, rankingData.length); i++) {
     var r = rankingData[i];
     podioHtml += '<div class="podio-item ' + podioClases[i] + '">'
         + '<div class="medalla">' + medallas[i] + '</div>'
-        + '<div class="podio-pct">' + r.porcentaje + '%</div>'
+        + '<div class="podio-pct">' + r.porcentaje.toFixed(2) + '%</div>'
         + '<div class="podio-nombre">' + r.nombre + '</div>'
         + '</div>';
 }
@@ -541,7 +541,7 @@ new Chart(ctx, {
                 callbacks: {
                     label: function(ctx) {
                         var r = rankingData[ctx.dataIndex];
-                        return r.porcentaje + '% (' + r.presentes + '/' + r.total + ')';
+                        return r.porcentaje.toFixed(2) + '% (' + r.presentes + '/' + r.total + ')';
                     }
                 }
             }
