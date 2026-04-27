@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>{{ presentacion.titulo }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -11,13 +12,13 @@
             color: white;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            min-height: 100dvh;
             overflow: hidden;
         }
+
         .header {
             padding: 0.6rem 1rem;
-            background: rgba(0,0,0,0.5);
+            background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -26,19 +27,29 @@
             top: 0; left: 0; right: 0;
             z-index: 10;
             transition: opacity 0.3s ease;
+            gap: 0.5rem;
         }
         .header.oculto { opacity: 0; pointer-events: none; }
 
+        .titulo-pres {
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .badge-en-vivo {
             background: #ef5350;
-            padding: 0.2rem 0.6rem;
+            padding: 0.2rem 0.55rem;
             border-radius: 12px;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 700;
             text-transform: uppercase;
             display: inline-flex;
             align-items: center;
             gap: 0.3rem;
+            white-space: nowrap;
         }
 
         .badge-en-vivo::before {
@@ -54,24 +65,43 @@
             50% { opacity: 0.3; }
         }
 
+        .acciones-header { display: flex; gap: 0.4rem; }
+
+        .btn-icono {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+        .btn-icono:hover { background: rgba(255,255,255,0.3); }
+
         .canvas-container {
-            flex: 1;
+            position: fixed;
+            inset: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 0;
             background: #000;
         }
 
         #pdfCanvas {
             max-width: 100%;
             max-height: 100vh;
+            max-height: 100dvh;
             background: white;
         }
 
         .footer {
             padding: 0.5rem 1rem;
-            background: rgba(0,0,0,0.5);
+            background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
             text-align: center;
             font-size: 0.75rem;
             position: fixed;
@@ -79,19 +109,109 @@
             z-index: 10;
             transition: opacity 0.3s ease;
         }
-
         .footer.oculto { opacity: 0; pointer-events: none; }
 
-        .loading {
-            text-align: center;
-            padding: 2rem;
+        /* Modal final */
+        .modal-final {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 1.5rem;
         }
+        .modal-final.activo { display: flex; }
+
+        .modal-card {
+            background: white;
+            color: #1e293b;
+            border-radius: 16px;
+            padding: 2rem 1.5rem;
+            max-width: 380px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .modal-card .icono {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+
+        .modal-card h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-card p {
+            color: #64748b;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .modal-acciones {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .btn-modal {
+            padding: 0.85rem 1rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-modal.primary {
+            background: #2e7d32;
+            color: white;
+        }
+        .btn-modal.primary:hover { background: #1b5e20; }
+
+        .btn-modal.secondary {
+            background: #1565c0;
+            color: white;
+        }
+        .btn-modal.secondary:hover { background: #0d47a1; }
+
+        .btn-modal.outline {
+            background: transparent;
+            border: 1px solid #cbd5e1;
+            color: #64748b;
+        }
+        .btn-modal.outline:hover { background: #f1f5f9; }
     </style>
 </head>
 <body>
     <div class="header" id="header">
-        <div>{{ presentacion.titulo }}</div>
-        <div class="badge-en-vivo">En vivo</div>
+        <div class="titulo-pres">{{ presentacion.titulo }}</div>
+        <span class="badge-en-vivo">En vivo</span>
+        <div class="acciones-header">
+            <button class="btn-icono" onclick="toggleFullscreen()" id="btnFs" title="Pantalla completa">
+                <i class="bi bi-fullscreen"></i>
+            </button>
+            <a href="{% url 'proyeccion_pdf' presentacion.codigo %}" download="{{ presentacion.titulo }}.pdf" class="btn-icono" title="Descargar PDF">
+                <i class="bi bi-download"></i>
+            </a>
+        </div>
     </div>
 
     <div class="canvas-container">
@@ -101,6 +221,26 @@
     <div class="footer" id="footer">
         Slide <span id="slideActual">{{ estado.slide_actual }}</span> / {{ presentacion.total_slides }} ·
         ICE Asuncion
+    </div>
+
+    <!-- Modal final -->
+    <div class="modal-final" id="modalFinal">
+        <div class="modal-card">
+            <div class="icono"><i class="bi bi-check-lg"></i></div>
+            <h3>Presentacion finalizada</h3>
+            <p>Gracias por seguir la predica</p>
+            <div class="modal-acciones">
+                <a href="{% url 'proyeccion_pdf' presentacion.codigo %}" download="{{ presentacion.titulo }}.pdf" class="btn-modal primary">
+                    <i class="bi bi-download"></i>Descargar PDF
+                </a>
+                <a href="/" class="btn-modal secondary">
+                    <i class="bi bi-house-fill"></i>Ir a la pagina principal
+                </a>
+                <button onclick="cerrarModal()" class="btn-modal outline">
+                    <i class="bi bi-arrow-left"></i>Volver a la presentacion
+                </button>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.mjs" type="module"></script>
@@ -117,6 +257,7 @@
         let slideActual = {{ estado.slide_actual }};
         let renderizando = false;
         let pendiente = null;
+        let modalMostrado = false;
 
         const canvas = document.getElementById('pdfCanvas');
         const ctx = canvas.getContext('2d');
@@ -144,6 +285,7 @@
                 canvas.width = viewport.width;
                 canvas.height = viewport.height;
                 canvas.style.width = (viewport.width / 2) + 'px';
+                canvas.style.height = (viewport.height / 2) + 'px';
 
                 page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function() {
                     renderizando = false;
@@ -159,6 +301,42 @@
             document.getElementById('slideActual').textContent = num;
         }
 
+        function actualizarSlide(nuevo) {
+            if (nuevo === slideActual) return;
+            const llegoFinal = nuevo === totalSlides && slideActual < totalSlides;
+            slideActual = nuevo;
+            renderSlide(slideActual);
+
+            // Si llego al ultimo slide, mostrar modal despues de 3s
+            if (llegoFinal && !modalMostrado) {
+                setTimeout(function() {
+                    if (slideActual === totalSlides) {
+                        document.getElementById('modalFinal').classList.add('activo');
+                        modalMostrado = true;
+                    }
+                }, 3000);
+            }
+        }
+
+        window.cerrarModal = function() {
+            document.getElementById('modalFinal').classList.remove('activo');
+        };
+
+        // Pantalla completa
+        window.toggleFullscreen = function() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(function(){});
+            } else {
+                document.exitFullscreen();
+            }
+        };
+
+        document.addEventListener('fullscreenchange', function() {
+            const icon = document.querySelector('#btnFs i');
+            if (document.fullscreenElement) icon.className = 'bi bi-fullscreen-exit';
+            else icon.className = 'bi bi-fullscreen';
+        });
+
         // SSE para sincronizacion
         let evtSource = null;
         let usePolling = false;
@@ -169,10 +347,7 @@
                 evtSource.onmessage = function(e) {
                     try {
                         const data = JSON.parse(e.data);
-                        if (data.slide && data.slide !== slideActual) {
-                            slideActual = data.slide;
-                            renderSlide(slideActual);
-                        }
+                        if (data.slide) actualizarSlide(data.slide);
                     } catch (err) {}
                 };
                 evtSource.onerror = function() {
@@ -191,10 +366,7 @@
         function iniciarPolling() {
             setInterval(function() {
                 fetch(estadoUrl).then(r => r.json()).then(function(data) {
-                    if (data.slide && data.slide !== slideActual) {
-                        slideActual = data.slide;
-                        renderSlide(slideActual);
-                    }
+                    if (data.slide) actualizarSlide(data.slide);
                 }).catch(function() {});
             }, 2000);
         }
@@ -212,8 +384,13 @@
                 document.getElementById('footer').classList.add('oculto');
             }, 4000);
         }
-        document.body.addEventListener('click', mostrarChrome);
-        document.body.addEventListener('touchstart', mostrarChrome);
+        document.body.addEventListener('click', function(e) {
+            // No ocultar si se hace tap en el modal o en botones
+            if (!e.target.closest('.modal-final')) mostrarChrome();
+        });
+        document.body.addEventListener('touchstart', function(e) {
+            if (!e.target.closest('.modal-final')) mostrarChrome();
+        });
         mostrarChrome();
 
         window.addEventListener('resize', function() {

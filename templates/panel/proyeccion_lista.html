@@ -113,7 +113,7 @@
                 {{ p.fecha_creacion|date:"d/m/Y" }}
             </div>
             <div class="pres-acciones">
-                <a href="{% url 'panel:proyeccion_control' p.codigo %}" class="btn-control">
+                <a href="{% url 'panel:proyeccion_control' p.codigo %}" class="btn-control" target="_blank" rel="noopener">
                     <i class="bi bi-display me-1"></i>Proyectar
                 </a>
                 <form method="post" action="{% url 'panel:proyeccion_eliminar' p.pk %}" style="flex:1; margin:0;"
