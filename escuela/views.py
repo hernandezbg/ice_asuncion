@@ -6,7 +6,7 @@ import unicodedata
 
 import json
 
-from .models import ClaseEscuela, Alumno, Asistencia, DomingoExcluido, GRADO_CHOICES
+from .models import ClaseEscuela, Alumno, Asistencia, DomingoExcluido, Presentacion, EstadoProyeccion, GRADO_CHOICES
 from miembros.models import Hermano
 from datetime import date, timedelta
 
@@ -675,3 +675,63 @@ def cerrar_sesion(request):
     """Cerrar sesion de escuela"""
     request.session.pop('escuela_clase_id', None)
     return redirect('escuela:acceso')
+
+
+# ===================== PROYECCION (publico) =====================
+
+def proyeccion_ver(request, codigo):
+    """Vista publica para celulares: muestra el slide actual del proyector"""
+    presentacion = get_object_or_404(Presentacion, codigo__iexact=codigo, activa=True)
+    estado, _ = EstadoProyeccion.objects.get_or_create(presentacion=presentacion)
+    return render(request, 'escuela/proyeccion_ver.html', {
+        'presentacion': presentacion,
+        'estado': estado,
+    })
+
+
+def proyeccion_estado(request, codigo):
+    """API: devuelve el slide actual (polling fallback)"""
+    presentacion = get_object_or_404(Presentacion, codigo__iexact=codigo, activa=True)
+    estado, _ = EstadoProyeccion.objects.get_or_create(presentacion=presentacion)
+    return JsonResponse({
+        'slide': estado.slide_actual,
+        'total': presentacion.total_slides,
+        'updated_at': estado.updated_at.timestamp(),
+    })
+
+
+def proyeccion_stream(request, codigo):
+    """SSE: empuja cambios de slide en tiempo real"""
+    from django.http import StreamingHttpResponse
+    import time
+
+    presentacion = get_object_or_404(Presentacion, codigo__iexact=codigo, activa=True)
+
+    def event_stream():
+        last_slide = -1
+        last_check = 0
+        # Mantener vivo hasta 5 minutos por conexion
+        for _ in range(300):
+            estado = EstadoProyeccion.objects.filter(presentacion=presentacion).first()
+            if estado and estado.slide_actual != last_slide:
+                last_slide = estado.slide_actual
+                yield f'data: {{"slide": {last_slide}}}\n\n'
+            else:
+                # Heartbeat cada 15s
+                if time.time() - last_check > 15:
+                    yield ': heartbeat\n\n'
+                    last_check = time.time()
+            time.sleep(1)
+
+    response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+    response['Cache-Control'] = 'no-cache'
+    response['X-Accel-Buffering'] = 'no'
+    return response
+
+
+def proyeccion_pdf(request, codigo):
+    """Servir el PDF (publico, para PDF.js)"""
+    presentacion = get_object_or_404(Presentacion, codigo__iexact=codigo, activa=True)
+    response = HttpResponse(presentacion.archivo.read(), content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="{presentacion.codigo}.pdf"'
+    return response

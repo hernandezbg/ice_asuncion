@@ -681,6 +681,10 @@
                 <i class="bi bi-book-fill"></i>
                 <span>Escuela Biblica</span>
             </a>
+            <a href="{% url 'panel:proyeccion_lista' %}" class="sidebar-nav-item {% if 'proyeccion' in request.path %}active{% endif %}">
+                <i class="bi bi-projector-fill"></i>
+                <span>Proyeccion</span>
+            </a>
 
             {% if user.is_superuser %}
             <div class="nav-section-title">Contenido Web</div>

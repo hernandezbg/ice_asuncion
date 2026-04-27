@@ -1,0 +1,137 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Proyeccion - Panel ICE{% endblock %}
+{% block page_title %}Proyeccion{% endblock %}
+{% block page_subtitle %}Presentaciones para proyectar y replicar en celulares{% endblock %}
+
+{% block extra_css %}
+<style>
+    .acciones-top {
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-subir {
+        background: #2e7d32;
+        color: white;
+        border-radius: 8px;
+        padding: 0.6rem 1.2rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-subir:hover { background: #1b5e20; color: white; }
+
+    .pres-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+    }
+
+    .pres-card {
+        background: white;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        transition: transform 0.2s ease;
+    }
+
+    .pres-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+
+    .pres-header {
+        background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+        color: white;
+        padding: 1rem 1.25rem;
+    }
+
+    .pres-titulo { font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem; }
+    .pres-codigo { font-family: monospace; font-size: 1.5rem; font-weight: 800; letter-spacing: 2px; }
+
+    .pres-body {
+        padding: 1.25rem;
+    }
+
+    .pres-meta {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-bottom: 1rem;
+    }
+
+    .pres-acciones {
+        display: flex;
+        gap: 0.4rem;
+    }
+
+    .pres-acciones a, .pres-acciones button {
+        flex: 1;
+        padding: 0.5rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-align: center;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+    }
+
+    .pres-acciones .btn-control { background: #1565c0; color: white; }
+    .pres-acciones .btn-control:hover { background: #0d47a1; }
+
+    .pres-acciones .btn-eliminar { background: #fce4ec; color: #c62828; }
+    .pres-acciones .btn-eliminar:hover { background: #ef5350; color: white; }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #94a3b8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="acciones-top">
+    <a href="{% url 'panel:proyeccion_subir' %}" class="btn-subir">
+        <i class="bi bi-cloud-upload"></i>Subir presentacion
+    </a>
+</div>
+
+{% if presentaciones %}
+<div class="pres-grid">
+    {% for p in presentaciones %}
+    <div class="pres-card">
+        <div class="pres-header">
+            <div class="pres-titulo">{{ p.titulo }}</div>
+            <div class="pres-codigo">{{ p.codigo }}</div>
+        </div>
+        <div class="pres-body">
+            <div class="pres-meta">
+                <i class="bi bi-file-earmark-pdf me-1"></i>{{ p.total_slides }} slide{{ p.total_slides|pluralize }} ·
+                {{ p.fecha_creacion|date:"d/m/Y" }}
+            </div>
+            <div class="pres-acciones">
+                <a href="{% url 'panel:proyeccion_control' p.codigo %}" class="btn-control">
+                    <i class="bi bi-display me-1"></i>Proyectar
+                </a>
+                <form method="post" action="{% url 'panel:proyeccion_eliminar' p.pk %}" style="flex:1; margin:0;"
+                      onsubmit="return confirm('Eliminar esta presentacion?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-eliminar" style="width:100%;">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="bi bi-projector" style="font-size: 4rem; opacity: 0.3;"></i>
+    <p class="mt-2">No hay presentaciones. Sube una para empezar.</p>
+</div>
+{% endif %}
+{% endblock %}

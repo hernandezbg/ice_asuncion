@@ -5,6 +5,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from escuela import views as escuela_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -14,6 +15,11 @@ urlpatterns = [
     path('chat/', include('chat.urls')),  # Chat con agente IA
     path('e/', include('encuestas.urls')),  # Encuestas en vivo (URL corta)
     path('escuela/', include('escuela.urls')),  # Escuela Biblica
+    # URLs cortas de proyeccion (publico)
+    path('p/<str:codigo>/', escuela_views.proyeccion_ver, name='proyeccion_ver'),
+    path('p/<str:codigo>/stream/', escuela_views.proyeccion_stream, name='proyeccion_stream'),
+    path('p/<str:codigo>/estado/', escuela_views.proyeccion_estado, name='proyeccion_estado'),
+    path('p/<str:codigo>/pdf/', escuela_views.proyeccion_pdf, name='proyeccion_pdf'),
     path('', include('contenido.urls')),  # URLs del sitio público
 ]
 

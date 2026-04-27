@@ -117,6 +117,58 @@ class Asistencia(models.Model):
         return f"{self.alumno} - {self.fecha} - {estado}"
 
 
+def _generar_codigo_proyeccion():
+    import random, string
+    while True:
+        codigo = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+        if not Presentacion.objects.filter(codigo=codigo).exists():
+            return codigo
+
+
+class Presentacion(models.Model):
+    """
+    Presentaciones (PDF) para proyectar en el salon y replicar en celulares
+    """
+    titulo = models.CharField(max_length=200, verbose_name='Titulo')
+    archivo = models.FileField(upload_to='proyecciones/', verbose_name='Archivo PDF')
+    codigo = models.CharField(max_length=10, unique=True, blank=True,
+                              verbose_name='Codigo de acceso',
+                              help_text='Codigo corto para la URL publica')
+    total_slides = models.PositiveIntegerField(default=1, verbose_name='Total de slides')
+    activa = models.BooleanField(default=True, verbose_name='Activa')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Presentacion'
+        verbose_name_plural = 'Presentaciones'
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        return f'{self.titulo} ({self.codigo})'
+
+    def save(self, *args, **kwargs):
+        if not self.codigo:
+            self.codigo = _generar_codigo_proyeccion()
+        super().save(*args, **kwargs)
+
+
+class EstadoProyeccion(models.Model):
+    """
+    Slide actual de cada presentacion (para sincronizar celulares con el proyector)
+    """
+    presentacion = models.OneToOneField(Presentacion, on_delete=models.CASCADE,
+                                         related_name='estado')
+    slide_actual = models.PositiveIntegerField(default=1)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Estado de proyeccion'
+        verbose_name_plural = 'Estados de proyeccion'
+
+    def __str__(self):
+        return f'{self.presentacion.codigo}: slide {self.slide_actual}'
+
+
 class DomingoExcluido(models.Model):
     """
     Domingos en los que no se dictan clases (domingos especiales)

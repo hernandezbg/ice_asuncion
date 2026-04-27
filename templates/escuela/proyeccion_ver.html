@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>{{ presentacion.titulo }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #000;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .header {
+            padding: 0.6rem 1rem;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+        }
+        .header.oculto { opacity: 0; pointer-events: none; }
+
+        .badge-en-vivo {
+            background: #ef5350;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .badge-en-vivo::before {
+            content: '';
+            width: 6px; height: 6px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 1.5s ease infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: #000;
+        }
+
+        #pdfCanvas {
+            max-width: 100%;
+            max-height: 100vh;
+            background: white;
+        }
+
+        .footer {
+            padding: 0.5rem 1rem;
+            background: rgba(0,0,0,0.5);
+            text-align: center;
+            font-size: 0.75rem;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+        }
+
+        .footer.oculto { opacity: 0; pointer-events: none; }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header" id="header">
+        <div>{{ presentacion.titulo }}</div>
+        <div class="badge-en-vivo">En vivo</div>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="pdfCanvas"></canvas>
+    </div>
+
+    <div class="footer" id="footer">
+        Slide <span id="slideActual">{{ estado.slide_actual }}</span> / {{ presentacion.total_slides }} ·
+        ICE Asuncion
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.mjs" type="module"></script>
+    <script type="module">
+        import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.mjs';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.mjs';
+
+        const pdfUrl = '{% url "proyeccion_pdf" presentacion.codigo %}';
+        const streamUrl = '{% url "proyeccion_stream" presentacion.codigo %}';
+        const estadoUrl = '{% url "proyeccion_estado" presentacion.codigo %}';
+        const totalSlides = {{ presentacion.total_slides }};
+
+        let pdfDoc = null;
+        let slideActual = {{ estado.slide_actual }};
+        let renderizando = false;
+        let pendiente = null;
+
+        const canvas = document.getElementById('pdfCanvas');
+        const ctx = canvas.getContext('2d');
+
+        pdfjsLib.getDocument(pdfUrl).promise.then(function(doc) {
+            pdfDoc = doc;
+            renderSlide(slideActual);
+        });
+
+        function renderSlide(num) {
+            if (!pdfDoc) return;
+            if (renderizando) {
+                pendiente = num;
+                return;
+            }
+            renderizando = true;
+            pdfDoc.getPage(num).then(function(page) {
+                const wrap = canvas.parentElement;
+                const maxW = wrap.clientWidth;
+                const maxH = wrap.clientHeight;
+                const viewport0 = page.getViewport({ scale: 1 });
+                const scale = Math.min(maxW / viewport0.width, maxH / viewport0.height) * 2;
+                const viewport = page.getViewport({ scale: scale });
+
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                canvas.style.width = (viewport.width / 2) + 'px';
+
+                page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function() {
+                    renderizando = false;
+                    if (pendiente !== null && pendiente !== num) {
+                        const next = pendiente;
+                        pendiente = null;
+                        renderSlide(next);
+                    } else {
+                        pendiente = null;
+                    }
+                });
+            });
+            document.getElementById('slideActual').textContent = num;
+        }
+
+        // SSE para sincronizacion
+        let evtSource = null;
+        let usePolling = false;
+
+        function conectarSSE() {
+            try {
+                evtSource = new EventSource(streamUrl);
+                evtSource.onmessage = function(e) {
+                    try {
+                        const data = JSON.parse(e.data);
+                        if (data.slide && data.slide !== slideActual) {
+                            slideActual = data.slide;
+                            renderSlide(slideActual);
+                        }
+                    } catch (err) {}
+                };
+                evtSource.onerror = function() {
+                    if (evtSource) evtSource.close();
+                    if (!usePolling) {
+                        usePolling = true;
+                        iniciarPolling();
+                    }
+                };
+            } catch (e) {
+                usePolling = true;
+                iniciarPolling();
+            }
+        }
+
+        function iniciarPolling() {
+            setInterval(function() {
+                fetch(estadoUrl).then(r => r.json()).then(function(data) {
+                    if (data.slide && data.slide !== slideActual) {
+                        slideActual = data.slide;
+                        renderSlide(slideActual);
+                    }
+                }).catch(function() {});
+            }, 2000);
+        }
+
+        conectarSSE();
+
+        // Auto-ocultar header/footer despues de 4s sin tocar
+        let timeoutHide = null;
+        function mostrarChrome() {
+            document.getElementById('header').classList.remove('oculto');
+            document.getElementById('footer').classList.remove('oculto');
+            if (timeoutHide) clearTimeout(timeoutHide);
+            timeoutHide = setTimeout(function() {
+                document.getElementById('header').classList.add('oculto');
+                document.getElementById('footer').classList.add('oculto');
+            }, 4000);
+        }
+        document.body.addEventListener('click', mostrarChrome);
+        document.body.addEventListener('touchstart', mostrarChrome);
+        mostrarChrome();
+
+        window.addEventListener('resize', function() {
+            if (pdfDoc) renderSlide(slideActual);
+        });
+    </script>
+</body>
+</html>

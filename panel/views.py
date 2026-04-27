@@ -13,7 +13,7 @@ from .models import Visita
 from .forms import HermanoForm, NoticiaForm, MensajeForm, PaginaForm, SeccionForm, SliderForm, OfrendaForm, DatosIceForm
 from contenido.models import Noticia, Mensaje, Pagina, Galeria, Slider, DatosIce, Seccion, Ofrenda
 from miembros.models import Hermano, Provincia, EstadoCivil, Clase, Grupo, Don
-from escuela.models import ClaseEscuela, Alumno, Asistencia, DomingoExcluido
+from escuela.models import ClaseEscuela, Alumno, Asistencia, DomingoExcluido, Presentacion, EstadoProyeccion
 
 
 def es_staff(user):
@@ -1632,3 +1632,110 @@ def escuela_domingo_excluido_eliminar(request, pk):
     domingo.delete()
     messages.success(request, f'Domingo {fecha_str} habilitado nuevamente.')
     return redirect('panel:escuela_domingos_excluidos')
+
+
+# ===================== PROYECCION =====================
+
+@login_required
+@user_passes_test(es_staff)
+def proyeccion_lista(request):
+    """Lista de presentaciones"""
+    presentaciones = Presentacion.objects.all()
+    return render(request, 'panel/proyeccion_lista.html', {
+        'presentaciones': presentaciones,
+    })
+
+
+@login_required
+@user_passes_test(es_staff)
+def proyeccion_subir(request):
+    """Subir nueva presentacion (PDF)"""
+    if request.method == 'POST':
+        titulo = request.POST.get('titulo', '').strip()
+        archivo = request.FILES.get('archivo')
+
+        if not titulo or not archivo:
+            messages.error(request, 'Titulo y archivo son obligatorios.')
+        elif not archivo.name.lower().endswith('.pdf'):
+            messages.error(request, 'El archivo debe ser PDF.')
+        else:
+            try:
+                from pypdf import PdfReader
+                reader = PdfReader(archivo)
+                total = len(reader.pages)
+                archivo.seek(0)
+            except Exception:
+                total = 1
+
+            pres = Presentacion.objects.create(
+                titulo=titulo,
+                archivo=archivo,
+                total_slides=total,
+            )
+            EstadoProyeccion.objects.create(presentacion=pres, slide_actual=1)
+            messages.success(request, f'Presentacion subida con codigo: {pres.codigo}')
+            return redirect('panel:proyeccion_lista')
+
+    return render(request, 'panel/proyeccion_subir.html')
+
+
+@login_required
+@user_passes_test(es_staff)
+def proyeccion_control(request, codigo):
+    """Vista del proyector con controles"""
+    presentacion = get_object_or_404(Presentacion, codigo__iexact=codigo)
+    estado, _ = EstadoProyeccion.objects.get_or_create(presentacion=presentacion)
+
+    # Generar QR
+    import qrcode
+    import io
+    import base64
+    url_publica = request.build_absolute_uri(f'/p/{presentacion.codigo}/')
+    qr = qrcode.make(url_publica, box_size=8, border=2)
+    buf = io.BytesIO()
+    qr.save(buf, format='PNG')
+    qr_b64 = base64.b64encode(buf.getvalue()).decode()
+
+    return render(request, 'panel/proyeccion_control.html', {
+        'presentacion': presentacion,
+        'estado': estado,
+        'url_publica': url_publica,
+        'qr_b64': qr_b64,
+    })
+
+
+@login_required
+@user_passes_test(es_staff)
+@require_POST
+def proyeccion_avanzar(request, codigo):
+    """Cambiar slide actual via AJAX"""
+    presentacion = get_object_or_404(Presentacion, codigo__iexact=codigo)
+    estado, _ = EstadoProyeccion.objects.get_or_create(presentacion=presentacion)
+
+    import json as _json
+    try:
+        data = _json.loads(request.body)
+        slide = int(data.get('slide', 1))
+        slide = max(1, min(slide, presentacion.total_slides))
+        estado.slide_actual = slide
+        estado.save()
+        return JsonResponse({'ok': True, 'slide': slide})
+    except (ValueError, _json.JSONDecodeError) as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@user_passes_test(es_staff)
+@require_POST
+def proyeccion_eliminar(request, pk):
+    """Eliminar presentacion"""
+    pres = get_object_or_404(Presentacion, pk=pk)
+    titulo = pres.titulo
+    if pres.archivo:
+        try:
+            pres.archivo.delete(save=False)
+        except Exception:
+            pass
+    pres.delete()
+    messages.success(request, f'Presentacion "{titulo}" eliminada.')
+    return redirect('panel:proyeccion_lista')

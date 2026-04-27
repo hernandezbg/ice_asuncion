@@ -1,0 +1,236 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Proyectar - {{ presentacion.titulo }}{% endblock %}
+{% block page_title %}{{ presentacion.titulo }}{% endblock %}
+{% block page_subtitle %}Codigo: {{ presentacion.codigo }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .proyector-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .url-publica {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .url-publica .url-text {
+        font-family: monospace;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1565c0;
+        flex: 1;
+    }
+
+    .url-publica .qr-mini img {
+        width: 80px;
+        height: 80px;
+        cursor: pointer;
+    }
+
+    .canvas-wrapper {
+        background: #1e293b;
+        border-radius: 14px;
+        padding: 1rem;
+        text-align: center;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+
+    #pdfCanvas {
+        max-width: 100%;
+        height: auto;
+        background: white;
+        border-radius: 4px;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .controles {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        justify-content: center;
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .btn-nav {
+        background: #1565c0;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.75rem 1.25rem;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        min-width: 120px;
+    }
+
+    .btn-nav:hover { background: #0d47a1; }
+    .btn-nav:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .slide-info {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #1e293b;
+        min-width: 100px;
+        text-align: center;
+    }
+
+    .qr-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.85);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        cursor: pointer;
+    }
+
+    .qr-modal.activo { display: flex; }
+
+    .qr-modal img {
+        max-width: 80vw;
+        max-height: 80vh;
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+    }
+
+    .hint {
+        text-align: center;
+        font-size: 0.85rem;
+        color: #94a3b8;
+        margin-top: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="proyector-container">
+    <div class="mb-3">
+        <a href="{% url 'panel:proyeccion_lista' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+
+    <div class="url-publica">
+        <div>
+            <div style="font-size:0.75rem; color:#64748b;">URL para asistentes:</div>
+            <div class="url-text">{{ url_publica }}</div>
+        </div>
+        <div class="qr-mini" onclick="document.getElementById('qrModal').classList.add('activo')" title="Click para ampliar">
+            <img src="data:image/png;base64,{{ qr_b64 }}" alt="QR">
+        </div>
+    </div>
+
+    <div class="canvas-wrapper">
+        <canvas id="pdfCanvas"></canvas>
+    </div>
+
+    <div class="controles">
+        <button class="btn-nav" id="btnPrev" onclick="cambiar(-1)">
+            <i class="bi bi-chevron-left"></i> Anterior
+        </button>
+        <div class="slide-info">
+            <span id="slideActual">{{ estado.slide_actual }}</span> / {{ presentacion.total_slides }}
+        </div>
+        <button class="btn-nav" id="btnNext" onclick="cambiar(1)">
+            Siguiente <i class="bi bi-chevron-right"></i>
+        </button>
+    </div>
+    <div class="hint">
+        Tambien podes usar las flechas del teclado o la barra espaciadora
+    </div>
+</div>
+
+<div class="qr-modal" id="qrModal" onclick="this.classList.remove('activo')">
+    <img src="data:image/png;base64,{{ qr_b64 }}" alt="QR grande">
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.mjs" type="module"></script>
+<script type="module">
+import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.mjs';
+
+const pdfUrl = '{% url "proyeccion_pdf" presentacion.codigo %}';
+const totalSlides = {{ presentacion.total_slides }};
+const csrfToken = '{{ csrf_token }}';
+const avanzarUrl = '{% url "panel:proyeccion_avanzar" presentacion.codigo %}';
+
+let pdfDoc = null;
+let slideActual = {{ estado.slide_actual }};
+let renderizando = false;
+
+const canvas = document.getElementById('pdfCanvas');
+const ctx = canvas.getContext('2d');
+
+pdfjsLib.getDocument(pdfUrl).promise.then(function(doc) {
+    pdfDoc = doc;
+    renderSlide(slideActual);
+});
+
+function renderSlide(num) {
+    if (renderizando) return;
+    renderizando = true;
+    pdfDoc.getPage(num).then(function(page) {
+        const maxWidth = canvas.parentElement.clientWidth - 32;
+        const viewport0 = page.getViewport({ scale: 1 });
+        const scale = Math.min(2, maxWidth / viewport0.width);
+        const viewport = page.getViewport({ scale: scale });
+
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function() {
+            renderizando = false;
+        });
+    });
+    document.getElementById('slideActual').textContent = num;
+    document.getElementById('btnPrev').disabled = num <= 1;
+    document.getElementById('btnNext').disabled = num >= totalSlides;
+}
+
+window.cambiar = function(delta) {
+    const nuevo = Math.max(1, Math.min(totalSlides, slideActual + delta));
+    if (nuevo === slideActual) return;
+    slideActual = nuevo;
+    renderSlide(slideActual);
+
+    fetch(avanzarUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ slide: slideActual })
+    });
+};
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        cambiar(1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        cambiar(-1);
+    }
+});
+
+window.addEventListener('resize', function() {
+    if (pdfDoc) renderSlide(slideActual);
+});
+</script>
+{% endblock %}

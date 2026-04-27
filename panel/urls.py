@@ -82,4 +82,11 @@ urlpatterns = [
     path('escuela/asistencia/<int:clase_id>/<str:fecha_str>/', views.escuela_asistencia_editar, name='escuela_asistencia_editar'),
     path('escuela/domingos-excluidos/', views.escuela_domingos_excluidos, name='escuela_domingos_excluidos'),
     path('escuela/domingos-excluidos/<int:pk>/eliminar/', views.escuela_domingo_excluido_eliminar, name='escuela_domingo_excluido_eliminar'),
+
+    # Proyeccion
+    path('proyeccion/', views.proyeccion_lista, name='proyeccion_lista'),
+    path('proyeccion/subir/', views.proyeccion_subir, name='proyeccion_subir'),
+    path('proyeccion/<str:codigo>/control/', views.proyeccion_control, name='proyeccion_control'),
+    path('proyeccion/<str:codigo>/avanzar/', views.proyeccion_avanzar, name='proyeccion_avanzar'),
+    path('proyeccion/<int:pk>/eliminar/', views.proyeccion_eliminar, name='proyeccion_eliminar'),
 ]
