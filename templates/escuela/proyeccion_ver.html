@@ -198,9 +198,77 @@
             color: #64748b;
         }
         .btn-modal.outline:hover { background: #f1f5f9; }
+
+        /* Pantalla de bienvenida */
+        .welcome-screen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 200;
+            padding: 2rem 1.5rem;
+            text-align: center;
+        }
+        .welcome-screen.oculto { display: none; }
+
+        .welcome-screen .titulo-grande {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+
+        .welcome-screen .subtitulo {
+            font-size: 0.95rem;
+            opacity: 0.85;
+            margin-bottom: 2.5rem;
+        }
+
+        .btn-entrar {
+            background: white;
+            color: #0d47a1;
+            border: none;
+            border-radius: 14px;
+            padding: 1.1rem 2.5rem;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.2s ease;
+        }
+
+        .btn-entrar:hover, .btn-entrar:active { transform: scale(1.04); }
+
+        .welcome-icono {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+        }
     </style>
 </head>
 <body>
+    <!-- Pantalla de bienvenida -->
+    <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-icono"><i class="bi bi-projector"></i></div>
+        <div class="titulo-grande">{{ presentacion.titulo }}</div>
+        <div class="subtitulo">Sigue la presentacion en tu celular</div>
+        <button class="btn-entrar" onclick="entrar()">
+            <i class="bi bi-play-fill"></i>Entrar a la presentacion
+        </button>
+    </div>
+
     <div class="header" id="header">
         <div class="titulo-pres">{{ presentacion.titulo }}</div>
         <span class="badge-en-vivo">En vivo</span>
@@ -208,9 +276,6 @@
             <button class="btn-icono" onclick="toggleFullscreen()" id="btnFs" title="Pantalla completa">
                 <i class="bi bi-fullscreen"></i>
             </button>
-            <a href="{% url 'proyeccion_pdf' presentacion.codigo %}" download="{{ presentacion.titulo }}.pdf" class="btn-icono" title="Descargar PDF">
-                <i class="bi bi-download"></i>
-            </a>
         </div>
     </div>
 
@@ -328,6 +393,15 @@
                 document.documentElement.requestFullscreen().catch(function(){});
             } else {
                 document.exitFullscreen();
+            }
+        };
+
+        // Entrar a la presentacion: oculta welcome y activa fullscreen
+        window.entrar = function() {
+            document.getElementById('welcomeScreen').classList.add('oculto');
+            // Pedir fullscreen DENTRO del handler del click (sino el navegador lo bloquea)
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(function(){});
             }
         };
 
