@@ -576,14 +576,14 @@ def exportar_excel(request):
     )
 
     # Titulo
-    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=3 + len(fechas))
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=4 + len(fechas))
     title_cell = ws.cell(row=1, column=1,
                          value=f'{clase.emoji} {clase.nombre} - Escuela Bíblica 2025')
     title_cell.font = Font(bold=True, size=14, color='2E7D32')
     title_cell.alignment = Alignment(horizontal='center')
 
     # Subtitulo
-    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=3 + len(fechas))
+    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=4 + len(fechas))
     sub_cell = ws.cell(row=2, column=1,
                        value=f'Maestros: {clase.maestros} | Rango: {clase.rango_edad()}')
     sub_cell.font = Font(size=10, color='666666')
@@ -591,7 +591,7 @@ def exportar_excel(request):
 
     # Encabezados
     row = 4
-    headers = ['Apellidos', 'Nombres', 'Edad']
+    headers = ['Apellidos', 'Nombres', 'Edad', 'Fecha Nac.']
     for col, h in enumerate(headers, 1):
         cell = ws.cell(row=row, column=col, value=h)
         cell.font = header_font
@@ -601,7 +601,7 @@ def exportar_excel(request):
 
     # Encabezados de fechas
     for i, fecha in enumerate(fechas):
-        cell = ws.cell(row=row, column=4 + i, value=fecha.strftime('%d/%m'))
+        cell = ws.cell(row=row, column=5 + i, value=fecha.strftime('%d/%m'))
         cell.font = Font(bold=True, color='FFFFFF', size=9)
         cell.fill = fecha_fill
         cell.alignment = center
@@ -617,9 +617,16 @@ def exportar_excel(request):
         edad_cell.alignment = center
         edad_cell.border = thin_border
 
+        fnac_cell = ws.cell(
+            row=r, column=4,
+            value=alumno.fecha_nacimiento.strftime('%d/%m/%Y') if alumno.fecha_nacimiento else ''
+        )
+        fnac_cell.alignment = center
+        fnac_cell.border = thin_border
+
         for i, fecha in enumerate(fechas):
             key = (alumno.id, fecha)
-            cell = ws.cell(row=r, column=4 + i)
+            cell = ws.cell(row=r, column=5 + i)
             cell.alignment = center
             cell.border = thin_border
 
@@ -643,11 +650,12 @@ def exportar_excel(request):
         ws.cell(row=r_total, column=1).border = thin_border
         ws.cell(row=r_total, column=2).border = thin_border
         ws.cell(row=r_total, column=3).border = thin_border
+        ws.cell(row=r_total, column=4).border = thin_border
 
         for i, fecha in enumerate(fechas):
             presentes = sum(1 for a in alumnos if asistencias.get((a.id, fecha)) is True)
             total_reg = sum(1 for a in alumnos if (a.id, fecha) in asistencias)
-            cell = ws.cell(row=r_total, column=4 + i)
+            cell = ws.cell(row=r_total, column=5 + i)
             cell.value = f'{presentes}/{total_reg}' if total_reg > 0 else '-'
             cell.font = Font(bold=True)
             cell.alignment = center
@@ -657,8 +665,9 @@ def exportar_excel(request):
     ws.column_dimensions['A'].width = 20
     ws.column_dimensions['B'].width = 20
     ws.column_dimensions['C'].width = 8
+    ws.column_dimensions['D'].width = 13
     for i in range(len(fechas)):
-        col_letter = openpyxl.utils.get_column_letter(4 + i)
+        col_letter = openpyxl.utils.get_column_letter(5 + i)
         ws.column_dimensions[col_letter].width = 8
 
     # Respuesta HTTP
