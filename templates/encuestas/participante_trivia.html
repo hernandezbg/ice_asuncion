@@ -435,6 +435,7 @@
         let timerInterval = null;
         let startTime = Date.now();
         let timeLimit = {% if pregunta %}{{ pregunta.get_tiempo_limite }}{% else %}30{% endif %};
+        let resultTimeout = null;  // setTimeout pendiente de showResult
 
         // Iniciar timer
         function startTimer() {
@@ -581,8 +582,18 @@
                 document.getElementById('stat-posicion').textContent = '#' + data.posicion;
             }
 
+            // Cancelar setTimeout previo si existe
+            if (resultTimeout) {
+                clearTimeout(resultTimeout);
+            }
+            const renderQuestion = currentQuestion;  // capturar version al disparar
+
             // Mostrar feedback despues de un momento
-            setTimeout(() => {
+            resultTimeout = setTimeout(() => {
+                resultTimeout = null;
+                // Si ya cambio la pregunta, no sobrescribir el HTML
+                if (renderQuestion !== currentQuestion) return;
+
                 if (data.es_correcta) {
                     container.innerHTML = `
                         <div class="result-feedback correct">
@@ -651,6 +662,11 @@
                 if (timerInterval) {
                     clearInterval(timerInterval);
                     timerInterval = null;
+                }
+                // Cancelar setTimeout pendiente de showResult (no sobrescribir nueva pregunta)
+                if (resultTimeout) {
+                    clearTimeout(resultTimeout);
+                    resultTimeout = null;
                 }
 
                 // Actualizar progreso
