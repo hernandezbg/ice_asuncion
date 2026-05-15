@@ -707,8 +707,14 @@ def panel_poll(request, encuesta_id):
     if pregunta_actual:
         respuestas_pregunta = Respuesta.objects.filter(pregunta=pregunta_actual).count()
 
-        # Verificar si todos los participantes respondieron
-        if total_participantes > 0 and respuestas_pregunta >= total_participantes:
+        # Para auto-avance: contar solo participantes conectados (no los que cerraron el navegador)
+        ids_conectados = list(encuesta.participantes.filter(ultima_actividad__gte=limite).values_list('id', flat=True))
+        respuestas_conectados = Respuesta.objects.filter(
+            pregunta=pregunta_actual, participante_id__in=ids_conectados
+        ).count()
+
+        # Verificar si todos los conectados respondieron
+        if participantes_conectados > 0 and respuestas_conectados >= participantes_conectados:
             todos_respondieron = True
 
             # Auto-avanzar si está habilitado y no es la última pregunta
