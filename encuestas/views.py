@@ -143,12 +143,22 @@ def responder(request, session_id):
         # Obtener opción elegida y tiempo de respuesta
         opcion = request.POST.get('opcion', '').upper()
         tiempo_respuesta = request.POST.get('tiempo', None)
+        timeout_flag = request.POST.get('timeout') == '1'
 
-        if opcion not in ['A', 'B', 'C', 'D']:
-            return JsonResponse({'error': 'Opción inválida'}, status=400)
+        # Si es timeout o opcion vacia/invalida, registrar como incorrecta sin opcion
+        if timeout_flag or opcion not in ['A', 'B', 'C', 'D']:
+            opcion_guardada = ''
+            es_correcta = False
+        else:
+            opcion_guardada = opcion
+            es_correcta = opcion == pregunta_actual.respuesta_correcta
 
-        # Verificar si es correcta
-        es_correcta = opcion == pregunta_actual.respuesta_correcta
+        # Validar tiempo: si paso el limite + 2s de gracia, forzar como incorrecta
+        if pregunta_actual.activada_en:
+            elapsed = (timezone.now() - pregunta_actual.activada_en).total_seconds()
+            limite = pregunta_actual.get_tiempo_limite() + 2
+            if elapsed > limite:
+                es_correcta = False
 
         # Calcular tiempo de respuesta
         tiempo_float = None
@@ -162,7 +172,7 @@ def responder(request, session_id):
         respuesta = Respuesta.objects.create(
             participante=participante,
             pregunta=pregunta_actual,
-            opcion_elegida=opcion,
+            opcion_elegida=opcion_guardada,
             es_correcta=es_correcta,
             tiempo_respuesta=tiempo_float
         )

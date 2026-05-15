@@ -465,12 +465,54 @@
 
                 if (remaining <= 0) {
                     clearInterval(timerInterval);
-                    // Tiempo agotado - deshabilitar opciones
-                    document.querySelectorAll('.option-btn').forEach(b => {
-                        b.classList.add('disabled');
-                    });
+                    // Tiempo agotado - auto enviar respuesta vacia
+                    enviarTimeout();
                 }
             }, 100);
+        }
+
+        function enviarTimeout() {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            // Deshabilitar opciones
+            document.querySelectorAll('.option-btn').forEach(b => {
+                b.classList.add('disabled');
+            });
+
+            const elapsed = (Date.now() - startTime) / 1000;
+            fetch('{% url "encuestas:responder" session_id=participante.session_id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: `opcion=&timeout=1&tiempo=${elapsed.toFixed(2)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showResult(data, '');
+                } else {
+                    // Si ya respondio (race condition) solo mostrar feedback de espera
+                    showTimeoutFeedback();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showTimeoutFeedback();
+            });
+        }
+
+        function showTimeoutFeedback() {
+            const container = document.getElementById('question-container');
+            container.innerHTML = `
+                <div class="result-feedback incorrect">
+                    <i class="bi bi-clock-history"></i>
+                    <h3>Tiempo agotado</h3>
+                    <p class="mt-2">Esperando siguiente pregunta...</p>
+                </div>
+            `;
         }
 
         function selectOption(btn, option) {
@@ -526,14 +568,18 @@
                 const btnOption = btn.dataset.option;
                 if (btnOption === data.respuesta_correcta) {
                     btn.classList.add('correct');
-                } else if (btnOption === selectedOption && !data.es_correcta) {
+                } else if (selectedOption && btnOption === selectedOption && !data.es_correcta) {
                     btn.classList.add('incorrect');
                 }
             });
 
             // Actualizar stats
-            document.getElementById('stat-puntos').textContent = data.puntos_totales;
-            document.getElementById('stat-posicion').textContent = '#' + data.posicion;
+            if (data.puntos_totales !== undefined) {
+                document.getElementById('stat-puntos').textContent = data.puntos_totales;
+            }
+            if (data.posicion !== undefined) {
+                document.getElementById('stat-posicion').textContent = '#' + data.posicion;
+            }
 
             // Mostrar feedback despues de un momento
             setTimeout(() => {
@@ -544,6 +590,16 @@
                             <h3>Correcto!</h3>
                             <div class="points-earned">+${data.puntos_obtenidos} puntos</div>
                             <p>Esperando siguiente pregunta...</p>
+                        </div>
+                    `;
+                } else if (!selectedOption) {
+                    // Timeout - sin opcion elegida
+                    container.innerHTML = `
+                        <div class="result-feedback incorrect">
+                            <i class="bi bi-clock-history"></i>
+                            <h3>Tiempo agotado</h3>
+                            <p>La respuesta correcta era: <strong>${data.respuesta_correcta}</strong></p>
+                            <p class="mt-2">Esperando siguiente pregunta...</p>
                         </div>
                     `;
                 } else {
@@ -588,7 +644,14 @@
 
             if (data.pregunta_actual !== currentQuestion) {
                 currentQuestion = data.pregunta_actual;
+                // Siempre confiar en el servidor: ya_respondio del backend manda
                 isAnswered = data.pregunta ? data.pregunta.ya_respondio : false;
+
+                // Cancelar timer previo (si quedo corriendo)
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
 
                 // Actualizar progreso
                 const progress = ((currentQuestion + 1) / data.total_preguntas) * 100;
@@ -639,7 +702,8 @@
                     }
 
                     startTimer();
-                } else if (isAnswered) {
+                } else {
+                    // Ya respondio (probablemente timeout server-side) - mostrar espera
                     showWaiting();
                 }
             }
