@@ -159,6 +159,7 @@ class EstadoProyeccion(models.Model):
     presentacion = models.OneToOneField(Presentacion, on_delete=models.CASCADE,
                                          related_name='estado')
     slide_actual = models.PositiveIntegerField(default=1)
+    finalizada = models.BooleanField(default=False, verbose_name='Finalizada')
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

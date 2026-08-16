@@ -315,13 +315,12 @@
 
         const pdfUrl = '{% url "proyeccion_pdf" presentacion.codigo %}';
         const estadoUrl = '{% url "proyeccion_estado" presentacion.codigo %}';
-        const totalSlides = {{ presentacion.total_slides }};
 
         let pdfDoc = null;
         let slideActual = {{ estado.slide_actual }};
         let renderizando = false;
         let pendiente = null;
-        let modalMostrado = false;
+        let finalizada = {{ estado.finalizada|yesno:"true,false" }};
 
         const canvas = document.getElementById('pdfCanvas');
         const ctx = canvas.getContext('2d');
@@ -367,24 +366,23 @@
 
         function actualizarSlide(nuevo) {
             if (nuevo === slideActual) return;
-            const llegoFinal = nuevo === totalSlides && slideActual < totalSlides;
             slideActual = nuevo;
             renderSlide(slideActual);
+        }
 
-            // Si llego al ultimo slide, mostrar modal despues de 3s
-            if (llegoFinal && !modalMostrado) {
-                setTimeout(function() {
-                    if (slideActual === totalSlides) {
-                        document.getElementById('modalFinal').classList.add('activo');
-                        modalMostrado = true;
-                    }
-                }, 3000);
-            }
+        function actualizarFinalizada(nuevo) {
+            if (nuevo === finalizada) return;
+            finalizada = nuevo;
+            document.getElementById('modalFinal').classList.toggle('activo', finalizada);
         }
 
         window.cerrarModal = function() {
             document.getElementById('modalFinal').classList.remove('activo');
         };
+
+        if (finalizada) {
+            document.getElementById('modalFinal').classList.add('activo');
+        }
 
         // Pantalla completa
         window.toggleFullscreen = function() {
@@ -417,6 +415,7 @@
             setInterval(function() {
                 fetch(estadoUrl).then(r => r.json()).then(function(data) {
                     if (data.slide) actualizarSlide(data.slide);
+                    actualizarFinalizada(!!data.finalizada);
                 }).catch(function() {});
             }, 2000);
         }

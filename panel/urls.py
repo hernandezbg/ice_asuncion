@@ -88,5 +88,6 @@ urlpatterns = [
     path('proyeccion/subir/', views.proyeccion_subir, name='proyeccion_subir'),
     path('proyeccion/<str:codigo>/control/', views.proyeccion_control, name='proyeccion_control'),
     path('proyeccion/<str:codigo>/avanzar/', views.proyeccion_avanzar, name='proyeccion_avanzar'),
+    path('proyeccion/<str:codigo>/finalizar/', views.proyeccion_finalizar, name='proyeccion_finalizar'),
     path('proyeccion/<int:pk>/eliminar/', views.proyeccion_eliminar, name='proyeccion_eliminar'),
 ]

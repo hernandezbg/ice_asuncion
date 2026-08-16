@@ -87,6 +87,8 @@
 
         .btn-icono:hover { background: rgba(255,255,255,0.3); }
         .btn-icono.danger:hover { background: #ef5350; }
+        .btn-icono.finalizada { background: #2e7d32; }
+        .btn-icono.finalizada:hover { background: #1b5e20; }
 
         /* Controles inferiores */
         .bottom-bar {
@@ -199,6 +201,9 @@
             <button class="btn-icono" onclick="toggleFullscreen()" id="btnFullscreen" title="Pantalla completa">
                 <i class="bi bi-fullscreen"></i>
             </button>
+            <button class="btn-icono" onclick="toggleFinalizar()" id="btnFinalizar" title="Finalizar presentacion">
+                <i class="bi bi-flag-fill"></i>
+            </button>
             <a href="{% url 'panel:proyeccion_lista' %}" class="btn-icono danger" title="Cerrar">
                 <i class="bi bi-x-lg"></i>
             </a>
@@ -232,10 +237,12 @@
         const totalSlides = {{ presentacion.total_slides }};
         const csrfToken = '{{ csrf_token }}';
         const avanzarUrl = '{% url "panel:proyeccion_avanzar" presentacion.codigo %}';
+        const finalizarUrl = '{% url "panel:proyeccion_finalizar" presentacion.codigo %}';
 
         let pdfDoc = null;
         let slideActual = {{ estado.slide_actual }};
         let renderizando = false;
+        let finalizada = {{ estado.finalizada|yesno:"true,false" }};
 
         const canvas = document.getElementById('pdfCanvas');
         const ctx = canvas.getContext('2d');
@@ -285,6 +292,34 @@
                 body: JSON.stringify({ slide: slideActual })
             });
         };
+
+        function actualizarBtnFinalizar() {
+            const btn = document.getElementById('btnFinalizar');
+            btn.classList.toggle('finalizada', finalizada);
+            btn.title = finalizada ? 'Presentacion finalizada (click para reanudar)' : 'Finalizar presentacion';
+        }
+
+        window.toggleFinalizar = function() {
+            const nuevoValor = !finalizada;
+            if (nuevoValor && !confirm('¿Finalizar la presentacion? A los asistentes les aparecera la pantalla de descarga del PDF.')) {
+                return;
+            }
+            fetch(finalizarUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ finalizada: nuevoValor })
+            }).then(r => r.json()).then(function(data) {
+                if (data.ok) {
+                    finalizada = data.finalizada;
+                    actualizarBtnFinalizar();
+                }
+            });
+        };
+
+        actualizarBtnFinalizar();
 
         window.toggleFullscreen = function() {
             if (!document.fullscreenElement) {

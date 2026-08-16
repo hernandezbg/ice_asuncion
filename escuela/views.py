@@ -705,6 +705,7 @@ def proyeccion_estado(request, codigo):
     return JsonResponse({
         'slide': estado.slide_actual,
         'total': presentacion.total_slides,
+        'finalizada': estado.finalizada,
         'updated_at': estado.updated_at.timestamp(),
     })
 

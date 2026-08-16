@@ -1727,6 +1727,24 @@ def proyeccion_avanzar(request, codigo):
 @login_required
 @user_passes_test(es_staff)
 @require_POST
+def proyeccion_finalizar(request, codigo):
+    """Marcar la presentacion como finalizada (o reanudarla) via AJAX"""
+    presentacion = get_object_or_404(Presentacion, codigo__iexact=codigo)
+    estado, _ = EstadoProyeccion.objects.get_or_create(presentacion=presentacion)
+
+    import json as _json
+    try:
+        data = _json.loads(request.body)
+        estado.finalizada = bool(data.get('finalizada', True))
+        estado.save()
+        return JsonResponse({'ok': True, 'finalizada': estado.finalizada})
+    except _json.JSONDecodeError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@user_passes_test(es_staff)
+@require_POST
 def proyeccion_eliminar(request, pk):
     """Eliminar presentacion"""
     pres = get_object_or_404(Presentacion, pk=pk)
