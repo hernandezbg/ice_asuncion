@@ -314,7 +314,6 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.mjs';
 
         const pdfUrl = '{% url "proyeccion_pdf" presentacion.codigo %}';
-        const streamUrl = '{% url "proyeccion_stream" presentacion.codigo %}';
         const estadoUrl = '{% url "proyeccion_estado" presentacion.codigo %}';
         const totalSlides = {{ presentacion.total_slides }};
 
@@ -411,32 +410,9 @@
             else icon.className = 'bi bi-fullscreen';
         });
 
-        // SSE para sincronizacion
-        let evtSource = null;
-        let usePolling = false;
-
-        function conectarSSE() {
-            try {
-                evtSource = new EventSource(streamUrl);
-                evtSource.onmessage = function(e) {
-                    try {
-                        const data = JSON.parse(e.data);
-                        if (data.slide) actualizarSlide(data.slide);
-                    } catch (err) {}
-                };
-                evtSource.onerror = function() {
-                    if (evtSource) evtSource.close();
-                    if (!usePolling) {
-                        usePolling = true;
-                        iniciarPolling();
-                    }
-                };
-            } catch (e) {
-                usePolling = true;
-                iniciarPolling();
-            }
-        }
-
+        // Polling para sincronizacion (SSE deshabilitado: con muchos
+        // celulares conectados, cada conexion SSE retiene un hilo del
+        // servidor por minutos y agota el pool de workers de gunicorn)
         function iniciarPolling() {
             setInterval(function() {
                 fetch(estadoUrl).then(r => r.json()).then(function(data) {
@@ -445,7 +421,7 @@
             }, 2000);
         }
 
-        conectarSSE();
+        iniciarPolling();
 
         // Auto-ocultar header/footer despues de 4s sin tocar
         let timeoutHide = null;
