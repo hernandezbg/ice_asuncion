@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{% block meta_description %}Iglesia Cristiana Evangélica de Asunción{% endblock %}">
+    <meta name="description" content="{% block meta_description %}Iglesia Cristiana Evangélica en Asunción{% endblock %}">
+    <meta name="organization" content="IGLESIA CRISTIANA EVANGÉLICA EN ASUNCIÓN">
     <title>{% block title %}ICE Asunción{% endblock %}</title>
 
     <!-- Favicon -->
@@ -211,6 +212,17 @@
     <link rel="stylesheet" href="{% static 'css/chat.css' %}">
     {% endif %}
 
+    <!-- Datos estructurados de la organización (verificación Google for Nonprofits) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Church",
+        "name": "IGLESIA CRISTIANA EVANGÉLICA EN ASUNCIÓN",
+        "alternateName": "ICE Asunción",
+        "url": "https://iceasuncion.org"
+    }
+    </script>
+
     {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -287,9 +299,9 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-4 mb-4 mb-lg-0">
-                    <h5 class="mb-3">ICE Asunción</h5>
+                    <h5 class="mb-3">IGLESIA CRISTIANA EVANGÉLICA EN ASUNCIÓN</h5>
                     <p class="text-white-50">
-                        Iglesia Cristiana Evangélica comprometida con la comunidad y la palabra de Dios.
+                        (ICE Asunción) &mdash; Comprometida con la comunidad y la palabra de Dios.
                     </p>
                 </div>
 
@@ -343,7 +355,7 @@
 
             <div class="row">
                 <div class="col-12 text-center text-white-50">
-                    <p class="mb-0">&copy; {% now "Y" %} ICE Asunción. Todos los derechos reservados.</p>
+                    <p class="mb-0">&copy; {% now "Y" %} Iglesia Cristiana Evangélica en Asunción (ICE Asunción). Todos los derechos reservados.</p>
                 </div>
             </div>
         </div>
