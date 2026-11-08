@@ -35,6 +35,9 @@
 .iti__country-list { z-index: 1060; max-height: 250px; }
 .btn-agregar { border: 2px dashed var(--primary-color); color: var(--primary-color); background: #fff; border-radius: 12px; width: 100%; padding: .8rem; font-weight: 600; }
 .btn-agregar:hover { background: rgba(44,95,141,.05); }
+/* Celular escribiendo: oculto el total fijo y dejo lugar abajo para poder subir la fila */
+body.escribiendo .resumen { display: none; }
+body.escribiendo .ev-container { padding-bottom: 60vh; }
 .resumen { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; box-shadow: 0 -4px 20px rgba(0,0,0,.1); padding: .75rem 1rem; z-index: 50; }
 .resumen-inner { max-width: 680px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .resumen .det { font-size: .85rem; color: #64748b; }
@@ -233,11 +236,33 @@
         return el;
     }
 
+    const esCelular = () => window.matchMedia('(max-width: 768px)').matches;
+
+    // En celular subo la fila arriba de todo para que se vea la lista de sugerencias
+    function subirFila(el) {
+        if (!esCelular()) return;
+        document.body.classList.add('escribiendo');
+        setTimeout(() => {  // espero a que abra el teclado
+            const nav = document.querySelector('nav.navbar');
+            const offset = (nav ? nav.offsetHeight : 0) + 8;
+            const top = el.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
+        }, 300);
+    }
+
+    document.addEventListener('focusout', () => {
+        setTimeout(() => {
+            const a = document.activeElement;
+            if (!a || !a.matches('input, select, textarea')) document.body.classList.remove('escribiendo');
+        }, 100);
+    });
+
     function configurarBusqueda(el, esResponsable) {
         const ap = el.querySelector('[name="apellido"]');
         const no = el.querySelector('[name="nombre"]');
         const sug = el.querySelector('.sugerencias');
         let timer = null, ultimo = '';
+        [ap, no].forEach(inp => inp.addEventListener('focus', () => subirFila(el)));
 
         function desvincular() {
             el.querySelector('[name="hermano_id"]').value = '';
