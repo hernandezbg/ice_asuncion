@@ -238,16 +238,24 @@ body.escribiendo .ev-container { padding-bottom: 60vh; }
 
     const esCelular = () => window.matchMedia('(max-width: 768px)').matches;
 
-    // En celular subo la fila arriba de todo para que se vea la lista de sugerencias
-    function subirFila(el) {
-        if (!esCelular()) return;
-        document.body.classList.add('escribiendo');
-        setTimeout(() => {  // espero a que abra el teclado
-            const nav = document.querySelector('nav.navbar');
-            const offset = (nav ? nav.offsetHeight : 0) + 8;
-            const top = el.getBoundingClientRect().top + window.scrollY - offset;
-            window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
-        }, 300);
+    // En celular, mientras se escribe oculto la barra del total para dejar lugar a la lista
+    function marcarEscribiendo() {
+        if (esCelular()) document.body.classList.add('escribiendo');
+    }
+
+    // Si las sugerencias quedan tapadas por el teclado, bajo lo justo para verlas,
+    // sin que el campo donde se escribe salga de la pantalla
+    function mostrarSugerencias(sug, input) {
+        const vv = window.visualViewport;
+        const alto = vv ? vv.height : window.innerHeight;
+        const arriba = vv ? vv.offsetTop : 0;
+        const abajoSug = sug.getBoundingClientRect().bottom - arriba;
+        const arribaInput = input.getBoundingClientRect().top - arriba;
+        const falta = abajoSug - (alto - 8);
+        if (falta <= 0) return;
+        const maximo = arribaInput - 70;  // dejo el campo visible con un margen arriba
+        const mover = Math.min(falta, maximo);
+        if (mover > 0) window.scrollBy({ top: mover, behavior: 'smooth' });
     }
 
     document.addEventListener('focusout', () => {
@@ -262,7 +270,7 @@ body.escribiendo .ev-container { padding-bottom: 60vh; }
         const no = el.querySelector('[name="nombre"]');
         const sug = el.querySelector('.sugerencias');
         let timer = null, ultimo = '';
-        [ap, no].forEach(inp => inp.addEventListener('focus', () => subirFila(el)));
+        [ap, no].forEach(inp => inp.addEventListener('focus', marcarEscribiendo));
 
         function desvincular() {
             el.querySelector('[name="hermano_id"]').value = '';
@@ -296,6 +304,8 @@ body.escribiendo .ev-container { padding-bottom: 60vh; }
                         b.addEventListener('click', () => elegir(r));
                         sug.appendChild(b);
                     });
+                    const activo = document.activeElement === no ? no : ap;
+                    mostrarSugerencias(sug, activo);
                 })
                 .catch(() => {});
         }
