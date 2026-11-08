@@ -1,0 +1,53 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Eventos - Panel ICE{% endblock %}
+{% block page_title %}Eventos{% endblock %}
+{% block page_subtitle %}Inscripciones a eventos de la iglesia{% endblock %}
+
+{% block extra_css %}
+<style>
+    .btn-nuevo { background: #2e7d32; color: #fff; border-radius: 8px; padding: .6rem 1.2rem; font-weight: 600; text-decoration: none; display: inline-flex; gap: .5rem; align-items: center; }
+    .btn-nuevo:hover { background: #1b5e20; color: #fff; }
+    .ev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+    .ev-card { background: #fff; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.06); overflow: hidden; text-decoration: none; color: inherit; display: block; transition: transform .2s; }
+    .ev-card:hover { transform: translateY(-3px); color: inherit; }
+    .ev-head { background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%); color: #fff; padding: 1rem 1.25rem; }
+    .ev-head .t { font-weight: 700; }
+    .ev-body { padding: 1rem 1.25rem; font-size: .9rem; color: #475569; }
+    .ev-stats { display: flex; gap: 1.25rem; margin-top: .5rem; }
+    .ev-stats strong { display: block; font-size: 1.3rem; color: #0f172a; }
+    .empty-state { text-align: center; padding: 3rem; color: #94a3b8; }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'eventos:panel_crear' %}" class="btn-nuevo"><i class="bi bi-plus-circle"></i>Nuevo evento</a>
+
+{% if eventos %}
+<div class="ev-grid">
+    {% for e in eventos %}
+    <a class="ev-card" href="{% url 'eventos:panel_detalle' e.pk %}">
+        <div class="ev-head">
+            <div class="t">{{ e.nombre }}</div>
+            <div class="small">{{ e.fecha|date:"d/m/Y" }}</div>
+        </div>
+        <div class="ev-body">
+            {% if e.cerrado %}
+            <span class="badge bg-secondary">Cerrado</span> <span class="small">{{ e.cerrado }}</span>
+            {% else %}
+            <span class="badge bg-success">Inscripción abierta</span>
+            {% endif %}
+            <div class="ev-stats">
+                <div><strong>{{ e.familias }}</strong>familias</div>
+                <div><strong>{{ e.inscriptas }}{% if e.cupo %}/{{ e.cupo }}{% endif %}</strong>personas</div>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="bi bi-calendar-event" style="font-size: 4rem; opacity: .3;"></i>
+    <p class="mt-2">No hay eventos. Creá uno para empezar.</p>
+</div>
+{% endif %}
+{% endblock %}

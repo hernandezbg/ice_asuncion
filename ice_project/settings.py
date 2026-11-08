@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'chat',
     'encuestas',
     'escuela',
+    'eventos',
 ]
 
 MIDDLEWARE = [

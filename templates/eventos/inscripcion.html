@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+{% load eventos_tags %}
+
+{% block title %}Inscripción: {{ evento.nombre }} - ICE Asuncion{% endblock %}
+
+{% block extra_css %}
+.ev-container { max-width: 680px; margin: 40px auto 120px; padding: 0 12px; }
+.ev-card { background: #fff; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); overflow: hidden; margin-bottom: 1.25rem; }
+.ev-header { background: linear-gradient(135deg, var(--primary-color) 0%, #1a3a52 100%); color: #fff; padding: 1.5rem 1.75rem; }
+.ev-header h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 .35rem; }
+.ev-header .meta { opacity: .9; font-size: .95rem; }
+.ev-body { padding: 1.5rem 1.75rem; }
+.ev-info { font-size: 1rem; line-height: 1.6; }
+.ev-info img { max-width: 100%; height: auto; }
+.precios { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; margin-top: 1rem; }
+.precio { background: #f4f7fb; border-radius: 12px; padding: .75rem; text-align: center; }
+.precio .monto { font-size: 1.25rem; font-weight: 700; color: var(--primary-color); }
+.precio .det { font-size: .8rem; color: #64748b; }
+.avisos { margin-top: 1rem; font-size: .92rem; color: #475569; }
+.avisos div { margin-bottom: .25rem; }
+.sec-title { font-weight: 700; color: var(--text-dark); font-size: 1.1rem; margin-bottom: .75rem; }
+.persona { border: 2px solid #e9ecef; border-radius: 12px; padding: 1rem; margin-bottom: .85rem; position: relative; }
+.persona .quitar { position: absolute; top: .5rem; right: .6rem; border: none; background: none; color: #c62828; font-size: 1.2rem; }
+.persona .form-label { font-size: .85rem; font-weight: 600; color: #475569; margin-bottom: .2rem; }
+.sugerencias { margin-top: .5rem; }
+.sugerencias:empty { display: none; }
+.sugerencias .hint { font-size: .8rem; color: #64748b; margin-bottom: .3rem; }
+.sugerencia { display: block; width: 100%; text-align: left; border: 1px solid #dbe3ec; background: #f8fafc; border-radius: 8px; padding: .45rem .7rem; margin-bottom: .3rem; font-size: .92rem; }
+.sugerencia:hover { border-color: var(--primary-color); background: rgba(44,95,141,.06); }
+.badge-base { display: none; font-size: .78rem; color: #2e7d32; margin-top: .35rem; }
+.persona.vinculada .badge-base { display: block; }
+.persona.vinculada { border-color: #a5d6a7; }
+.btn-agregar { border: 2px dashed var(--primary-color); color: var(--primary-color); background: #fff; border-radius: 12px; width: 100%; padding: .8rem; font-weight: 600; }
+.btn-agregar:hover { background: rgba(44,95,141,.05); }
+.resumen { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; box-shadow: 0 -4px 20px rgba(0,0,0,.1); padding: .75rem 1rem; z-index: 50; }
+.resumen-inner { max-width: 680px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.resumen .det { font-size: .85rem; color: #64748b; }
+.resumen .total { font-size: 1.35rem; font-weight: 700; color: var(--primary-color); }
+.btn-enviar { background: var(--primary-color); color: #fff; border: none; border-radius: 10px; padding: .7rem 1.4rem; font-weight: 600; white-space: nowrap; }
+.btn-enviar:hover { background: #1a3a52; color: #fff; }
+@media (max-width: 480px) {
+    .precios { grid-template-columns: 1fr; }
+    .ev-body, .ev-header { padding: 1.25rem; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="ev-container">
+
+    <div class="ev-card">
+        <div class="ev-header">
+            <h1>{{ evento.nombre }}</h1>
+            <div class="meta">
+                <i class="bi bi-calendar-event me-1"></i>{{ evento.fecha|date:"l j \d\e F \d\e Y" }}
+                {% if evento.lugar %}<span class="ms-2"><i class="bi bi-geo-alt me-1"></i>{{ evento.lugar }}</span>{% endif %}
+            </div>
+        </div>
+        <div class="ev-body">
+            {% if evento.informacion %}
+            <div class="ev-info">{{ evento.informacion|safe }}</div>
+            {% endif %}
+
+            <div class="precios">
+                <div class="precio">
+                    <div class="monto">${{ evento.precio_adulto|pesos }}</div>
+                    <div class="det">Adultos<br>{{ evento.edad_max_nino|add:1 }} años o más</div>
+                </div>
+                <div class="precio">
+                    <div class="monto">${{ evento.precio_nino|pesos }}</div>
+                    <div class="det">Niños<br>{{ evento.edad_min_paga }} a {{ evento.edad_max_nino }} años</div>
+                </div>
+                <div class="precio">
+                    <div class="monto">Sin cargo</div>
+                    <div class="det">Menores de<br>{{ evento.edad_min_paga }} años</div>
+                </div>
+            </div>
+
+            <div class="avisos">
+                {% if evento.fecha_cierre %}
+                <div><i class="bi bi-clock me-1"></i>Inscripción abierta hasta el <strong>{{ evento.fecha_cierre|date:"j/m/Y \a \l\a\s H:i" }} hs</strong></div>
+                {% endif %}
+                {% if cupo_disponible is not None and not motivo_cerrado %}
+                <div><i class="bi bi-people me-1"></i>Quedan <strong>{{ cupo_disponible }}</strong> lugares</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if motivo_cerrado %}
+    <div class="alert alert-warning"><i class="bi bi-exclamation-triangle me-1"></i>{{ motivo_cerrado }}</div>
+    {% else %}
+
+    {% if errores %}
+    <div class="alert alert-danger">
+        <ul class="mb-0">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    <form method="post" id="form-inscripcion" autocomplete="off">
+        {% csrf_token %}
+
+        <div class="ev-card">
+            <div class="ev-body">
+                <div class="sec-title"><i class="bi bi-person-fill me-1"></i>Adulto responsable</div>
+                <div id="responsable"></div>
+                <div>
+                    <label class="form-label" style="font-size:.85rem;font-weight:600;color:#475569;">Celular de contacto *</label>
+                    <input type="tel" name="celular" class="form-control" required placeholder="Ej: 351 1234567" value="{{ celular }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="ev-card">
+            <div class="ev-body">
+                <div class="sec-title"><i class="bi bi-people-fill me-1"></i>Familiares que asisten</div>
+                <p class="text-muted small mb-3">Agregá a tu esposa/o, hijos u otros familiares. Si no viene nadie más, dejalo vacío.</p>
+                <div id="familiares"></div>
+                <button type="button" class="btn-agregar" id="btn-agregar"><i class="bi bi-plus-circle me-1"></i>Agregar familiar</button>
+            </div>
+        </div>
+
+        <div class="ev-card">
+            <div class="ev-body">
+                <label class="form-label" style="font-size:.85rem;font-weight:600;color:#475569;">Observaciones (opcional)</label>
+                <textarea name="observaciones" class="form-control" rows="2" maxlength="1000">{{ observaciones }}</textarea>
+
+                {% if recaptcha_site_key %}
+                <div class="mt-3 g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="resumen">
+            <div class="resumen-inner">
+                <div>
+                    <div class="det" id="resumen-det">1 adulto</div>
+                    <div class="total" id="resumen-total">$0</div>
+                </div>
+                <button type="submit" class="btn-enviar"><i class="bi bi-check-circle me-1"></i>Confirmar inscripción</button>
+            </div>
+        </div>
+    </form>
+    {% endif %}
+</div>
+
+{% if not motivo_cerrado %}
+<template id="tpl-persona">
+    <div class="persona">
+        <button type="button" class="quitar" title="Quitar"><i class="bi bi-x-circle"></i></button>
+        <input type="hidden" name="hermano_id" value="">
+        <input type="hidden" name="alumno_id" value="">
+        <div class="row g-2">
+            <div class="col-6">
+                <label class="form-label">Apellido *</label>
+                <input type="text" name="apellido" class="form-control" maxlength="200">
+            </div>
+            <div class="col-6">
+                <label class="form-label">Nombre *</label>
+                <input type="text" name="nombre" class="form-control" maxlength="200">
+            </div>
+            <div class="col-6 campo-familiar">
+                <label class="form-label">Parentesco</label>
+                <select name="parentesco" class="form-select">
+                    {% for v, l in parentescos %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-6 campo-familiar">
+                <label class="form-label">Edad *</label>
+                <select name="edad" class="form-select">
+                    <option value="">Elegí...</option>
+                    {% for v, l in opciones_edad %}<option value="{% if v %}{{ v }}{% else %}adulto{% endif %}">{{ l }}</option>{% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="badge-base"><i class="bi bi-check-circle-fill me-1"></i>Encontrado en la lista de la iglesia</div>
+        <div class="sugerencias"></div>
+    </div>
+</template>
+
+{{ filas_previas|json_script:"filas-previas" }}
+<script>
+(function () {
+    const PRECIO_ADULTO = {{ evento.precio_adulto }};
+    const PRECIO_NINO = {{ evento.precio_nino }};
+    const EDAD_MIN_PAGA = {{ evento.edad_min_paga }};
+    const URL_BUSCAR = "{% url 'eventos:buscar' evento.slug %}";
+    const MAX_FAMILIARES = 19;
+
+    const tpl = document.getElementById('tpl-persona');
+    const contResp = document.getElementById('responsable');
+    const contFam = document.getElementById('familiares');
+    const btnAgregar = document.getElementById('btn-agregar');
+
+    const fmt = n => '$' + n.toLocaleString('es-AR');
+
+    function crearFila(esResponsable, datos) {
+        const el = tpl.content.firstElementChild.cloneNode(true);
+        const q = name => el.querySelector(`[name="${name}"]`);
+        if (esResponsable) {
+            el.querySelector('.quitar').remove();
+            el.querySelectorAll('.campo-familiar').forEach(c => c.remove());
+            // Campos ocultos para que las listas queden alineadas
+            el.insertAdjacentHTML('beforeend',
+                '<input type="hidden" name="parentesco" value="responsable"><input type="hidden" name="edad" value="adulto">');
+            el.style.border = 'none'; el.style.padding = '0';
+            q('apellido').required = true; q('nombre').required = true;
+        } else {
+            q('apellido').required = true; q('nombre').required = true; q('edad').required = true;
+            el.querySelector('.quitar').addEventListener('click', () => { el.remove(); actualizar(); });
+        }
+        if (datos) {
+            ['apellido', 'nombre', 'hermano_id', 'alumno_id'].forEach(k => { if (datos[k]) q(k).value = datos[k]; });
+            if (!esResponsable) {
+                if (datos.parentesco) q('parentesco').value = datos.parentesco;
+                if (datos.edad) q('edad').value = datos.edad;
+            }
+            if (datos.hermano_id || datos.alumno_id) el.classList.add('vinculada');
+        }
+        configurarBusqueda(el, esResponsable);
+        if (!esResponsable) q('edad').addEventListener('change', actualizar);
+        return el;
+    }
+
+    function configurarBusqueda(el, esResponsable) {
+        const ap = el.querySelector('[name="apellido"]');
+        const no = el.querySelector('[name="nombre"]');
+        const sug = el.querySelector('.sugerencias');
+        let timer = null, ultimo = '';
+
+        function desvincular() {
+            el.querySelector('[name="hermano_id"]').value = '';
+            el.querySelector('[name="alumno_id"]').value = '';
+            el.classList.remove('vinculada');
+        }
+
+        function buscar() {
+            const q = (ap.value + ' ' + no.value).trim();
+            if (q === ultimo) return;
+            ultimo = q;
+            if (q.replace(/\s/g, '').length < 3) { sug.innerHTML = ''; return; }
+            fetch(URL_BUSCAR + '?q=' + encodeURIComponent(q))
+                .then(r => r.json())
+                .then(data => {
+                    if ((ap.value + ' ' + no.value).trim() !== q) return; // respuesta vieja
+                    sug.innerHTML = '';
+                    const res = data.resultados.filter(r => !esResponsable || r.adulto || r.tipo === 'hermano');
+                    if (!res.length) return;
+                    sug.insertAdjacentHTML('beforeend', '<div class="hint">¿Es alguno de estos? Tocá para completar:</div>');
+                    res.forEach(r => {
+                        const b = document.createElement('button');
+                        b.type = 'button';
+                        b.className = 'sugerencia';
+                        b.textContent = r.apellido + ', ' + r.nombre + (r.edad !== null ? ` (${r.edad} años)` : '');
+                        b.addEventListener('click', () => elegir(r));
+                        sug.appendChild(b);
+                    });
+                })
+                .catch(() => {});
+        }
+
+        function elegir(r) {
+            ap.value = r.apellido;
+            no.value = r.nombre;
+            ultimo = (ap.value + ' ' + no.value).trim();
+            el.querySelector('[name="hermano_id"]').value = r.tipo === 'hermano' ? r.id : '';
+            el.querySelector('[name="alumno_id"]').value = r.tipo === 'alumno' ? r.id : '';
+            el.classList.add('vinculada');
+            const edad = el.querySelector('select[name="edad"]');
+            if (edad) {
+                if (r.edad !== null) {
+                    edad.value = String(r.edad);
+                    el.querySelector('select[name="parentesco"]').value = 'hijo';
+                }
+                else if (r.adulto) edad.value = 'adulto';
+            }
+            sug.innerHTML = '';
+            actualizar();
+        }
+
+        [ap, no].forEach(inp => inp.addEventListener('input', () => {
+            desvincular();
+            clearTimeout(timer);
+            timer = setTimeout(buscar, 300);
+        }));
+    }
+
+    function agregarFamiliar(datos) {
+        if (contFam.children.length >= MAX_FAMILIARES) return;
+        const apResp = contResp.querySelector('[name="apellido"]').value;
+        // El primero suele ser esposo/a, los siguientes hijos
+        const el = crearFila(false, datos || { apellido: apResp, parentesco: contFam.children.length ? 'hijo' : 'conyuge' });
+        contFam.appendChild(el);
+        if (!datos) el.querySelector('[name="nombre"]').focus();
+        actualizar();
+    }
+
+    function actualizar() {
+        let adultos = 1, ninos = 0, gratis = 0;
+        contFam.querySelectorAll('select[name="edad"]').forEach(s => {
+            if (s.value === 'adulto') adultos++;
+            else if (s.value !== '') {
+                if (parseInt(s.value, 10) < EDAD_MIN_PAGA) gratis++; else ninos++;
+            }
+        });
+        const partes = [`${adultos} adulto${adultos !== 1 ? 's' : ''}`];
+        if (ninos) partes.push(`${ninos} niño${ninos !== 1 ? 's' : ''}`);
+        if (gratis) partes.push(`${gratis} sin cargo`);
+        document.getElementById('resumen-det').textContent = partes.join(' · ');
+        document.getElementById('resumen-total').textContent = fmt(adultos * PRECIO_ADULTO + ninos * PRECIO_NINO);
+        btnAgregar.disabled = contFam.children.length >= MAX_FAMILIARES;
+    }
+
+    // Inicio (con datos previos si hubo errores)
+    const previas = JSON.parse(document.getElementById('filas-previas').textContent);
+    contResp.appendChild(crearFila(true, previas[0]));
+    previas.slice(1).forEach(f => { if (f.apellido || f.nombre) agregarFamiliar(f); });
+    btnAgregar.addEventListener('click', () => agregarFamiliar());
+    actualizar();
+
+    // Evito doble envio
+    document.getElementById('form-inscripcion').addEventListener('submit', e => {
+        const b = e.target.querySelector('.btn-enviar');
+        setTimeout(() => { b.disabled = true; b.textContent = 'Enviando...'; }, 0);
+    });
+})();
+</script>
+{% if recaptcha_site_key %}
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+{% endif %}
+{% endif %}
+{% endblock %}

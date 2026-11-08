@@ -1,0 +1,133 @@
+{% extends 'panel/base_panel.html' %}
+{% load eventos_tags %}
+{% block title %}{{ evento.nombre }} - Panel ICE{% endblock %}
+{% block page_title %}{{ evento.nombre }}{% endblock %}
+{% block page_subtitle %}{{ evento.fecha|date:"d/m/Y" }}{% if evento.lugar %} · {{ evento.lugar }}{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .acciones { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+    .acciones a { border-radius: 8px; padding: .55rem 1.1rem; font-weight: 600; text-decoration: none; display: inline-flex; gap: .4rem; align-items: center; }
+    .b-excel { background: #2e7d32; color: #fff; } .b-excel:hover { background: #1b5e20; color: #fff; }
+    .b-sec { background: #fff; color: #1565c0; border: 1px solid #1565c0; } .b-sec:hover { background: #e3f2fd; }
+    .top { display: grid; grid-template-columns: 1fr auto; gap: 1rem; margin-bottom: 1.25rem; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: .75rem; align-content: start; }
+    .stat { background: #fff; border-radius: 12px; padding: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+    .stat .n { font-size: 1.5rem; font-weight: 700; color: #0f172a; }
+    .stat .l { font-size: .8rem; color: #64748b; }
+    .stat.revisar .n { color: #b45309; }
+    .stat.cobrado .n { color: #2e7d32; }
+    .stat.pendiente .n { color: #c62828; }
+    .btn-pago { border-radius: 8px; font-size: .8rem; font-weight: 600; padding: .3rem .6rem; white-space: nowrap; }
+    .btn-pago.pagado { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .btn-pago.pendiente { background: #fff; color: #64748b; border: 1px dashed #94a3b8; }
+    .btn-pago.pendiente:hover { border-color: #2e7d32; color: #2e7d32; }
+    .tabla tr.pagado > td { background: #f0fdf4; }
+    .qr-card { background: #fff; border-radius: 12px; padding: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,.06); text-align: center; max-width: 230px; }
+    .qr-card img { width: 150px; height: 150px; }
+    .qr-card input { font-size: .72rem; }
+    .tabla { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.06); overflow-x: auto; }
+    .tabla table { margin: 0; }
+    .tabla tr.revisar > td { background: #fffbeb; }
+    .persona-linea { font-size: .88rem; white-space: nowrap; }
+    .tag { font-size: .7rem; padding: .1rem .4rem; border-radius: 6px; font-weight: 600; }
+    .tag-nobase { background: #fef3c7; color: #92400e; }
+    .tag-dup { background: #fee2e2; color: #991b1b; }
+    .tag-base { background: #dcfce7; color: #166534; }
+    @media (max-width: 768px) { .top { grid-template-columns: 1fr; } .qr-card { max-width: none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="acciones">
+    <a href="{% url 'eventos:panel_lista' %}" class="b-sec"><i class="bi bi-arrow-left"></i>Eventos</a>
+    <a href="{% url 'eventos:panel_editar' evento.pk %}" class="b-sec"><i class="bi bi-pencil"></i>Editar evento</a>
+    <a href="{% url 'eventos:inscripcion' evento.slug %}" target="_blank" rel="noopener" class="b-sec"><i class="bi bi-box-arrow-up-right"></i>Ver formulario</a>
+    <a href="{% url 'eventos:panel_exportar' evento.pk %}" class="b-excel"><i class="bi bi-file-earmark-excel"></i>Descargar Excel</a>
+</div>
+
+{% if motivo_cerrado %}
+<div class="alert alert-secondary py-2"><i class="bi bi-lock me-1"></i>Formulario cerrado: {{ motivo_cerrado }}</div>
+{% endif %}
+
+<div class="top">
+    <div class="stats">
+        <div class="stat"><div class="n">{{ totales.familias }}</div><div class="l">Familias</div></div>
+        <div class="stat"><div class="n">{{ totales.personas }}{% if evento.cupo %}<small class="text-muted fs-6">/{{ evento.cupo }}</small>{% endif %}</div><div class="l">Personas</div></div>
+        <div class="stat"><div class="n">{{ totales.adultos }}</div><div class="l">Adultos</div></div>
+        <div class="stat"><div class="n">{{ totales.ninos }}</div><div class="l">Niños</div></div>
+        <div class="stat"><div class="n">{{ totales.gratis }}</div><div class="l">Sin cargo</div></div>
+        <div class="stat"><div class="n">${{ totales.monto|pesos }}</div><div class="l">Total a cobrar</div></div>
+        <a class="stat cobrado text-decoration-none" href="?pago={% if filtro_pago == 'pagado' %}{% else %}pagado{% endif %}">
+            <div class="n">${{ totales.cobrado|pesos }}</div>
+            <div class="l">Cobrado · {{ totales.familias_pagadas }} fam.{% if filtro_pago == 'pagado' %} (ver todas){% endif %}</div>
+        </a>
+        <a class="stat pendiente text-decoration-none" href="?pago={% if filtro_pago == 'pendiente' %}{% else %}pendiente{% endif %}">
+            <div class="n">${{ totales.pendiente|pesos }}</div>
+            <div class="l">Pendiente{% if filtro_pago == 'pendiente' %} (ver todas){% else %} (filtrar){% endif %}</div>
+        </a>
+        <a class="stat revisar text-decoration-none" href="?revisar={% if solo_revisar %}0{% else %}1{% endif %}">
+            <div class="n">{{ totales.revisar }}</div>
+            <div class="l">{% if solo_revisar %}Ver todas{% else %}Para revisar (filtrar){% endif %}</div>
+        </a>
+    </div>
+    <div class="qr-card">
+        <img src="data:image/png;base64,{{ qr_b64 }}" alt="QR del formulario">
+        <input class="form-control form-control-sm mt-2" value="{{ url_publica }}" readonly onclick="this.select()">
+        <a href="data:image/png;base64,{{ qr_b64 }}" download="qr_{{ evento.slug }}.png" class="small d-inline-block mt-1">Descargar QR</a>
+    </div>
+</div>
+
+<div class="tabla">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr><th>#</th><th>Responsable / Personas</th><th>Celular</th><th class="text-end">Total</th><th>Pago</th><th>Fecha</th><th></th></tr>
+        </thead>
+        <tbody>
+        {% for insc in inscripciones %}
+        <tr id="insc-{{ insc.pk }}" class="{% if insc.revisar %}revisar{% elif insc.pagado %}pagado{% endif %}">
+            <td class="text-muted">{{ forloop.counter }}</td>
+            <td>
+                {% for p in insc.personas.all %}
+                <div class="persona-linea">
+                    {% if forloop.first %}<strong>{% endif %}{{ p.apellido }}, {{ p.nombre }}{% if forloop.first %}</strong>{% endif %}
+                    <span class="text-muted">· {{ p.get_parentesco_display }} · {{ p.categoria_label }}{% if p.edad is not None %} ({{ p.edad }}){% endif %}</span>
+                    {% if p.en_base %}<span class="tag tag-base">{{ p.origen }}</span>{% else %}<span class="tag tag-nobase">No está en la base</span>{% endif %}
+                    {% if p.duplicado %}<span class="tag tag-dup">Posible duplicado</span>{% endif %}
+                </div>
+                {% endfor %}
+                {% if insc.observaciones %}<div class="small text-muted mt-1"><i class="bi bi-chat-left-text me-1"></i>{{ insc.observaciones }}</div>{% endif %}
+            </td>
+            <td class="text-nowrap">{{ insc.celular }}</td>
+            <td class="text-end fw-semibold">${{ insc.total|pesos }}</td>
+            <td>
+                <form method="post" action="{% url 'eventos:panel_inscripcion_pagado' insc.pk %}" class="d-inline"
+                      {% if insc.pagado %}onsubmit="return confirm('¿Desmarcar el pago de esta inscripción?')"{% endif %}>
+                    {% csrf_token %}
+                    <input type="hidden" name="filtros" value="{{ request.GET.urlencode }}">
+                    {% if insc.pagado %}
+                    <button class="btn-pago pagado" title="Pagado el {{ insc.fecha_pago|date:'d/m/Y H:i' }}"><i class="bi bi-check-circle-fill me-1"></i>Pagado</button>
+                    {% else %}
+                    <button class="btn-pago pendiente"><i class="bi bi-circle me-1"></i>Marcar pagado</button>
+                    {% endif %}
+                </form>
+            </td>
+            <td class="small text-muted text-nowrap">{{ insc.fecha|date:"d/m H:i" }}</td>
+            <td class="text-nowrap">
+                {% if user.is_superuser %}
+                <a href="{% url 'admin:eventos_inscripcion_change' insc.pk %}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+                {% endif %}
+                <form method="post" action="{% url 'eventos:panel_inscripcion_eliminar' insc.pk %}" class="d-inline"
+                      onsubmit="return confirm('¿Eliminar esta inscripción completa?')">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">{% if solo_revisar or filtro_pago %}No hay inscripciones con ese filtro.{% else %}Todavía no hay inscripciones.{% endif %}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

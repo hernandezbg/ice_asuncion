@@ -15,6 +15,7 @@ urlpatterns = [
     path('chat/', include('chat.urls')),  # Chat con agente IA
     path('e/', include('encuestas.urls')),  # Encuestas en vivo (URL corta)
     path('escuela/', include('escuela.urls')),  # Escuela Biblica
+    path('eventos/', include('eventos.urls')),  # Inscripcion a eventos
     # URLs cortas de proyeccion (publico)
     path('p/<str:codigo>/', escuela_views.proyeccion_ver, name='proyeccion_ver'),
     path('p/<str:codigo>/stream/', escuela_views.proyeccion_stream, name='proyeccion_stream'),

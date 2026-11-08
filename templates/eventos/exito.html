@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load eventos_tags %}
+
+{% block title %}Inscripción registrada - {{ evento.nombre }}{% endblock %}
+
+{% block extra_css %}
+.ok-container { max-width: 600px; margin: 50px auto; padding: 0 12px; }
+.ok-card { background: #fff; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); padding: 2rem; }
+.ok-icon { font-size: 3.5rem; color: #2e7d32; }
+.ok-total { font-size: 1.6rem; font-weight: 700; color: var(--primary-color); }
+{% endblock %}
+
+{% block content %}
+<div class="ok-container">
+    <div class="ok-card">
+        <div class="text-center mb-3">
+            <div class="ok-icon"><i class="bi bi-check-circle-fill"></i></div>
+            <h2 class="h4 fw-bold mt-2">¡Inscripción registrada!</h2>
+            <p class="text-muted mb-0">{{ evento.nombre }} · {{ evento.fecha|date:"j/m/Y" }}</p>
+        </div>
+
+        <table class="table table-sm align-middle mt-3">
+            <thead><tr><th>Persona</th><th>Categoría</th><th class="text-end">Precio</th></tr></thead>
+            <tbody>
+            {% for p in personas %}
+            <tr>
+                <td>{{ p.apellido }}, {{ p.nombre }} <span class="text-muted small">({{ p.get_parentesco_display }})</span></td>
+                <td>{{ p.categoria_label }}{% if p.edad is not None %} · {{ p.edad }} años{% endif %}</td>
+                <td class="text-end">${{ p.precio|pesos }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-semibold">Total a abonar</span>
+            <span class="ok-total">${{ inscripcion.total|pesos }}</span>
+        </div>
+
+        <p class="text-muted small mt-3 mb-0">
+            Guardá esta pantalla (captura) como comprobante. Administración se comunicará para la cobranza.
+            Si necesitás corregir algo, avisá a la iglesia.
+        </p>
+    </div>
+</div>
+{% endblock %}
