@@ -1,2 +1,5 @@
 [settings]
 python.github_attestations = false
+# La descarga de Python desde GitHub a veces es muy lenta en el build de Railway
+# y corta a los 30s por defecto: le doy mas margen
+http_timeout = "300s"
