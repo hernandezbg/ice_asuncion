@@ -22,7 +22,6 @@
 .persona { border: 2px solid #e9ecef; border-radius: 12px; padding: 1rem; margin-bottom: .85rem; position: relative; }
 .persona .quitar { position: absolute; top: .5rem; right: .6rem; border: none; background: none; color: #c62828; font-size: 1.2rem; }
 .persona .form-label { font-size: .85rem; font-weight: 600; color: #475569; margin-bottom: .2rem; }
-.sugerencias { margin-top: .5rem; }
 .sugerencias:empty { display: none; }
 .sugerencias .hint { font-size: .8rem; color: #64748b; margin-bottom: .3rem; }
 .sugerencia { display: block; width: 100%; text-align: left; border: 1px solid #dbe3ec; background: #f8fafc; border-radius: 8px; padding: .45rem .7rem; margin-bottom: .3rem; font-size: .92rem; }
@@ -170,6 +169,8 @@ body.escribiendo .ev-container { padding-bottom: 60vh; }
                 <label class="form-label">Nombre *</label>
                 <input type="text" name="nombre" class="form-control" maxlength="200">
             </div>
+            <!-- Sugerencias justo debajo de apellido/nombre -->
+            <div class="col-12 sugerencias"></div>
             <div class="col-6 campo-familiar">
                 <label class="form-label">Parentesco</label>
                 <select name="parentesco" class="form-select">
@@ -183,7 +184,6 @@ body.escribiendo .ev-container { padding-bottom: 60vh; }
             </div>
         </div>
         <div class="badge-base"><i class="bi bi-check-circle-fill me-1"></i>Encontrado en la lista de la iglesia</div>
-        <div class="sugerencias"></div>
     </div>
 </template>
 
