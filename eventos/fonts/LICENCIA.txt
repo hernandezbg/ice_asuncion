@@ -1,0 +1,4 @@
+Roboto (subset latin) - Copyright Google LLC.
+Licencia: SIL Open Font License 1.1 (https://openfontlicense.org)
+Fuente: https://fontsource.org/fonts/roboto
+Se usa para generar el QR imprimible de eventos.

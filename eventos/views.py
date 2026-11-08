@@ -1,5 +1,6 @@
 import base64
 import io
+import os
 from collections import defaultdict
 
 from django.conf import settings
@@ -291,36 +292,78 @@ def _qr_b64(url):
     return base64.b64encode(buf.getvalue()).decode()
 
 
-def _qr_png_grande(url):
-    """QR grande para imprimir, con la URL escrita debajo"""
+def _qr_png_grande(url, titulo=''):
+    """QR grande para imprimir: nombre del evento arriba y la URL debajo"""
     import qrcode
     from PIL import Image, ImageDraw, ImageFont
 
     qr = qrcode.make(url, box_size=24, border=4).convert('RGB')
     ancho = qr.width
     margen = 40
-
-    # Fuente: la mas grande que entre en el ancho
+    borde_qr = 24 * 4 - 48  # parte del borde blanco del QR que aprovecho para el texto
+    util = ancho - 2 * margen
     draw_tmp = ImageDraw.Draw(qr)
-    fuente = None
-    for size in range(48, 15, -2):
-        try:
-            f = ImageFont.load_default(size=size)
-        except TypeError:  # Pillow viejo sin fuentes escalables
-            f = ImageFont.load_default()
-        if draw_tmp.textlength(url, font=f) <= ancho - 2 * margen:
-            fuente = f
-            break
-    fuente = fuente or f
 
-    bbox = draw_tmp.textbbox((0, 0), url, font=fuente)
-    alto_texto = bbox[3] - bbox[1]
-    y_texto = qr.height - 48  # aprovecho parte del borde blanco del QR
-    img = Image.new('RGB', (ancho, y_texto + alto_texto + margen * 2), 'white')
-    img.paste(qr, (0, 0))
+    carpeta_fuentes = os.path.join(os.path.dirname(__file__), 'fonts')
+
+    def fuente(size, negrita=False):
+        archivo = 'Roboto-Bold.ttf' if negrita else 'Roboto-Regular.ttf'
+        try:
+            return ImageFont.truetype(os.path.join(carpeta_fuentes, archivo), size)
+        except OSError:
+            return ImageFont.load_default(size=size)
+
+    def partir(texto, f):
+        """Parto el texto en lineas que entren en el ancho util"""
+        lineas, actual = [], ''
+        for palabra in texto.split():
+            prueba = f'{actual} {palabra}'.strip()
+            if draw_tmp.textlength(prueba, font=f) <= util or not actual:
+                actual = prueba
+            else:
+                lineas.append(actual)
+                actual = palabra
+        if actual:
+            lineas.append(actual)
+        return lineas
+
+    # Titulo: la fuente mas grande que entre en 1 o 2 lineas
+    lineas_titulo, f_titulo = [], None
+    if titulo:
+        for size in range(72, 31, -4):
+            f_titulo = fuente(size, negrita=True)
+            lineas_titulo = partir(titulo, f_titulo)
+            if len(lineas_titulo) <= 2 and all(draw_tmp.textlength(l, font=f_titulo) <= util for l in lineas_titulo):
+                break
+
+    # URL: la fuente mas grande que entre en una linea
+    for size in range(48, 15, -2):
+        f_url = fuente(size)
+        if draw_tmp.textlength(url, font=f_url) <= util:
+            break
+
+    def alto(texto, f):
+        b = draw_tmp.textbbox((0, 0), texto, font=f)
+        return b[3] - b[1], b[1]
+
+    interlineado = 16
+    alto_titulo = sum(alto(l, f_titulo)[0] + interlineado for l in lineas_titulo)
+    y_qr = margen + alto_titulo - borde_qr if lineas_titulo else 0
+    alto_url, off_url = alto(url, f_url)
+    y_url = y_qr + qr.height - 48
+    img = Image.new('RGB', (ancho, y_url + alto_url + margen * 2), 'white')
+    img.paste(qr, (0, y_qr))
     draw = ImageDraw.Draw(img)
-    x = (ancho - draw.textlength(url, font=fuente)) / 2
-    draw.text((x, y_texto - bbox[1]), url, fill='black', font=fuente)
+
+    y = margen
+    for linea in lineas_titulo:
+        h, off = alto(linea, f_titulo)
+        x = (ancho - draw.textlength(linea, font=f_titulo)) / 2
+        draw.text((x, y - off), linea, fill='black', font=f_titulo)
+        y += h + interlineado
+
+    x = (ancho - draw.textlength(url, font=f_url)) / 2
+    draw.text((x, y_url - off_url), url, fill='black', font=f_url)
 
     buf = io.BytesIO()
     img.save(buf, format='PNG')
@@ -428,7 +471,7 @@ def panel_detalle(request, pk):
 @user_passes_test(es_staff)
 def panel_qr(request, pk):
     evento = get_object_or_404(Evento, pk=pk)
-    response = HttpResponse(_qr_png_grande(_url_publica(request, evento)), content_type='image/png')
+    response = HttpResponse(_qr_png_grande(_url_publica(request, evento), evento.nombre), content_type='image/png')
     response['Content-Disposition'] = f'attachment; filename="qr_{evento.slug}.png"'
     return response
 
