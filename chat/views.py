@@ -8,7 +8,20 @@ from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
 
+from contenido.models import DatosIce
 from .models import PhoneVerification, ICEChatSession, ICEChatMessage
+
+
+def chat_habilitado_requerido(view):
+    """Rechazo las llamadas a la API si el chat esta deshabilitado en Configuracion"""
+    from functools import wraps
+
+    @wraps(view)
+    def wrapper(request, *args, **kwargs):
+        if not DatosIce.load().chat_habilitado:
+            return JsonResponse({'success': False, 'error': 'El chat no está disponible.'}, status=403)
+        return view(request, *args, **kwargs)
+    return wrapper
 
 # URL del agente externo
 AGENT_URL = 'https://behemotmalaki-production.up.railway.app'
@@ -46,6 +59,7 @@ def send_sms_twilio(phone, message):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@chat_habilitado_requerido
 def send_verification_code(request):
     """Envía código de verificación por SMS"""
     try:
@@ -101,6 +115,7 @@ def send_verification_code(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@chat_habilitado_requerido
 def verify_code(request):
     """Verifica el código y crea una sesión de chat"""
     try:
@@ -170,6 +185,7 @@ def verify_code(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@chat_habilitado_requerido
 def send_message(request):
     """Envía un mensaje de texto al agente"""
     try:
@@ -255,6 +271,7 @@ def send_message(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@chat_habilitado_requerido
 def send_audio(request):
     """Envía un mensaje de audio al agente"""
     try:
@@ -347,6 +364,7 @@ def send_audio(request):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@chat_habilitado_requerido
 def get_history(request, session_id):
     """Obtiene el historial de chat de una sesión"""
     try:

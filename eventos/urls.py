@@ -9,6 +9,7 @@ urlpatterns = [
     path('panel/nuevo/', views.panel_form, name='panel_crear'),
     path('panel/<int:pk>/', views.panel_detalle, name='panel_detalle'),
     path('panel/<int:pk>/editar/', views.panel_form, name='panel_editar'),
+    path('panel/<int:pk>/qr/', views.panel_qr, name='panel_qr'),
     path('panel/<int:pk>/exportar/', views.panel_exportar, name='panel_exportar'),
     path('panel/inscripcion/<int:pk>/pagado/', views.panel_inscripcion_pagado, name='panel_inscripcion_pagado'),
     path('panel/inscripcion/<int:pk>/eliminar/', views.panel_inscripcion_eliminar, name='panel_inscripcion_eliminar'),

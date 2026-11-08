@@ -74,7 +74,7 @@
     <div class="qr-card">
         <img src="data:image/png;base64,{{ qr_b64 }}" alt="QR del formulario">
         <input class="form-control form-control-sm mt-2" value="{{ url_publica }}" readonly onclick="this.select()">
-        <a href="data:image/png;base64,{{ qr_b64 }}" download="qr_{{ evento.slug }}.png" class="small d-inline-block mt-1">Descargar QR</a>
+        <a href="{% url 'eventos:panel_qr' evento.pk %}" class="small d-inline-block mt-1">Descargar QR (para imprimir)</a>
     </div>
 </div>
 
@@ -91,7 +91,7 @@
                 {% for p in insc.personas.all %}
                 <div class="persona-linea">
                     {% if forloop.first %}<strong>{% endif %}{{ p.apellido }}, {{ p.nombre }}{% if forloop.first %}</strong>{% endif %}
-                    <span class="text-muted">· {{ p.get_parentesco_display }} · {{ p.categoria_label }}{% if p.edad is not None %} ({{ p.edad }}){% endif %}</span>
+                    <span class="text-muted">· {{ p.get_parentesco_display }} ·{% if p.edad is not None %} {{ p.edad }} años ·{% endif %} {{ p.categoria_label }}</span>
                     {% if p.en_base %}<span class="tag tag-base">{{ p.origen }}</span>{% else %}<span class="tag tag-nobase">No está en la base</span>{% endif %}
                     {% if p.duplicado %}<span class="tag tag-dup">Posible duplicado</span>{% endif %}
                 </div>

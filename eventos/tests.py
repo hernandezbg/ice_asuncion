@@ -24,7 +24,7 @@ class InscripcionTests(TestCase):
                                             fecha_nacimiento=date(2018, 12, 13))  # 7 años al evento
         self.url = reverse('eventos:inscripcion', args=['fin-2026'])
 
-    def post(self, filas, celular='351 1234567', **extra):
+    def post(self, filas, celular='+54 9 3511234567', **extra):
         data = {'celular': celular, 'apellido': [], 'nombre': [], 'parentesco': [], 'edad': [],
                 'hermano_id': [], 'alumno_id': []}
         for f in filas:
@@ -44,9 +44,9 @@ class InscripcionTests(TestCase):
 
     def test_inscripcion_familia(self):
         r = self.post([
-            {'apellido': 'Perez', 'nombre': 'juan', 'parentesco': 'responsable', 'edad': 'adulto',
+            {'apellido': 'Perez', 'nombre': 'juan', 'parentesco': 'responsable', 'edad': '45',
              'hermano_id': self.hermano.pk},
-            {'apellido': 'Gómez', 'nombre': 'Ana', 'parentesco': 'conyuge', 'edad': 'adulto'},
+            {'apellido': 'Gómez', 'nombre': 'Ana', 'parentesco': 'conyuge', 'edad': '40'},
             {'apellido': 'Pérez', 'nombre': 'Sofía', 'parentesco': 'hijo', 'edad': '7', 'alumno_id': self.alumno.pk},
             {'apellido': 'Pérez', 'nombre': 'Bebé', 'parentesco': 'hijo', 'edad': '1'},
             {'apellido': '', 'nombre': '', 'parentesco': 'hijo', 'edad': ''},  # fila vacia
@@ -63,28 +63,51 @@ class InscripcionTests(TestCase):
         self.assertContains(r, '25.000')
 
     def test_vinculo_descartado_si_nombre_no_coincide(self):
-        self.post([{'apellido': 'Otro', 'nombre': 'Nombre', 'hermano_id': self.hermano.pk}])
+        self.post([{'apellido': 'Otro', 'nombre': 'Nombre', 'edad': 40, 'hermano_id': self.hermano.pk}])
         self.assertIsNone(Inscripto.objects.get().hermano)
 
     def test_edad_obligatoria_para_familiares(self):
-        r = self.post([{'apellido': 'Perez', 'nombre': 'Juan'}, {'apellido': 'Perez', 'nombre': 'Hijo', 'edad': ''}])
+        r = self.post([{'apellido': 'Perez', 'nombre': 'Juan', 'edad': 40}, {'apellido': 'Perez', 'nombre': 'Hijo', 'edad': ''}])
         self.assertEqual(r.status_code, 200)
-        self.assertContains(r, 'elegí la edad')
+        self.assertContains(r, 'ingresá la edad')
         self.assertContains(r, 'Hijo')  # se conservan los datos cargados
         self.assertFalse(Inscripcion.objects.exists())
 
+    def test_responsable_debe_ser_adulto(self):
+        r = self.post([{'apellido': 'Perez', 'nombre': 'Juan', 'edad': 10}])
+        self.assertContains(r, 'El responsable debe tener 12 años o más')
+        self.assertFalse(Inscripcion.objects.exists())
+
+    def test_edad_guardada_para_todos(self):
+        self.post([{'apellido': 'Perez', 'nombre': 'Juan', 'edad': 45},
+                   {'apellido': 'Gomez', 'nombre': 'Ana', 'parentesco': 'conyuge', 'edad': 43}])
+        self.assertEqual(sorted(Inscripto.objects.values_list('edad', flat=True)), [43, 45])
+        self.assertEqual(Inscripcion.objects.get().total(), 20000)
+
+    def test_normalizar_celular(self):
+        from .views import normalizar_celular
+        self.assertEqual(normalizar_celular('351 1234567'), ('+54 9 3511234567', None))
+        self.assertEqual(normalizar_celular('+54 9 3511234567')[0], '+54 9 3511234567')
+        self.assertEqual(normalizar_celular('+543511234567')[0], '+54 9 3511234567')
+        self.assertEqual(normalizar_celular('11 23456789')[0], '+54 9 1123456789')
+        self.assertIn('sin el 0', normalizar_celular('0351 1234567')[1])
+        self.assertIn('sin el 15', normalizar_celular('351 15 1234567')[1])
+        self.assertIsNotNone(normalizar_celular('1512345678')[1])
+        self.assertIsNotNone(normalizar_celular('351123')[1])
+        self.assertEqual(normalizar_celular('+595981123456'), ('+595981123456', None))
+
     def test_celular_obligatorio(self):
-        r = self.post([{'apellido': 'Perez', 'nombre': 'Juan'}], celular='12')
+        r = self.post([{'apellido': 'Perez', 'nombre': 'Juan', 'edad': 40}], celular='12')
         self.assertContains(r, 'celular')
         self.assertFalse(Inscripcion.objects.exists())
 
     def test_cupo(self):
         self.evento.cupo = 2
         self.evento.save()
-        r = self.post([{'apellido': 'Aa', 'nombre': 'Bb'}, {'apellido': 'Aa', 'nombre': 'Bb', 'edad': 'adulto'},
+        r = self.post([{'apellido': 'Aa', 'nombre': 'Bb', 'edad': 40}, {'apellido': 'Aa', 'nombre': 'Dd', 'edad': '40'},
                        {'apellido': 'Aa', 'nombre': 'Cc', 'edad': '5'}])
         self.assertContains(r, 'Solo quedan 2 lugares')
-        self.post([{'apellido': 'Aa', 'nombre': 'Bb'}, {'apellido': 'Aa', 'nombre': 'Cc', 'edad': '5'}])
+        self.post([{'apellido': 'Aa', 'nombre': 'Bb', 'edad': 40}, {'apellido': 'Aa', 'nombre': 'Cc', 'edad': '5'}])
         self.assertEqual(Inscripto.objects.count(), 2)
         r = self.client.get(self.url)
         self.assertContains(r, 'Se completó el cupo')
@@ -92,7 +115,7 @@ class InscripcionTests(TestCase):
     def test_fecha_cierre(self):
         self.evento.fecha_cierre = timezone.now() - timedelta(hours=1)
         self.evento.save()
-        r = self.post([{'apellido': 'Perez', 'nombre': 'Juan'}])
+        r = self.post([{'apellido': 'Perez', 'nombre': 'Juan', 'edad': 40}])
         self.assertContains(r, 'La inscripción ya cerró')
         self.assertFalse(Inscripcion.objects.exists())
 
@@ -102,15 +125,27 @@ class InscripcionTests(TestCase):
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0]['tipo'], 'alumno')
         self.assertEqual(res[0]['edad'], 7)
+        res = self.client.get(url, {'q': 'perez juan'}).json()['resultados']
+        self.assertEqual(res[0]['tipo'], 'hermano')
+        self.assertIsNone(res[0]['edad'])  # sin fecha de nacimiento
+        # Apellido precompletado distinto (ej: el de la mama): busca solo por nombre
+        r = self.client.get(url, {'apellido': 'Gomez', 'nombre': 'sofi', 'modo': 'familiar'}).json()
+        self.assertTrue(r['aproximado'])
+        self.assertEqual(r['resultados'][0]['nombre'], 'Sofía')
+        # Muchos hermanos con el mismo apellido no tapan al alumno en modo familiar
+        for i in range(10):
+            Hermano.objects.create(apellidos='Pérez', nombres=f'Socorro {i}', sexo='F')
+        r = self.client.get(url, {'apellido': 'Perez', 'nombre': 'so', 'modo': 'familiar'}).json()
+        self.assertEqual(r['resultados'][0]['tipo'], 'alumno')
         res = self.client.get(url, {'q': 'pe'}).json()['resultados']
         self.assertEqual(res, [])  # minimo 3 letras
 
     def test_panel_y_excel(self):
         import openpyxl
-        self.post([{'apellido': 'Pérez', 'nombre': 'Juan', 'hermano_id': self.hermano.pk},
+        self.post([{'apellido': 'Pérez', 'nombre': 'Juan', 'edad': 45, 'hermano_id': self.hermano.pk},
                    {'apellido': 'Pérez', 'nombre': 'Sofía', 'parentesco': 'hijo', 'edad': '7', 'alumno_id': self.alumno.pk}])
         # Otra familia anota a la misma nena -> duplicado
-        self.post([{'apellido': 'Gómez', 'nombre': 'Ana'},
+        self.post([{'apellido': 'Gómez', 'nombre': 'Ana', 'edad': 38},
                    {'apellido': 'Perez', 'nombre': 'Sofia', 'parentesco': 'hijo', 'edad': '7'}])
 
         self.assertEqual(self.client.get(reverse('eventos:panel_lista')).status_code, 302)  # requiere login
@@ -149,6 +184,13 @@ class InscripcionTests(TestCase):
         primera.refresh_from_db()
         self.assertFalse(primera.pagado)
 
+        r = self.client.get(reverse('eventos:panel_qr', args=[self.evento.pk]))
+        self.assertEqual(r['Content-Type'], 'image/png')
+        from PIL import Image
+        img = Image.open(io.BytesIO(r.content))
+        self.assertGreater(img.width, 800)
+        self.assertGreater(img.height, img.width)  # texto debajo
+
         r = self.client.get(reverse('eventos:panel_editar', args=[self.evento.pk]))
         self.assertEqual(r.status_code, 200)
         r = self.client.post(reverse('eventos:panel_inscripcion_eliminar', args=[Inscripcion.objects.last().pk]))
@@ -164,3 +206,13 @@ class InscripcionTests(TestCase):
         ev = Evento.objects.get(slug='otro')
         self.assertRedirects(r, reverse('eventos:panel_detalle', args=[ev.pk]))
         self.assertContains(self.client.get(reverse('eventos:inscripcion', args=['otro'])), '<p>Info</p>')
+
+
+class ChatDeshabilitadoTests(TestCase):
+    def test_api_chat_rechaza_si_esta_deshabilitado(self):
+        from contenido.models import DatosIce
+        datos = DatosIce.load()
+        datos.chat_habilitado = False
+        datos.save()
+        r = self.client.post(reverse('chat:send_code'), '{}', content_type='application/json')
+        self.assertEqual(r.status_code, 403)

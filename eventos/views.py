@@ -69,21 +69,21 @@ def _leer_personas(request, evento):
             errores.append(f'{n}: completá apellido y nombre.')
             continue
 
+        edad_str = get(edades, i)
+        if not (edad_str.isdigit() and int(edad_str) <= 120):
+            errores.append(f'{apellido}, {nombre}: ingresá la edad.')
+            continue
+        edad = int(edad_str)
+
         if es_responsable:
             parentesco = Inscripto.RESPONSABLE
-            edad = None
+            if edad <= evento.edad_max_nino:
+                errores.append(f'El responsable debe tener {evento.edad_max_nino + 1} años o más.')
+                continue
         else:
             parentesco = get(parentescos, i)
             if parentesco not in parentescos_validos:
                 parentesco = 'otro'
-            edad_str = get(edades, i)
-            if edad_str == 'adulto':
-                edad = None
-            elif edad_str.isdigit() and int(edad_str) <= evento.edad_max_nino:
-                edad = int(edad_str)
-            else:
-                errores.append(f'{apellido}, {nombre}: elegí la edad.')
-                continue
 
         # Vinculo con la base solo si el nombre coincide con el registro elegido
         hermano = alumno = None
@@ -111,6 +111,35 @@ def _leer_personas(request, evento):
     return personas, errores
 
 
+MSJ_CELULAR_AR = ('Ingresá el celular con código de área sin el 0 y el número sin el 15 '
+                  '(10 números en total). Ej: 351 1234567')
+
+
+def normalizar_celular(valor):
+    """
+    Devuelvo (celular_normalizado, error).
+    Argentina: codigo de area sin 0 + numero sin 15 = 10 digitos -> '+54 9 3511234567'.
+    Otros paises: '+<codigo><numero>' con 8 a 15 digitos.
+    """
+    valor = (valor or '').strip()
+    digitos = ''.join(c for c in valor if c.isdigit())
+    if valor.startswith('+') and not digitos.startswith('54'):
+        if 8 <= len(digitos) <= 15:
+            return f'+{digitos}', None
+        return None, 'Ingresá un celular válido.'
+
+    nacional = digitos[2:] if valor.startswith('+') else digitos
+    if valor.startswith('+') and len(nacional) == 11 and nacional.startswith('9'):
+        nacional = nacional[1:]  # +54 9 ...
+    if nacional.startswith('0'):
+        return None, 'Ingresá el código de área sin el 0. ' + MSJ_CELULAR_AR
+    if len(nacional) == 10 and not nacional.startswith('15'):
+        return f'+54 9 {nacional}', None
+    if len(nacional) == 12 and '15' in nacional[2:6]:
+        return None, 'Ingresá el número sin el 15. ' + MSJ_CELULAR_AR
+    return None, MSJ_CELULAR_AR
+
+
 def _filas_previas(request):
     """Filas enviadas, para volver a mostrarlas si hubo errores"""
     if request.method != 'POST':
@@ -136,8 +165,9 @@ def inscripcion_form(request, slug):
         personas, errores_personas = _leer_personas(request, evento)
         errores += errores_personas
 
-        if sum(c.isdigit() for c in celular) < 8:
-            errores.append('Ingresá un celular de contacto válido.')
+        celular_ok, error_celular = normalizar_celular(celular)
+        if error_celular:
+            errores.append(error_celular)
 
         if not errores:
             with transaction.atomic():
@@ -150,7 +180,7 @@ def inscripcion_form(request, slug):
                     errores.append(f'Solo quedan {disponible} lugares disponibles.')
                 else:
                     inscripcion = Inscripcion.objects.create(
-                        evento=ev, celular=celular[:30], observaciones=observaciones,
+                        evento=ev, celular=celular_ok[:30], observaciones=observaciones,
                     )
                     Inscripto.objects.bulk_create(
                         [Inscripto(inscripcion=inscripcion, **p) for p in personas]
@@ -162,7 +192,6 @@ def inscripcion_form(request, slug):
         'evento': evento,
         'motivo_cerrado': motivo_cerrado,
         'errores': errores,
-        'opciones_edad': evento.opciones_edad(),
         'parentescos': [p for p in Inscripto.PARENTESCO_CHOICES if p[0] != Inscripto.RESPONSABLE],
         'cupo_disponible': evento.cupo_disponible(),
         'recaptcha_site_key': settings.RECAPTCHA_SITE_KEY,
@@ -187,45 +216,64 @@ def inscripcion_exito(request, slug):
 
 
 def buscar_personas(request, slug):
-    """Sugerencias de hermanos y alumnos para autocompletar (solo nombres)"""
+    """
+    Sugerencias de hermanos y alumnos para autocompletar (solo nombres).
+    Parametros: apellido, nombre y modo ('responsable' o 'familiar').
+    - Busco que todas las palabras escritas aparezcan en apellido/nombre.
+    - Si no hay resultados y hay un nombre escrito, busco solo por nombre
+      (caso tipico: el apellido precompletado del responsable no es el del chico).
+    - Ordeno por mejor coincidencia; para familiares priorizo alumnos.
+    """
     evento = get_object_or_404(Evento, slug=slug)
     if evento.motivo_cerrado():
         return JsonResponse({'resultados': []})
 
-    tokens = _norm(request.GET.get('q', '')).split()
+    apellido = request.GET.get('apellido')
+    nombre = request.GET.get('nombre')
+    if apellido is None and nombre is None:  # compatibilidad con ?q=
+        apellido, nombre = request.GET.get('q', ''), ''
+    tokens_ap = _norm(apellido).split()
+    tokens_no = _norm(nombre).split()
+    tokens = tokens_ap + tokens_no
     if sum(len(t) for t in tokens) < 3:
         return JsonResponse({'resultados': []})
+    familiar = request.GET.get('modo') == 'familiar'
 
-    def coincide(*campos):
-        texto = _norm(' '.join(c or '' for c in campos))
-        return all(t in texto for t in tokens)
-
-    resultados = []
+    personas = []
     for h in Hermano.objects.filter(activo=True).only('id', 'apellidos', 'nombres', 'apellido_soltera', 'fecha_nacimiento'):
-        if coincide(h.apellidos, h.nombres, h.apellido_soltera):
-            edad = evento.edad_a_la_fecha(h.fecha_nacimiento)
-            resultados.append({
-                'tipo': 'hermano', 'id': h.id, 'apellido': h.apellidos, 'nombre': h.nombres,
-                # solo informo la edad si es menor (para elegir el precio)
-                'edad': edad if edad is not None and edad <= evento.edad_max_nino else None,
-                'adulto': edad is None or edad > evento.edad_max_nino,
-            })
-            if len(resultados) >= MAX_SUGERENCIAS:
-                break
+        personas.append(('hermano', h, _norm(f'{h.apellidos} {h.apellido_soltera or ""}'), _norm(h.nombres)))
+    for a in Alumno.objects.filter(activo=True).only('id', 'apellidos', 'nombres', 'fecha_nacimiento'):
+        personas.append(('alumno', a, _norm(a.apellidos), _norm(a.nombres)))
 
-    if len(resultados) < MAX_SUGERENCIAS:
-        for a in Alumno.objects.filter(activo=True).only('id', 'apellidos', 'nombres', 'fecha_nacimiento'):
-            if coincide(a.apellidos, a.nombres):
-                edad = evento.edad_a_la_fecha(a.fecha_nacimiento)
-                resultados.append({
-                    'tipo': 'alumno', 'id': a.id, 'apellido': a.apellidos, 'nombre': a.nombres,
-                    'edad': edad if edad is not None and edad <= evento.edad_max_nino else None,
-                    'adulto': edad is not None and edad > evento.edad_max_nino,
-                })
-                if len(resultados) >= MAX_SUGERENCIAS:
-                    break
+    def puntaje(toks, texto):
+        """None si falta alguna palabra; si no, cuantas coinciden al inicio de una palabra"""
+        palabras = texto.split()
+        if not all(t in texto for t in toks):
+            return None
+        return sum(1 for t in toks if any(p.startswith(t) for p in palabras))
 
-    return JsonResponse({'resultados': resultados})
+    def buscar(toks, solo_nombre):
+        encontrados = []
+        for tipo, obj, ap_norm, no_norm in personas:
+            texto = no_norm if solo_nombre else f'{ap_norm} {no_norm}'
+            pts = puntaje(toks, texto)
+            if pts is not None:
+                prioridad = 0 if (tipo == 'alumno') == familiar else 1
+                encontrados.append((-pts, prioridad, ap_norm, no_norm, tipo, obj))
+        encontrados.sort(key=lambda x: x[:4])
+        return encontrados
+
+    aproximado = False
+    encontrados = buscar(tokens, solo_nombre=False)
+    if not encontrados and tokens_ap and sum(len(t) for t in tokens_no) >= 3:
+        encontrados = buscar(tokens_no, solo_nombre=True)
+        aproximado = True
+
+    resultados = [{
+        'tipo': tipo, 'id': obj.id, 'apellido': obj.apellidos, 'nombre': obj.nombres,
+        'edad': evento.edad_a_la_fecha(obj.fecha_nacimiento),
+    } for *_, tipo, obj in encontrados[:MAX_SUGERENCIAS]]
+    return JsonResponse({'resultados': resultados, 'aproximado': aproximado})
 
 
 # =============================================================================
@@ -241,6 +289,42 @@ def _qr_b64(url):
     buf = io.BytesIO()
     qrcode.make(url, box_size=8, border=2).save(buf, format='PNG')
     return base64.b64encode(buf.getvalue()).decode()
+
+
+def _qr_png_grande(url):
+    """QR grande para imprimir, con la URL escrita debajo"""
+    import qrcode
+    from PIL import Image, ImageDraw, ImageFont
+
+    qr = qrcode.make(url, box_size=24, border=4).convert('RGB')
+    ancho = qr.width
+    margen = 40
+
+    # Fuente: la mas grande que entre en el ancho
+    draw_tmp = ImageDraw.Draw(qr)
+    fuente = None
+    for size in range(48, 15, -2):
+        try:
+            f = ImageFont.load_default(size=size)
+        except TypeError:  # Pillow viejo sin fuentes escalables
+            f = ImageFont.load_default()
+        if draw_tmp.textlength(url, font=f) <= ancho - 2 * margen:
+            fuente = f
+            break
+    fuente = fuente or f
+
+    bbox = draw_tmp.textbbox((0, 0), url, font=fuente)
+    alto_texto = bbox[3] - bbox[1]
+    y_texto = qr.height - 48  # aprovecho parte del borde blanco del QR
+    img = Image.new('RGB', (ancho, y_texto + alto_texto + margen * 2), 'white')
+    img.paste(qr, (0, 0))
+    draw = ImageDraw.Draw(img)
+    x = (ancho - draw.textlength(url, font=fuente)) / 2
+    draw.text((x, y_texto - bbox[1]), url, fill='black', font=fuente)
+
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    return buf.getvalue()
 
 
 def _datos_evento(evento):
@@ -338,6 +422,15 @@ def panel_detalle(request, pk):
         'qr_b64': _qr_b64(url),
         'motivo_cerrado': evento.motivo_cerrado(),
     })
+
+
+@login_required
+@user_passes_test(es_staff)
+def panel_qr(request, pk):
+    evento = get_object_or_404(Evento, pk=pk)
+    response = HttpResponse(_qr_png_grande(_url_publica(request, evento)), content_type='image/png')
+    response['Content-Disposition'] = f'attachment; filename="qr_{evento.slug}.png"'
+    return response
 
 
 @login_required
@@ -465,7 +558,7 @@ def panel_exportar(request, pk):
                 motivos.append('Posible duplicado')
             valores = [
                 n, str(resp) if resp else '', p.apellido, p.nombre, p.get_parentesco_display(),
-                p.edad if p.edad is not None else 'Adulto', p.categoria_label(), p.precio(),
+                p.edad if p.edad is not None else '', p.categoria_label(), p.precio(),
                 p.origen() or 'NO', ', '.join(motivos),
             ]
             for col, v in enumerate(valores, 1):

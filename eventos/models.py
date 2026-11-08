@@ -74,17 +74,6 @@ class Evento(models.Model):
             CATEGORIA_GRATIS: 0,
         }[categoria]
 
-    def opciones_edad(self):
-        """Opciones del selector de edad: adulto + cada edad de niño (de mayor a menor)"""
-        opciones = [('', f'Adulto ({self.edad_max_nino + 1} años o más)')]
-        for e in range(self.edad_max_nino, -1, -1):
-            if e == 0:
-                label = 'Menos de 1 año'
-            else:
-                label = f'{e} año{"s" if e != 1 else ""}'
-            opciones.append((str(e), label))
-        return opciones
-
     # --- Cupo y cierre ---
 
     def personas_inscriptas(self):
@@ -157,7 +146,7 @@ class Inscripto(models.Model):
     nombre = models.CharField(max_length=200, verbose_name='Nombre')
     parentesco = models.CharField(max_length=20, choices=PARENTESCO_CHOICES, default='otro')
     edad = models.PositiveIntegerField(null=True, blank=True, verbose_name='Edad',
-                                       help_text='Vacío = adulto')
+                                       help_text='Edad a la fecha del evento')
     hermano = models.ForeignKey(Hermano, on_delete=models.SET_NULL, null=True, blank=True,
                                 related_name='inscripciones_eventos', verbose_name='Hermano (base)')
     alumno = models.ForeignKey(Alumno, on_delete=models.SET_NULL, null=True, blank=True,

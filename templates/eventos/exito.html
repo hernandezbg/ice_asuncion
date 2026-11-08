@@ -25,7 +25,7 @@
             {% for p in personas %}
             <tr>
                 <td>{{ p.apellido }}, {{ p.nombre }} <span class="text-muted small">({{ p.get_parentesco_display }})</span></td>
-                <td>{{ p.categoria_label }}{% if p.edad is not None %} · {{ p.edad }} años{% endif %}</td>
+                <td>{% if p.edad is not None %}{{ p.edad }} años · {% endif %}{{ p.categoria_label }}</td>
                 <td class="text-end">${{ p.precio|pesos }}</td>
             </tr>
             {% endfor %}

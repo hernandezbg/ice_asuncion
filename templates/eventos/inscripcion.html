@@ -30,6 +30,9 @@
 .badge-base { display: none; font-size: .78rem; color: #2e7d32; margin-top: .35rem; }
 .persona.vinculada .badge-base { display: block; }
 .persona.vinculada { border-color: #a5d6a7; }
+.iti { width: 100%; }
+.iti__selected-flag { background-color: #e9ecef; border-radius: .375rem 0 0 .375rem; }
+.iti__country-list { z-index: 1060; max-height: 250px; }
 .btn-agregar { border: 2px dashed var(--primary-color); color: var(--primary-color); background: #fff; border-radius: 12px; width: 100%; padding: .8rem; font-weight: 600; }
 .btn-agregar:hover { background: rgba(44,95,141,.05); }
 .resumen { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; box-shadow: 0 -4px 20px rgba(0,0,0,.1); padding: .75rem 1rem; z-index: 50; }
@@ -105,7 +108,11 @@
                 <div id="responsable"></div>
                 <div>
                     <label class="form-label" style="font-size:.85rem;font-weight:600;color:#475569;">Celular de contacto *</label>
-                    <input type="tel" name="celular" class="form-control" required placeholder="Ej: 351 1234567" value="{{ celular }}">
+                    <input type="tel" id="celular-input" class="form-control" required placeholder="351 1234567"
+                           inputmode="tel" autocomplete="tel-national">
+                    <input type="hidden" name="celular" id="celular-completo" value="{{ celular }}">
+                    <div class="form-text" id="celular-ayuda">Código de área sin el 0 y número sin el 15. Ej: 351 1234567</div>
+                    <div class="invalid-feedback d-block" id="celular-error" style="display:none!important"></div>
                 </div>
             </div>
         </div>
@@ -113,7 +120,7 @@
         <div class="ev-card">
             <div class="ev-body">
                 <div class="sec-title"><i class="bi bi-people-fill me-1"></i>Familiares que asisten</div>
-                <p class="text-muted small mb-3">Agregá a tu esposa/o, hijos u otros familiares. Si no viene nadie más, dejalo vacío.</p>
+                <p class="text-muted small mb-3">Agregá a tu esposa/o, hijos u otros familiares. Si no viene nadie más, dejalo vacío. La edad se toma a la fecha del evento.</p>
                 <div id="familiares"></div>
                 <button type="button" class="btn-agregar" id="btn-agregar"><i class="bi bi-plus-circle me-1"></i>Agregar familiar</button>
             </div>
@@ -121,8 +128,10 @@
 
         <div class="ev-card">
             <div class="ev-body">
-                <label class="form-label" style="font-size:.85rem;font-weight:600;color:#475569;">Observaciones (opcional)</label>
-                <textarea name="observaciones" class="form-control" rows="2" maxlength="1000">{{ observaciones }}</textarea>
+                <label class="form-label" style="font-size:.85rem;font-weight:600;color:#475569;">Observaciones o necesidades especiales (opcional)</label>
+                <textarea name="observaciones" class="form-control" rows="3" maxlength="1000"
+                          placeholder="Ej: menú para celíacos (sin TACC), vegetariano, vegano, diabético, alergias, silla de ruedas, etc. Indicá para quién.">{{ observaciones }}</textarea>
+                <div class="form-text">Si alguien tiene una restricción alimentaria o necesita algo especial, contanos acá.</div>
 
                 {% if recaptcha_site_key %}
                 <div class="mt-3 g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
@@ -133,7 +142,7 @@
         <div class="resumen">
             <div class="resumen-inner">
                 <div>
-                    <div class="det" id="resumen-det">1 adulto</div>
+                    <div class="det" id="resumen-det">&nbsp;</div>
                     <div class="total" id="resumen-total">$0</div>
                 </div>
                 <button type="submit" class="btn-enviar"><i class="bi bi-check-circle me-1"></i>Confirmar inscripción</button>
@@ -164,12 +173,10 @@
                     {% for v, l in parentescos %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
                 </select>
             </div>
-            <div class="col-6 campo-familiar">
+            <div class="col-6">
                 <label class="form-label">Edad *</label>
-                <select name="edad" class="form-select">
-                    <option value="">Elegí...</option>
-                    {% for v, l in opciones_edad %}<option value="{% if v %}{{ v }}{% else %}adulto{% endif %}">{{ l }}</option>{% endfor %}
-                </select>
+                <input type="number" name="edad" class="form-control" min="0" max="120" step="1"
+                       inputmode="numeric" placeholder="Años">
             </div>
         </div>
         <div class="badge-base"><i class="bi bi-check-circle-fill me-1"></i>Encontrado en la lista de la iglesia</div>
@@ -177,12 +184,15 @@
     </div>
 </template>
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css">
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js"></script>
 {{ filas_previas|json_script:"filas-previas" }}
 <script>
 (function () {
     const PRECIO_ADULTO = {{ evento.precio_adulto }};
     const PRECIO_NINO = {{ evento.precio_nino }};
     const EDAD_MIN_PAGA = {{ evento.edad_min_paga }};
+    const EDAD_ADULTO = {{ evento.edad_max_nino|add:1 }};
     const URL_BUSCAR = "{% url 'eventos:buscar' evento.slug %}";
     const MAX_FAMILIARES = 19;
 
@@ -201,23 +211,25 @@
             el.querySelectorAll('.campo-familiar').forEach(c => c.remove());
             // Campos ocultos para que las listas queden alineadas
             el.insertAdjacentHTML('beforeend',
-                '<input type="hidden" name="parentesco" value="responsable"><input type="hidden" name="edad" value="adulto">');
+                '<input type="hidden" name="parentesco" value="responsable">');
             el.style.border = 'none'; el.style.padding = '0';
-            q('apellido').required = true; q('nombre').required = true;
+            q('edad').min = EDAD_ADULTO;
         } else {
-            q('apellido').required = true; q('nombre').required = true; q('edad').required = true;
             el.querySelector('.quitar').addEventListener('click', () => { el.remove(); actualizar(); });
         }
+        q('apellido').required = true; q('nombre').required = true; q('edad').required = true;
         if (datos) {
-            ['apellido', 'nombre', 'hermano_id', 'alumno_id'].forEach(k => { if (datos[k]) q(k).value = datos[k]; });
-            if (!esResponsable) {
-                if (datos.parentesco) q('parentesco').value = datos.parentesco;
-                if (datos.edad) q('edad').value = datos.edad;
-            }
+            ['apellido', 'nombre', 'hermano_id', 'alumno_id', 'edad'].forEach(k => { if (datos[k]) q(k).value = datos[k]; });
+            if (!esResponsable && datos.parentesco) q('parentesco').value = datos.parentesco;
             if (datos.hermano_id || datos.alumno_id) el.classList.add('vinculada');
         }
         configurarBusqueda(el, esResponsable);
-        if (!esResponsable) q('edad').addEventListener('change', actualizar);
+        q('edad').addEventListener('input', () => {
+            const par = q('parentesco');
+            const e = parseInt(q('edad').value, 10);
+            if (par && par.tagName === 'SELECT' && par.value === 'conyuge' && e < EDAD_ADULTO) par.value = 'hijo';
+            actualizar();
+        });
         return el;
     }
 
@@ -238,19 +250,24 @@
             if (q === ultimo) return;
             ultimo = q;
             if (q.replace(/\s/g, '').length < 3) { sug.innerHTML = ''; return; }
-            fetch(URL_BUSCAR + '?q=' + encodeURIComponent(q))
+            const params = new URLSearchParams({
+                apellido: ap.value, nombre: no.value, modo: esResponsable ? 'responsable' : 'familiar'
+            });
+            fetch(URL_BUSCAR + '?' + params)
                 .then(r => r.json())
                 .then(data => {
                     if ((ap.value + ' ' + no.value).trim() !== q) return; // respuesta vieja
                     sug.innerHTML = '';
-                    const res = data.resultados.filter(r => !esResponsable || r.adulto || r.tipo === 'hermano');
+                    const res = data.resultados.filter(r => !esResponsable || r.edad === null || r.edad >= EDAD_ADULTO);
                     if (!res.length) return;
-                    sug.insertAdjacentHTML('beforeend', '<div class="hint">¿Es alguno de estos? Tocá para completar:</div>');
+                    sug.insertAdjacentHTML('beforeend', data.aproximado
+                        ? '<div class="hint">No encontramos ese apellido. ¿Es alguno de estos? Tocá para completar:</div>'
+                        : '<div class="hint">¿Es alguno de estos? Tocá para completar:</div>');
                     res.forEach(r => {
                         const b = document.createElement('button');
                         b.type = 'button';
                         b.className = 'sugerencia';
-                        b.textContent = r.apellido + ', ' + r.nombre + (r.edad !== null ? ` (${r.edad} años)` : '');
+                        b.textContent = r.apellido + ', ' + r.nombre + (r.edad !== null && r.edad < EDAD_ADULTO ? ` (${r.edad} años)` : '');
                         b.addEventListener('click', () => elegir(r));
                         sug.appendChild(b);
                     });
@@ -265,13 +282,14 @@
             el.querySelector('[name="hermano_id"]').value = r.tipo === 'hermano' ? r.id : '';
             el.querySelector('[name="alumno_id"]').value = r.tipo === 'alumno' ? r.id : '';
             el.classList.add('vinculada');
-            const edad = el.querySelector('select[name="edad"]');
-            if (edad) {
-                if (r.edad !== null) {
-                    edad.value = String(r.edad);
-                    el.querySelector('select[name="parentesco"]').value = 'hijo';
-                }
-                else if (r.adulto) edad.value = 'adulto';
+            const edad = el.querySelector('[name="edad"]');
+            if (r.edad !== null) {
+                edad.value = String(r.edad);
+                const par = el.querySelector('select[name="parentesco"]');
+                if (par && r.edad < EDAD_ADULTO) par.value = 'hijo';
+            } else {
+                edad.value = '';
+                edad.focus();
             }
             sug.innerHTML = '';
             actualizar();
@@ -295,16 +313,20 @@
     }
 
     function actualizar() {
-        let adultos = 1, ninos = 0, gratis = 0;
-        contFam.querySelectorAll('select[name="edad"]').forEach(s => {
-            if (s.value === 'adulto') adultos++;
-            else if (s.value !== '') {
-                if (parseInt(s.value, 10) < EDAD_MIN_PAGA) gratis++; else ninos++;
-            }
+        let adultos = 0, ninos = 0, gratis = 0, sinEdad = 0;
+        document.querySelectorAll('#form-inscripcion input[name="edad"]').forEach(inp => {
+            const v = inp.value.trim();
+            if (v === '' || isNaN(parseInt(v, 10))) { sinEdad++; return; }
+            const e = parseInt(v, 10);
+            if (e >= EDAD_ADULTO) adultos++;
+            else if (e < EDAD_MIN_PAGA) gratis++;
+            else ninos++;
         });
-        const partes = [`${adultos} adulto${adultos !== 1 ? 's' : ''}`];
+        const partes = [];
+        if (adultos) partes.push(`${adultos} adulto${adultos !== 1 ? 's' : ''}`);
         if (ninos) partes.push(`${ninos} niño${ninos !== 1 ? 's' : ''}`);
         if (gratis) partes.push(`${gratis} sin cargo`);
+        if (sinEdad) partes.push(`${sinEdad} sin edad`);
         document.getElementById('resumen-det').textContent = partes.join(' · ');
         document.getElementById('resumen-total').textContent = fmt(adultos * PRECIO_ADULTO + ninos * PRECIO_NINO);
         btnAgregar.disabled = contFam.children.length >= MAX_FAMILIARES;
@@ -317,8 +339,58 @@
     btnAgregar.addEventListener('click', () => agregarFamiliar());
     actualizar();
 
-    // Evito doble envio
+    // Celular con bandera y codigo de pais (Argentina por defecto)
+    const celInput = document.getElementById('celular-input');
+    const celCompleto = document.getElementById('celular-completo');
+    const celError = document.getElementById('celular-error');
+    let iti = null;
+    if (window.intlTelInput) {
+        iti = window.intlTelInput(celInput, {
+            initialCountry: 'ar',
+            preferredCountries: ['ar', 'py', 'bo', 'cl', 'uy', 'br', 'pe'],
+            separateDialCode: true,
+            utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js',
+        });
+    }
+    if (celCompleto.value) {
+        if (iti) iti.setNumber(celCompleto.value.replace('+54 9 ', '+54'));
+        else celInput.value = celCompleto.value;
+    }
+
+    function validarCelular() {
+        const digitos = celInput.value.replace(/\D/g, '');
+        const pais = iti ? iti.getSelectedCountryData().iso2 : 'ar';
+        const AYUDA = 'Tienen que ser 10 números: código de área sin el 0 y número sin el 15. Ej: 351 1234567';
+        if (pais === 'ar') {
+            if (digitos.startsWith('0')) return ['Sacá el 0 del código de área. Ej: 351 1234567'];
+            if (digitos.length === 12 && digitos.slice(2, 6).includes('15')) return ['Sacá el 15 del número. Ej: 351 1234567'];
+            if (digitos.length !== 10 || digitos.startsWith('15')) return [AYUDA];
+            return [null, '+54 9 ' + digitos];
+        }
+        if (iti && window.intlTelInputUtils && !iti.isValidNumber()) return ['El número no es válido para el país elegido.'];
+        if (digitos.length < 6) return ['Ingresá un celular válido.'];
+        return [null, iti ? iti.getNumber() : digitos];
+    }
+
+    function mostrarErrorCelular(msg) {
+        celError.textContent = msg || '';
+        celError.style.cssText = msg ? '' : 'display:none!important';
+        celInput.classList.toggle('is-invalid', !!msg);
+    }
+    celInput.addEventListener('input', () => mostrarErrorCelular(null));
+    celInput.addEventListener('blur', () => { if (celInput.value.trim()) mostrarErrorCelular(validarCelular()[0]); });
+
+    // Evito doble envio y valido celular
     document.getElementById('form-inscripcion').addEventListener('submit', e => {
+        const [errorCel, numero] = validarCelular();
+        if (errorCel) {
+            e.preventDefault();
+            mostrarErrorCelular(errorCel);
+            celInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            celInput.focus();
+            return;
+        }
+        celCompleto.value = numero;
         const b = e.target.querySelector('.btn-enviar');
         setTimeout(() => { b.disabled = true; b.textContent = 'Enviando...'; }, 0);
     });
