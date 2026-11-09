@@ -171,7 +171,7 @@ class InscripcionTests(TestCase):
         self.evento.fecha_limite_descuento = timezone.localdate() + timedelta(days=dias)
         self.evento.precio_adulto_descuento = 8000
         self.evento.precio_nino_descuento = 3000
-        self.evento.nota_comprobante = 'Alias: ICE.EVENTOS'
+        self.evento.nota_comprobante = 'Alias: ICE.EVENTOS\nTitular: Juan'
         self.evento.save()
 
     def test_descuento_en_comprobante_y_whatsapp(self):
@@ -186,7 +186,8 @@ class InscripcionTests(TestCase):
         self.assertContains(r, 'aplicaremos un descuento')
         self.assertContains(r, '11.000')
         self.assertContains(r, 'Pagando después')
-        self.assertContains(r, 'Alias: ICE.EVENTOS')
+        self.assertContains(r, 'data-copiar="ICE.EVENTOS"')
+        self.assertContains(r, 'Titular: Juan')
         self.assertContains(r, 'Mi%20importe%20a%20pagar%20es%20%2411.000%20%28con%20el%20descuento')
 
     def test_descuento_vencido_cobra_precio_normal(self):
@@ -230,6 +231,17 @@ class InscripcionTests(TestCase):
         self.client.post(reverse('eventos:panel_inscripcion_pagado', args=[a.pk]))
         a.refresh_from_db()
         self.assertFalse(a.pagado or a.con_descuento)
+
+    def test_lineas_nota_comprobante(self):
+        self.evento.nota_comprobante = ('Alias para transferir: cenaiglesia.665\n'
+                                        'Titular: Santiago Fernando Cardozo\n\nCBU: 0000003100012345678901\n'
+                                        'Alias de ejemplo con espacios: no copiable porque tiene espacios')
+        self.assertEqual(self.evento.lineas_nota_comprobante(), [
+            ('Alias para transferir', 'cenaiglesia.665'),
+            ('Titular: Santiago Fernando Cardozo', None),
+            ('CBU', '0000003100012345678901'),
+            ('Alias de ejemplo con espacios: no copiable porque tiene espacios', None),
+        ])
 
     def test_form_descuento_incompleto(self):
         from .forms import EventoForm

@@ -116,6 +116,25 @@ class Evento(models.Model):
         dia = dia or timezone.localdate()
         return self.tiene_descuento() and dia <= self.fecha_limite_descuento
 
+    def lineas_nota_comprobante(self):
+        """
+        Lineas de la nota del comprobante. Las que son 'Alias...: valor', 'CBU...: valor'
+        o 'CVU...: valor' devuelven tambien el valor para mostrar un boton de copiar.
+        [(etiqueta, valor_copiable o None), ...]
+        """
+        import re
+        lineas = []
+        for linea in (self.nota_comprobante or '').splitlines():
+            linea = linea.strip()
+            if not linea:
+                continue
+            m = re.match(r'^((?:alias|cbu|cvu)\b[^:]*):\s*(\S+)\s*$', linea, re.IGNORECASE)
+            if m:
+                lineas.append((m.group(1).strip(), m.group(2)))
+            else:
+                lineas.append((linea, None))
+        return lineas
+
     def lista_contactos_pago(self):
         """[(nombre, numero_para_whatsapp), ...] a partir del texto 'Nombre, numero' por linea"""
         contactos = []
