@@ -47,6 +47,16 @@ class Evento(models.Model):
     edad_min_paga = models.PositiveIntegerField(default=3, verbose_name='Edad mínima que paga',
                                                 help_text='Menores a esta edad no pagan')
 
+    # Descuento por pago anticipado (opcional, precio fijo)
+    fecha_limite_descuento = models.DateField(null=True, blank=True, verbose_name='Pagando hasta el (inclusive)',
+                                              help_text='Vacío = sin descuento')
+    precio_adulto_descuento = models.PositiveIntegerField(null=True, blank=True,
+                                                          verbose_name='Precio adulto con descuento ($)')
+    precio_nino_descuento = models.PositiveIntegerField(null=True, blank=True,
+                                                        verbose_name='Precio niño con descuento ($)')
+    nota_comprobante = models.TextField(blank=True, verbose_name='Nota del comprobante',
+                                        help_text='Se muestra en el comprobante final. Ej: alias o CBU para transferir')
+
     fecha_cierre = models.DateTimeField(null=True, blank=True, verbose_name='Cierre de inscripción',
                                         help_text='Vacío = sin fecha de cierre')
     cupo = models.PositiveIntegerField(null=True, blank=True, verbose_name='Cupo (personas)',
@@ -81,12 +91,30 @@ class Evento(models.Model):
             return CATEGORIA_GRATIS
         return CATEGORIA_NINO
 
-    def precio_categoria(self, categoria):
+    def precio_categoria(self, categoria, descuento=False):
+        if descuento and self.tiene_descuento():
+            return {
+                CATEGORIA_ADULTO: self.precio_adulto_descuento,
+                CATEGORIA_NINO: self.precio_nino_descuento,
+                CATEGORIA_GRATIS: 0,
+            }[categoria]
         return {
             CATEGORIA_ADULTO: self.precio_adulto,
             CATEGORIA_NINO: self.precio_nino,
             CATEGORIA_GRATIS: 0,
         }[categoria]
+
+    # --- Descuento por pago anticipado ---
+
+    def tiene_descuento(self):
+        return (self.fecha_limite_descuento is not None
+                and self.precio_adulto_descuento is not None
+                and self.precio_nino_descuento is not None)
+
+    def descuento_vigente(self, dia=None):
+        """True si hoy (o el dia indicado) todavia se paga con descuento"""
+        dia = dia or timezone.localdate()
+        return self.tiene_descuento() and dia <= self.fecha_limite_descuento
 
     def lista_contactos_pago(self):
         """[(nombre, numero_para_whatsapp), ...] a partir del texto 'Nombre, numero' por linea"""
@@ -137,6 +165,7 @@ class Inscripcion(models.Model):
     fecha = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de inscripción')
     fecha_modificacion = models.DateTimeField(auto_now=True, null=True, verbose_name='Última modificación')
     pagado = models.BooleanField(default=False, verbose_name='Pagado')
+    con_descuento = models.BooleanField(default=False, verbose_name='Pagó con descuento')
     fecha_pago = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de pago')
 
     class Meta:
@@ -155,8 +184,18 @@ class Inscripcion(models.Model):
                 return p
         return personas[0] if personas else None
 
-    def total(self):
-        return sum(p.precio() for p in self.personas.all())
+    def total(self, descuento=False):
+        return sum(p.precio(descuento) for p in self.personas.all())
+
+    def total_descuento(self):
+        return self.total(descuento=True)
+
+    def total_vigente(self):
+        """Lo que tiene que pagar hoy (con descuento si todavia esta vigente)"""
+        return self.total(descuento=self.evento.descuento_vigente())
+
+    def total_pagado(self):
+        return self.total(descuento=self.con_descuento) if self.pagado else 0
 
     def fue_modificada(self):
         from datetime import timedelta
@@ -203,8 +242,11 @@ class Inscripto(models.Model):
     def categoria_label(self):
         return CATEGORIA_LABELS[self.categoria()]
 
-    def precio(self):
-        return self.inscripcion.evento.precio_categoria(self.categoria())
+    def precio(self, descuento=False):
+        return self.inscripcion.evento.precio_categoria(self.categoria(), descuento)
+
+    def precio_descuento(self):
+        return self.precio(descuento=True)
 
     def en_base(self):
         return bool(self.hermano_id or self.alumno_id)

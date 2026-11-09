@@ -22,6 +22,7 @@
     .btn-pago.pagado { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
     .btn-pago.pendiente { background: #fff; color: #64748b; border: 1px dashed #94a3b8; }
     .btn-pago.pendiente:hover { border-color: #2e7d32; color: #2e7d32; }
+    .btn-pago.sugerido { border-style: solid; border-color: #2e7d32; color: #2e7d32; }
     .tabla tr.pagado > td { background: #f0fdf4; }
     .qr-card { background: #fff; border-radius: 12px; padding: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,.06); text-align: center; max-width: 230px; }
     .qr-card img { width: 150px; height: 150px; }
@@ -57,7 +58,10 @@
         <div class="stat"><div class="n">{{ totales.adultos }}</div><div class="l">Adultos</div></div>
         <div class="stat"><div class="n">{{ totales.ninos }}</div><div class="l">Niños</div></div>
         <div class="stat"><div class="n">{{ totales.gratis }}</div><div class="l">Sin cargo</div></div>
-        <div class="stat"><div class="n">${{ totales.monto|pesos }}</div><div class="l">Total a cobrar</div></div>
+        <div class="stat"><div class="n">${{ totales.monto|pesos }}</div><div class="l">Total{% if evento.tiene_descuento %} sin descuento{% else %} a cobrar{% endif %}</div></div>
+        {% if evento.tiene_descuento %}
+        <div class="stat"><div class="n">${{ totales.monto_descuento|pesos }}</div><div class="l">Total con descuento (hasta {{ evento.fecha_limite_descuento|date:"d/m" }})</div></div>
+        {% endif %}
         <a class="stat cobrado text-decoration-none" href="?pago={% if filtro_pago == 'pagado' %}{% else %}pagado{% endif %}">
             <div class="n">${{ totales.cobrado|pesos }}</div>
             <div class="l">Cobrado · {{ totales.familias_pagadas }} fam.{% if filtro_pago == 'pagado' %} (ver todas){% endif %}</div>
@@ -99,14 +103,23 @@
                 {% if insc.observaciones %}<div class="small text-muted mt-1"><i class="bi bi-chat-left-text me-1"></i>{{ insc.observaciones }}</div>{% endif %}
             </td>
             <td class="text-nowrap">{{ insc.celular }}</td>
-            <td class="text-end fw-semibold">${{ insc.total|pesos }}</td>
+            <td class="text-end text-nowrap">
+                <span class="fw-semibold">${{ insc.total|pesos }}</span>
+                {% if evento.tiene_descuento and insc.total_descuento != insc.total %}<br><span class="small text-success">c/desc. ${{ insc.total_descuento|pesos }}</span>{% endif %}
+            </td>
             <td>
                 <form method="post" action="{% url 'eventos:panel_inscripcion_pagado' insc.pk %}" class="d-inline"
                       {% if insc.pagado %}onsubmit="return confirm('¿Desmarcar el pago de esta inscripción?')"{% endif %}>
                     {% csrf_token %}
                     <input type="hidden" name="filtros" value="{{ request.GET.urlencode }}">
                     {% if insc.pagado %}
-                    <button class="btn-pago pagado" title="Pagado el {{ insc.fecha_pago|date:'d/m/Y H:i' }}"><i class="bi bi-check-circle-fill me-1"></i>Pagado</button>
+                    <button class="btn-pago pagado" title="Pagado el {{ insc.fecha_pago|date:'d/m/Y H:i' }}"><i class="bi bi-check-circle-fill me-1"></i>Pagado ${{ insc.total_pagado|pesos }}{% if insc.con_descuento %} c/desc.{% endif %}</button>
+                    {% elif evento.tiene_descuento and insc.total_descuento != insc.total %}
+                    <div class="small text-muted mb-1">Marcar pagado:</div>
+                    <div class="d-flex flex-column gap-1">
+                        <button name="descuento" value="1" class="btn-pago pendiente{% if descuento_hoy %} sugerido{% endif %}"><i class="bi bi-circle me-1"></i>Con desc. ${{ insc.total_descuento|pesos }}</button>
+                        <button name="descuento" value="0" class="btn-pago pendiente{% if not descuento_hoy %} sugerido{% endif %}"><i class="bi bi-circle me-1"></i>Sin desc. ${{ insc.total|pesos }}</button>
+                    </div>
                     {% else %}
                     <button class="btn-pago pendiente"><i class="bi bi-circle me-1"></i>Marcar pagado</button>
                     {% endif %}

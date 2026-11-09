@@ -167,6 +167,82 @@ class InscripcionTests(TestCase):
         d = self.client.post(url, {'apellido': 'Otro', 'nombre': 'Nombre', 'celular': '+54 9 3511234567'}).json()
         self.assertFalse(d['encontrada'])
 
+    def _con_descuento(self, dias=5):
+        self.evento.fecha_limite_descuento = timezone.localdate() + timedelta(days=dias)
+        self.evento.precio_adulto_descuento = 8000
+        self.evento.precio_nino_descuento = 3000
+        self.evento.nota_comprobante = 'Alias: ICE.EVENTOS'
+        self.evento.save()
+
+    def test_descuento_en_comprobante_y_whatsapp(self):
+        self._con_descuento()
+        self.post([{'apellido': 'Pérez', 'nombre': 'Juan', 'edad': 45},
+                   {'apellido': 'Pérez', 'nombre': 'Sofía', 'parentesco': 'hijo', 'edad': 7},
+                   {'apellido': 'Pérez', 'nombre': 'Bebé', 'parentesco': 'hijo', 'edad': 1}])
+        insc = Inscripcion.objects.get()
+        self.assertEqual(insc.total(), 15000)
+        self.assertEqual(insc.total_descuento(), 11000)
+        r = self.client.get(reverse('eventos:exito', args=['fin-2026']))
+        self.assertContains(r, 'aplicaremos un descuento')
+        self.assertContains(r, '11.000')
+        self.assertContains(r, 'Pagando después')
+        self.assertContains(r, 'Alias: ICE.EVENTOS')
+        self.assertContains(r, 'Mi%20importe%20a%20pagar%20es%20%2411.000%20%28con%20el%20descuento')
+
+    def test_descuento_vencido_cobra_precio_normal(self):
+        self._con_descuento(dias=-1)
+        self.post([{'apellido': 'Pérez', 'nombre': 'Juan', 'edad': 45}])
+        r = self.client.get(reverse('eventos:exito', args=['fin-2026']))
+        self.assertNotContains(r, 'aplicaremos un descuento')
+        self.assertContains(r, 'Mi%20importe%20a%20pagar%20es%20%2410.000.')
+
+    def test_marcar_pagado_con_y_sin_descuento(self):
+        self._con_descuento()
+        self.post([{'apellido': 'Pérez', 'nombre': 'Juan', 'edad': 45}])
+        self.post([{'apellido': 'Gómez', 'nombre': 'Ana', 'edad': 40}], celular='351 7654321')
+        a, b = Inscripcion.objects.order_by('pk')
+        User.objects.create_user('staff', password='x', is_staff=True)
+        self.client.login(username='staff', password='x')
+        self.client.post(reverse('eventos:panel_inscripcion_pagado', args=[a.pk]), {'descuento': '1'})
+        self.client.post(reverse('eventos:panel_inscripcion_pagado', args=[b.pk]), {'descuento': '0'})
+        a.refresh_from_db(); b.refresh_from_db()
+        self.assertTrue(a.con_descuento)
+        self.assertFalse(b.con_descuento)
+        self.assertEqual(a.total_pagado(), 8000)
+        self.assertEqual(b.total_pagado(), 10000)
+        r = self.client.get(reverse('eventos:panel_detalle', args=[self.evento.pk]))
+        self.assertEqual(r.context['totales']['cobrado'], 18000)
+        self.assertEqual(r.context['totales']['monto_descuento'], 16000)
+        self.assertContains(r, 'Pagado $8.000 c/desc.')
+
+        import openpyxl
+        r = self.client.get(reverse('eventos:panel_exportar', args=[self.evento.pk]))
+        ws = openpyxl.load_workbook(io.BytesIO(r.content))['Familias']
+        headers = [c.value for c in ws[4]]
+        self.assertIn('Monto pagado', headers)
+        self.assertTrue(any(h and h.startswith('Total c/desc.') for h in headers))
+        col_pagado = headers.index('Pagado') + 1
+        col_monto = headers.index('Monto pagado') + 1
+        self.assertIn('c/desc.', ws.cell(row=5, column=col_pagado).value)
+        self.assertEqual(ws.cell(row=5, column=col_monto).value, 8000)
+
+        # Desmarcar limpia el descuento
+        self.client.post(reverse('eventos:panel_inscripcion_pagado', args=[a.pk]))
+        a.refresh_from_db()
+        self.assertFalse(a.pagado or a.con_descuento)
+
+    def test_form_descuento_incompleto(self):
+        from .forms import EventoForm
+        datos = {'nombre': 'X', 'slug': 'x', 'fecha': '2026-12-20', 'precio_adulto': 100, 'precio_nino': 50,
+                 'edad_max_nino': 11, 'edad_min_paga': 3, 'precio_adulto_descuento': 80}
+        f = EventoForm(datos)
+        self.assertFalse(f.is_valid())
+        self.assertIn('fecha_limite_descuento', f.errors)
+        datos.update(fecha_limite_descuento='2026-12-01', precio_nino_descuento=60)
+        f = EventoForm(datos)
+        self.assertFalse(f.is_valid())
+        self.assertIn('precio_nino_descuento', f.errors)  # mayor al normal
+
     def test_celular_obligatorio(self):
         r = self.post([{'apellido': 'Perez', 'nombre': 'Juan', 'edad': 40}], celular='12')
         self.assertContains(r, 'celular')

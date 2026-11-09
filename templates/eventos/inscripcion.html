@@ -16,6 +16,7 @@
 .precio { background: #f4f7fb; border-radius: 12px; padding: .75rem; text-align: center; }
 .precio .monto { font-size: 1.25rem; font-weight: 700; color: var(--primary-color); }
 .precio .det { font-size: .8rem; color: #64748b; }
+.precio .desc { font-size: .8rem; color: #166534; background: #dcfce7; border-radius: 8px; padding: .2rem .4rem; margin-top: .4rem; font-weight: 600; }
 .avisos { margin-top: 1rem; font-size: .92rem; color: #475569; }
 .avisos div { margin-bottom: .25rem; }
 .sec-title { font-weight: 700; color: var(--text-dark); font-size: 1.1rem; margin-bottom: .75rem; }
@@ -69,10 +70,12 @@ body.escribiendo .ev-container { padding-bottom: 60vh; }
                 <div class="precio">
                     <div class="monto">${{ evento.precio_adulto|pesos }}</div>
                     <div class="det">Adultos<br>{{ evento.edad_max_nino|add:1 }} años o más</div>
+                    {% if descuento_hoy %}<div class="desc">${{ evento.precio_adulto_descuento|pesos }} pagando hasta el {{ evento.fecha_limite_descuento|date:"d/m" }}</div>{% endif %}
                 </div>
                 <div class="precio">
                     <div class="monto">${{ evento.precio_nino|pesos }}</div>
                     <div class="det">Niños<br>{{ evento.edad_min_paga }} a {{ evento.edad_max_nino }} años</div>
+                    {% if descuento_hoy %}<div class="desc">${{ evento.precio_nino_descuento|pesos }} pagando hasta el {{ evento.fecha_limite_descuento|date:"d/m" }}</div>{% endif %}
                 </div>
                 <div class="precio">
                     <div class="monto">Sin cargo</div>
@@ -205,6 +208,7 @@ body.escribiendo .ev-container { padding-bottom: 60vh; }
 (function () {
     const PRECIO_ADULTO = {{ evento.precio_adulto }};
     const PRECIO_NINO = {{ evento.precio_nino }};
+    const DESCUENTO = {% if descuento_hoy %}{ adulto: {{ evento.precio_adulto_descuento }}, nino: {{ evento.precio_nino_descuento }}, hasta: '{{ evento.fecha_limite_descuento|date:"d/m" }}' }{% else %}null{% endif %};
     const EDAD_MIN_PAGA = {{ evento.edad_min_paga }};
     const EDAD_ADULTO = {{ evento.edad_max_nino|add:1 }};
     const URL_BUSCAR = "{% url 'eventos:buscar' evento.slug %}";
@@ -374,7 +378,15 @@ body.escribiendo .ev-container { padding-bottom: 60vh; }
         if (gratis) partes.push(`${gratis} sin cargo`);
         if (sinEdad) partes.push(`${sinEdad} sin edad`);
         document.getElementById('resumen-det').textContent = partes.join(' · ');
-        document.getElementById('resumen-total').textContent = fmt(adultos * PRECIO_ADULTO + ninos * PRECIO_NINO);
+        const total = adultos * PRECIO_ADULTO + ninos * PRECIO_NINO;
+        if (DESCUENTO && total > 0) {
+            const totalDesc = adultos * DESCUENTO.adulto + ninos * DESCUENTO.nino;
+            document.getElementById('resumen-total').textContent = fmt(totalDesc);
+            document.getElementById('resumen-det').textContent = partes.join(' · ') +
+                ` — pagando hasta el ${DESCUENTO.hasta} (después ${fmt(total)})`;
+        } else {
+            document.getElementById('resumen-total').textContent = fmt(total);
+        }
         btnAgregar.disabled = contFam.children.length >= MAX_FAMILIARES;
     }
 

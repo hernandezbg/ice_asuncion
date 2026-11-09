@@ -56,6 +56,17 @@
             </div>
         </div>
 
+        <div class="sec">Descuento por pago anticipado (opcional)</div>
+        <div class="form-text mb-2">Ej: pagando hasta el 22/11 inclusive, adulto $10.000 y niño $6.000. Dejalo vacío si no hay descuento.</div>
+        <div class="row g-3">
+            {% include "eventos/panel/_campo.html" with f=form.fecha_limite_descuento col="col-md-4" %}
+            {% include "eventos/panel/_campo.html" with f=form.precio_adulto_descuento col="col-md-4 col-6" %}
+            {% include "eventos/panel/_campo.html" with f=form.precio_nino_descuento col="col-md-4 col-6" %}
+        </div>
+
+        <div class="sec">Nota del comprobante</div>
+        {% include "eventos/panel/_campo.html" with f=form.nota_comprobante col="" %}
+
         <div class="sec">Contactos para coordinar el pago</div>
         <div class="form-text mb-2">Aparecen en el comprobante final con un botón de WhatsApp que abre el chat con el importe a pagar.</div>
         {% include "eventos/panel/_campo.html" with f=form.contactos_pago col="" %}

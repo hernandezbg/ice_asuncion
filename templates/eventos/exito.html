@@ -8,6 +8,8 @@
 .ok-card { background: #fff; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); padding: 2rem; }
 .ok-icon { font-size: 3.5rem; color: #2e7d32; }
 .ok-total { font-size: 1.6rem; font-weight: 700; color: var(--primary-color); }
+.nota-desc { background: #fefce8; border: 1px solid #fde68a; color: #854d0e; border-radius: 12px; padding: .75rem 1rem; margin-top: 1rem; font-size: .92rem; }
+.nota-libre { background: #f1f5f9; border-radius: 12px; padding: .75rem 1rem; margin-top: 1rem; font-size: .92rem; color: #334155; }
 .pago-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 1rem; margin-top: 1.25rem; text-align: center; }
 .pago-box p { margin-bottom: .75rem; font-weight: 600; color: #166534; }
 .btns-wa { display: flex; gap: .6rem; justify-content: center; flex-wrap: wrap; }
@@ -26,22 +28,43 @@
         </div>
 
         <table class="table table-sm align-middle mt-3">
-            <thead><tr><th>Persona</th><th>Categoría</th><th class="text-end">Precio</th></tr></thead>
+            <thead><tr><th>Persona</th><th>Categoría</th><th class="text-end">Precio</th>{% if descuento_hoy %}<th class="text-end text-success">Con desc.</th>{% endif %}</tr></thead>
             <tbody>
             {% for p in personas %}
             <tr>
                 <td>{{ p.apellido }}, {{ p.nombre }} <span class="text-muted small">({{ p.get_parentesco_display }})</span></td>
                 <td>{% if p.edad is not None %}{{ p.edad }} años · {% endif %}{{ p.categoria_label }}</td>
                 <td class="text-end">${{ p.precio|pesos }}</td>
+                {% if descuento_hoy %}<td class="text-end text-success">${{ p.precio_descuento|pesos }}</td>{% endif %}
             </tr>
             {% endfor %}
             </tbody>
         </table>
 
+        {% if descuento_hoy and importe != inscripcion.total %}
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-semibold">Total pagando hasta el {{ evento.fecha_limite_descuento|date:"j \d\e F" }}</span>
+            <span class="ok-total">${{ importe|pesos }}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center text-muted">
+            <span>Pagando después</span>
+            <span class="fw-semibold">${{ inscripcion.total|pesos }}</span>
+        </div>
+        <div class="nota-desc">
+            <i class="bi bi-tag-fill me-1"></i>Realizando el pago hasta el <strong>{{ evento.fecha_limite_descuento|date:"j \d\e F" }} inclusive</strong>
+            aplicaremos un descuento quedando <strong>${{ evento.precio_adulto_descuento|pesos }}</strong> por adulto
+            y <strong>${{ evento.precio_nino_descuento|pesos }}</strong> por menores.
+        </div>
+        {% else %}
         <div class="d-flex justify-content-between align-items-center">
             <span class="fw-semibold">Total a abonar</span>
             <span class="ok-total">${{ inscripcion.total|pesos }}</span>
         </div>
+        {% endif %}
+
+        {% if evento.nota_comprobante %}
+        <div class="nota-libre">{{ evento.nota_comprobante|linebreaksbr }}</div>
+        {% endif %}
 
         {% if contactos_pago and inscripcion.total %}
         <div class="pago-box">

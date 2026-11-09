@@ -18,6 +18,7 @@ from miembros.views import quitar_acentos, verificar_recaptcha
 from escuela.models import Alumno
 
 from .forms import EventoForm
+from .templatetags.eventos_tags import pesos
 from .models import (Evento, Inscripcion, Inscripto,
                      CATEGORIA_ADULTO, CATEGORIA_NINO, CATEGORIA_GRATIS)
 
@@ -277,6 +278,7 @@ def inscripcion_form(request, slug):
         'parentescos': [p for p in Inscripto.PARENTESCO_CHOICES if p[0] != Inscripto.RESPONSABLE],
         'cupo_disponible': evento.cupo_disponible(),
         'cupo_lleno': evento.cupo_lleno(),
+        'descuento_hoy': evento.descuento_vigente(),
         'recaptcha_site_key': settings.RECAPTCHA_SITE_KEY,
         'filas_previas': filas,
         'celular': request.POST.get('celular', '') if request.method == 'POST' else '',
@@ -294,18 +296,23 @@ def inscripcion_exito(request, slug):
     if not inscripcion:
         return redirect('eventos:inscripcion', slug=slug)
     from urllib.parse import quote
-    from .templatetags.eventos_tags import pesos
     resp = inscripcion.responsable()
+    descuento_hoy = evento.descuento_vigente()
+    importe = inscripcion.total(descuento=descuento_hoy)
+    detalle_desc = (f' (con el descuento pagando hasta el {evento.fecha_limite_descuento:%d/%m})'
+                    if descuento_hoy and importe != inscripcion.total() else '')
     contactos = []
     for nombre, numero in evento.lista_contactos_pago():
         texto = (f'Hola {nombre}, terminé de hacer la inscripción a {evento.nombre} '
                  f'a nombre de {resp.apellido}, {resp.nombre} y me gustaría coordinar el pago. '
-                 f'Mi importe a pagar es ${pesos(inscripcion.total())}.')
+                 f'Mi importe a pagar es ${pesos(importe)}{detalle_desc}.')
         contactos.append({'nombre': nombre, 'url': f'https://wa.me/{numero}?text={quote(texto)}'})
     return render(request, 'eventos/exito.html', {
         'evento': evento,
         'inscripcion': inscripcion,
         'contactos_pago': contactos,
+        'descuento_hoy': descuento_hoy,
+        'importe': importe,
         'actualizada': request.session.get(f'evento_insc_actualizada_{evento.pk}', False),
         'personas': inscripcion.personas.all(),
     })
@@ -512,8 +519,9 @@ def _datos_evento(evento):
                 claves[('a', p.alumno_id)].add(insc.pk)
 
     totales = {'familias': len(inscripciones), 'adultos': 0, 'ninos': 0, 'gratis': 0,
-               'personas': 0, 'monto': 0, 'revisar': 0, 'cobrado': 0, 'pendiente': 0,
-               'familias_pagadas': 0}
+               'personas': 0, 'monto': 0, 'monto_descuento': 0, 'revisar': 0,
+               'cobrado': 0, 'pendiente': 0, 'familias_pagadas': 0}
+    descuento_hoy = evento.descuento_vigente()
     for insc in inscripciones:
         insc.revisar = False
         for p in insc.personas.all():
@@ -530,13 +538,14 @@ def _datos_evento(evento):
             totales['gratis'] += cat == CATEGORIA_GRATIS
             totales['personas'] += 1
             totales['monto'] += p.precio()
+            totales['monto_descuento'] += p.precio(descuento=True)
         totales['revisar'] += insc.revisar
-        total_insc = insc.total()
         if insc.pagado:
-            totales['cobrado'] += total_insc
+            totales['cobrado'] += insc.total_pagado()
             totales['familias_pagadas'] += 1
         else:
-            totales['pendiente'] += total_insc
+            # Lo pendiente se calcula con el precio que corresponde hoy
+            totales['pendiente'] += insc.total(descuento=descuento_hoy)
 
     return inscripciones, totales
 
@@ -587,6 +596,7 @@ def panel_detalle(request, pk):
         'url_publica': url,
         'qr_b64': _qr_b64(url),
         'motivo_cerrado': evento.motivo_cerrado(),
+        'descuento_hoy': evento.descuento_vigente(),
     })
 
 
@@ -614,12 +624,18 @@ def panel_inscripcion_eliminar(request, pk):
 @user_passes_test(es_staff)
 @require_POST
 def panel_inscripcion_pagado(request, pk):
-    inscripcion = get_object_or_404(Inscripcion, pk=pk)
+    inscripcion = get_object_or_404(Inscripcion.objects.select_related('evento'), pk=pk)
     inscripcion.pagado = not inscripcion.pagado
     inscripcion.fecha_pago = timezone.now() if inscripcion.pagado else None
-    inscripcion.save(update_fields=['pagado', 'fecha_pago'])
+    inscripcion.con_descuento = (inscripcion.pagado and inscripcion.evento.tiene_descuento()
+                                 and request.POST.get('descuento') == '1')
+    inscripcion.save(update_fields=['pagado', 'fecha_pago', 'con_descuento'])
     resp = inscripcion.responsable()
-    estado = 'pagada' if inscripcion.pagado else 'pendiente de pago'
+    if inscripcion.pagado:
+        detalle = ' con descuento' if inscripcion.con_descuento else ''
+        estado = f'pagada{detalle} (${pesos(inscripcion.total_pagado())})'
+    else:
+        estado = 'pendiente de pago'
     messages.success(request, f'Inscripción de {resp} marcada como {estado}.')
     destino = reverse('eventos:panel_detalle', args=[inscripcion.evento_id])
     filtros = request.POST.get('filtros', '')
@@ -653,6 +669,8 @@ def panel_exportar(request, pk):
             f'{evento.fecha:%d/%m/%Y} · Adulto ${evento.precio_adulto:,} · '
             f'Niño ({evento.edad_min_paga} a {evento.edad_max_nino} años) ${evento.precio_nino:,} · '
             f'Menores de {evento.edad_min_paga} sin cargo'
+            + (f' · Pagando hasta el {evento.fecha_limite_descuento:%d/%m}: adulto ${evento.precio_adulto_descuento:,}'
+               f' y niño ${evento.precio_nino_descuento:,}' if evento.tiene_descuento() else '')
         ).replace(',', '.')).font = Font(size=10, color='666666')
         for col, (h, ancho) in enumerate(zip(headers, anchos), 1):
             c = ws.cell(row=4, column=col, value=h)
@@ -662,57 +680,87 @@ def panel_exportar(request, pk):
 
     wb = openpyxl.Workbook()
 
-    # --- Hoja 1: Familias (para cobrar) ---
-    ws = wb.active
-    ws.title = 'Familias'
-    headers = ['N°', 'Responsable', 'Celular', 'Adultos', 'Niños', 'Sin cargo', 'Personas',
-               'Total a cobrar', 'Revisar', 'Inscripción', 'Pagado', 'Observaciones']
-    encabezado(ws, f'{evento.nombre} - Inscripciones por familia', headers,
-               [5, 30, 16, 9, 8, 10, 10, 15, 10, 16, 10, 40])
-    r = 5
-    for n, insc in enumerate(inscripciones, 1):
-        resp = insc.responsable()
-        valores = [
-            n, str(resp) if resp else '', insc.celular,
-            insc.cantidad(CATEGORIA_ADULTO), insc.cantidad(CATEGORIA_NINO), insc.cantidad(CATEGORIA_GRATIS),
-            insc.personas.count(), insc.total(), 'SÍ' if insc.revisar else '',
-            timezone.localtime(insc.fecha).strftime('%d/%m/%Y %H:%M'),
-            ('SÍ ' + timezone.localtime(insc.fecha_pago).strftime('%d/%m')) if insc.pagado and insc.fecha_pago
-            else ('SÍ' if insc.pagado else ''),
-            insc.observaciones,
-        ]
+    con_desc = evento.tiene_descuento()
+    hasta = f'{evento.fecha_limite_descuento:%d/%m}' if con_desc else ''
+
+    def fila(ws, r, valores, centrar, monedas, resaltar):
         for col, v in enumerate(valores, 1):
             c = ws.cell(row=r, column=col, value=v)
             c.border = border
-            if col in (1, 4, 5, 6, 7, 9, 11):
+            if col in centrar:
                 c.alignment = center
-            if insc.revisar:
+            if col in monedas:
+                c.number_format = money
+            if resaltar:
                 c.fill = revisar_fill
-        ws.cell(row=r, column=8).number_format = money
+
+    # --- Hoja 1: Familias (para cobrar) ---
+    ws = wb.active
+    ws.title = 'Familias'
+    cols = [('N°', 5), ('Responsable', 30), ('Celular', 18), ('Adultos', 9), ('Niños', 8), ('Sin cargo', 10),
+            ('Personas', 10), ('Total', 13)]
+    if con_desc:
+        cols.append((f'Total c/desc. (hasta {hasta})', 20))
+    cols += [('Revisar', 10), ('Inscripción', 16), ('Pagado', 16), ('Monto pagado', 14), ('Observaciones', 40)]
+    headers = [c[0] for c in cols]
+    idx = {h: n for n, h in enumerate(headers, 1)}
+    col_total, col_pagado, col_monto_pag = idx['Total'], idx['Pagado'], idx['Monto pagado']
+    col_desc = col_total + 1 if con_desc else None
+    monedas = {col_total, col_monto_pag} | ({col_desc} if con_desc else set())
+    centrar = {1, 4, 5, 6, 7, idx['Revisar'], col_pagado}
+    encabezado(ws, f'{evento.nombre} - Inscripciones por familia', headers, [c[1] for c in cols])
+    r = 5
+    for n, insc in enumerate(inscripciones, 1):
+        resp = insc.responsable()
+        pagado = ''
+        if insc.pagado:
+            pagado = 'SÍ'
+            if insc.fecha_pago:
+                pagado += ' ' + timezone.localtime(insc.fecha_pago).strftime('%d/%m')
+            if insc.con_descuento:
+                pagado += ' c/desc.'
+        valores = [n, str(resp) if resp else '', insc.celular,
+                   insc.cantidad(CATEGORIA_ADULTO), insc.cantidad(CATEGORIA_NINO), insc.cantidad(CATEGORIA_GRATIS),
+                   insc.personas.count(), insc.total()]
+        if con_desc:
+            valores.append(insc.total_descuento())
+        valores += ['SÍ' if insc.revisar else '', timezone.localtime(insc.fecha).strftime('%d/%m/%Y %H:%M'),
+                    pagado, insc.total_pagado() if insc.pagado else None, insc.observaciones]
+        fila(ws, r, valores, centrar, monedas, insc.revisar)
         r += 1
     # Totales
-    for col, v in [(2, 'TOTAL'), (4, totales['adultos']), (5, totales['ninos']), (6, totales['gratis']),
-                   (7, totales['personas']), (8, totales['monto']),
-                   (11, f"{totales['familias_pagadas']}/{totales['familias']}")]:
+    fila_tot = {2: 'TOTAL', 4: totales['adultos'], 5: totales['ninos'], 6: totales['gratis'],
+                7: totales['personas'], col_total: totales['monto'],
+                col_pagado: f"{totales['familias_pagadas']}/{totales['familias']}", col_monto_pag: totales['cobrado']}
+    if con_desc:
+        fila_tot[col_desc] = totales['monto_descuento']
+    for col, v in fila_tot.items():
         c = ws.cell(row=r, column=col, value=v)
         c.font = Font(bold=True)
         c.border = border
         if col != 2:
             c.alignment = center
-    ws.cell(row=r, column=8).number_format = money
-    for etiqueta, valor in [('Cobrado', totales['cobrado']), ('Pendiente', totales['pendiente'])]:
+        if col in monedas:
+            c.number_format = money
+    etiqueta_pend = 'Pendiente (precio de hoy)' if con_desc else 'Pendiente'
+    for etiqueta, valor in [('Cobrado', totales['cobrado']), (etiqueta_pend, totales['pendiente'])]:
         r += 1
-        ws.cell(row=r, column=7, value=etiqueta).font = Font(bold=True)
-        c = ws.cell(row=r, column=8, value=valor)
+        ws.cell(row=r, column=col_total - 1, value=etiqueta).font = Font(bold=True)
+        c = ws.cell(row=r, column=col_total, value=valor)
         c.font = Font(bold=True)
         c.number_format = money
 
     # --- Hoja 2: Personas (detalle) ---
     ws2 = wb.create_sheet('Personas')
-    headers = ['N° Fam.', 'Responsable', 'Apellido', 'Nombre', 'Parentesco', 'Edad', 'Categoría',
-               'Precio', 'En base', 'Revisar']
-    encabezado(ws2, f'{evento.nombre} - Detalle de personas', headers,
-               [8, 30, 20, 20, 14, 8, 12, 12, 12, 30])
+    cols = [('N° Fam.', 8), ('Responsable', 30), ('Apellido', 20), ('Nombre', 20), ('Parentesco', 14),
+            ('Edad', 8), ('Categoría', 12), ('Precio', 12)]
+    if con_desc:
+        cols.append((f'Precio c/desc.', 14))
+    cols += [('En base', 12), ('Revisar', 30)]
+    headers = [c[0] for c in cols]
+    encabezado(ws2, f'{evento.nombre} - Detalle de personas', headers, [c[1] for c in cols])
+    monedas2 = {8, 9} if con_desc else {8}
+    centrar2 = {1, 6, 7, len(headers) - 1}
     r = 5
     for n, insc in enumerate(inscripciones, 1):
         resp = insc.responsable()
@@ -722,19 +770,12 @@ def panel_exportar(request, pk):
                 motivos.append('No está en la base')
             if p.duplicado:
                 motivos.append('Posible duplicado')
-            valores = [
-                n, str(resp) if resp else '', p.apellido, p.nombre, p.get_parentesco_display(),
-                p.edad if p.edad is not None else '', p.categoria_label(), p.precio(),
-                p.origen() or 'NO', ', '.join(motivos),
-            ]
-            for col, v in enumerate(valores, 1):
-                c = ws2.cell(row=r, column=col, value=v)
-                c.border = border
-                if col in (1, 6, 7, 9):
-                    c.alignment = center
-                if p.revisar:
-                    c.fill = revisar_fill
-            ws2.cell(row=r, column=8).number_format = money
+            valores = [n, str(resp) if resp else '', p.apellido, p.nombre, p.get_parentesco_display(),
+                       p.edad if p.edad is not None else '', p.categoria_label(), p.precio()]
+            if con_desc:
+                valores.append(p.precio(descuento=True))
+            valores += [p.origen() or 'NO', ', '.join(motivos)]
+            fila(ws2, r, valores, centrar2, monedas2, p.revisar)
             r += 1
 
     buf = io.BytesIO()
