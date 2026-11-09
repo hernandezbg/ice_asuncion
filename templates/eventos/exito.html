@@ -1,13 +1,19 @@
 {% extends 'base.html' %}
 {% load eventos_tags %}
 
-{% block title %}Inscripción registrada - {{ evento.nombre }}{% endblock %}
+{% block title %}Inscripción {% if actualizada %}actualizada{% else %}registrada{% endif %} - {{ evento.nombre }}{% endblock %}
 
 {% block extra_css %}
 .ok-container { max-width: 600px; margin: 50px auto; padding: 0 12px; }
 .ok-card { background: #fff; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); padding: 2rem; }
 .ok-icon { font-size: 3.5rem; color: #2e7d32; }
 .ok-total { font-size: 1.6rem; font-weight: 700; color: var(--primary-color); }
+.pago-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 1rem; margin-top: 1.25rem; text-align: center; }
+.pago-box p { margin-bottom: .75rem; font-weight: 600; color: #166534; }
+.btns-wa { display: flex; gap: .6rem; justify-content: center; flex-wrap: wrap; }
+.btn-wa { background: #25D366; color: #fff; border-radius: 10px; padding: .65rem 1.2rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: .5rem; font-size: 1rem; }
+.btn-wa i { font-size: 1.35rem; }
+.btn-wa:hover { background: #1ebe5b; color: #fff; }
 {% endblock %}
 
 {% block content %}
@@ -15,7 +21,7 @@
     <div class="ok-card">
         <div class="text-center mb-3">
             <div class="ok-icon"><i class="bi bi-check-circle-fill"></i></div>
-            <h2 class="h4 fw-bold mt-2">¡Inscripción registrada!</h2>
+            <h2 class="h4 fw-bold mt-2">{% if actualizada %}¡Inscripción actualizada!{% else %}¡Inscripción registrada!{% endif %}</h2>
             <p class="text-muted mb-0">{{ evento.nombre }} · {{ evento.fecha|date:"j/m/Y" }}</p>
         </div>
 
@@ -37,9 +43,22 @@
             <span class="ok-total">${{ inscripcion.total|pesos }}</span>
         </div>
 
+        {% if contactos_pago and inscripcion.total %}
+        <div class="pago-box">
+            <p>Para coordinar el pago comunicate con {% for c in contactos_pago %}{{ c.nombre }}{% if not forloop.last %}{% if forloop.revcounter == 2 %} o {% else %}, {% endif %}{% endif %}{% endfor %}:</p>
+            <div class="btns-wa">
+                {% for c in contactos_pago %}
+                <a class="btn-wa" href="{{ c.url }}" target="_blank" rel="noopener">
+                    <i class="bi bi-whatsapp"></i>{{ c.nombre }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
         <p class="text-muted small mt-3 mb-0">
-            Guardá esta pantalla (captura) como comprobante. Administración se comunicará para la cobranza.
-            Si necesitás corregir algo, avisá a la iglesia.
+            Guardá esta pantalla (captura) como comprobante.
+            Si necesitás corregir algo, volvé a entrar al formulario con tu nombre y el mismo celular.
         </p>
     </div>
 </div>

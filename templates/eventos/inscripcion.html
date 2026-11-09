@@ -84,7 +84,7 @@ body.escribiendo .ev-container { padding-bottom: 60vh; }
                 {% if evento.fecha_cierre %}
                 <div><i class="bi bi-clock me-1"></i>Inscripción abierta hasta el <strong>{{ evento.fecha_cierre|date:"j/m/Y \a \l\a\s H:i" }} hs</strong></div>
                 {% endif %}
-                {% if cupo_disponible is not None and not motivo_cerrado %}
+                {% if cupo_disponible is not None and not motivo_cerrado and not cupo_lleno %}
                 <div><i class="bi bi-people me-1"></i>Quedan <strong>{{ cupo_disponible }}</strong> lugares</div>
                 {% endif %}
             </div>
@@ -95,6 +95,11 @@ body.escribiendo .ev-container { padding-bottom: 60vh; }
     <div class="alert alert-warning"><i class="bi bi-exclamation-triangle me-1"></i>{{ motivo_cerrado }}</div>
     {% else %}
 
+    {% if cupo_lleno %}
+    <div class="alert alert-warning"><i class="bi bi-people me-1"></i>Se completó el cupo del evento.
+        Si ya estás inscripto, podés modificar tu inscripción ingresando tu nombre y el mismo celular.</div>
+    {% endif %}
+
     {% if errores %}
     <div class="alert alert-danger">
         <ul class="mb-0">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>
@@ -103,6 +108,7 @@ body.escribiendo .ev-container { padding-bottom: 60vh; }
 
     <form method="post" id="form-inscripcion" autocomplete="off">
         {% csrf_token %}
+        <input type="hidden" name="editar" id="editar" value="{{ editar }}">
 
         <div class="ev-card">
             <div class="ev-body">
@@ -117,6 +123,11 @@ body.escribiendo .ev-container { padding-bottom: 60vh; }
                     <div class="invalid-feedback d-block" id="celular-error" style="display:none!important"></div>
                 </div>
             </div>
+        </div>
+
+        <div id="aviso-previa" class="alert alert-info"{% if not previa_cargada %} style="display:none"{% endif %}>
+            {% if previa_cargada %}<i class="bi bi-info-circle me-1"></i>Ya te habías inscripto el {{ previa_cargada.fecha|date:"d/m" }}.
+            Cargamos tu inscripción: podés agregar, quitar o corregir familiares y después tocá <b>Guardar cambios</b>.{% endif %}
         </div>
 
         <div class="ev-card">
@@ -147,7 +158,7 @@ body.escribiendo .ev-container { padding-bottom: 60vh; }
                     <div class="det" id="resumen-det">&nbsp;</div>
                     <div class="total" id="resumen-total">$0</div>
                 </div>
-                <button type="submit" class="btn-enviar"><i class="bi bi-check-circle me-1"></i>Confirmar inscripción</button>
+                <button type="submit" class="btn-enviar"><i class="bi bi-check-circle me-1"></i><span id="txt-enviar">{% if editar %}Guardar cambios{% else %}Confirmar inscripción{% endif %}</span></button>
             </div>
         </div>
     </form>
@@ -413,7 +424,93 @@ body.escribiendo .ev-container { padding-bottom: 60vh; }
         celInput.classList.toggle('is-invalid', !!msg);
     }
     celInput.addEventListener('input', () => mostrarErrorCelular(null));
-    celInput.addEventListener('blur', () => { if (celInput.value.trim()) mostrarErrorCelular(validarCelular()[0]); });
+    celInput.addEventListener('blur', () => {
+        if (!celInput.value.trim()) return;
+        mostrarErrorCelular(validarCelular()[0]);
+        buscarPrevia();
+    });
+
+    // ¿Ya se inscribio antes? Si el celular coincide, cargo su inscripcion para modificarla
+    const URL_PREVIA = "{% url 'eventos:inscripcion_previa' evento.slug %}";
+    const csrf = document.querySelector('[name="csrfmiddlewaretoken"]').value;
+    const aviso = document.getElementById('aviso-previa');
+    const inpEditar = document.getElementById('editar');
+    let ultimaConsulta = '';
+
+    const normTxt = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, ' ');
+    const CAMPOS = ['apellido', 'nombre', 'parentesco', 'edad', 'hermano_id', 'alumno_id'];
+    const leerFila = el => Object.fromEntries(CAMPOS.map(c => {
+        const inp = el.querySelector(`[name="${c}"]`);
+        return [c, inp ? inp.value : ''];
+    }));
+
+    function mostrarAviso(tipo, html) {
+        aviso.className = 'alert alert-' + tipo;
+        aviso.innerHTML = html;
+        aviso.style.display = '';
+    }
+
+    function buscarPrevia() {
+        const [err, numero] = validarCelular();
+        if (err) return;
+        const ap = contResp.querySelector('[name="apellido"]').value.trim();
+        const no = contResp.querySelector('[name="nombre"]').value.trim();
+        if (ap.length < 2 || no.length < 2) return;
+        const clave = [ap, no, numero].join('|');
+        if (clave === ultimaConsulta) return;
+        ultimaConsulta = clave;
+        const body = new URLSearchParams({
+            apellido: ap, nombre: no, celular: numero,
+            hermano_id: contResp.querySelector('[name="hermano_id"]').value,
+        });
+        fetch(URL_PREVIA, { method: 'POST', headers: { 'X-CSRFToken': csrf }, body })
+            .then(r => r.json())
+            .then(d => {
+                if (!d.encontrada) return;
+                if (d.otro_celular) {
+                    mostrarAviso('warning', '<i class="bi bi-exclamation-triangle me-1"></i>Ya hay una inscripción a este nombre con otro celular. ' +
+                        'Para modificarla ingresá el mismo celular con el que te inscribiste, o comunicate con la iglesia.');
+                    return;
+                }
+                if (d.pagada) {
+                    mostrarAviso('warning', '<i class="bi bi-exclamation-triangle me-1"></i>Ya estás inscripto y tu inscripción figura como pagada. ' +
+                        'Para hacer cambios comunicate con la iglesia.');
+                    return;
+                }
+                if (inpEditar.value === String(d.id)) return;
+                cargarPrevia(d);
+            })
+            .catch(() => {});
+    }
+
+    function cargarPrevia(d) {
+        inpEditar.value = d.id;
+        // El responsable conserva el vinculo con la base que tenia en su inscripcion
+        const r0 = d.filas[0] || {};
+        const filaResp = contResp.querySelector('.persona');
+        if ((r0.hermano_id || r0.alumno_id) && !contResp.querySelector('[name="hermano_id"]').value) {
+            contResp.querySelector('[name="apellido"]').value = r0.apellido;
+            contResp.querySelector('[name="nombre"]').value = r0.nombre;
+            contResp.querySelector('[name="hermano_id"]').value = r0.hermano_id || '';
+            contResp.querySelector('[name="alumno_id"]').value = r0.alumno_id || '';
+            filaResp.classList.add('vinculada');
+            filaResp.querySelector('.sugerencias').innerHTML = '';
+        }
+        const edadResp = contResp.querySelector('[name="edad"]');
+        if (!edadResp.value && d.filas[0] && d.filas[0].edad) edadResp.value = d.filas[0].edad;
+        // Familiares de la inscripcion anterior + los que ya haya cargado ahora (sin repetir)
+        const actuales = [...contFam.querySelectorAll('.persona')].map(leerFila).filter(f => f.apellido || f.nombre);
+        contFam.innerHTML = '';
+        const vistos = new Set();
+        d.filas.slice(1).forEach(f => { vistos.add(normTxt(f.apellido) + '|' + normTxt(f.nombre)); agregarFamiliar(f); });
+        actuales.forEach(f => { if (!vistos.has(normTxt(f.apellido) + '|' + normTxt(f.nombre))) agregarFamiliar(f); });
+        const obs = document.querySelector('[name="observaciones"]');
+        if (!obs.value.trim() && d.observaciones) obs.value = d.observaciones;
+        mostrarAviso('info', `<i class="bi bi-info-circle me-1"></i>Ya te habías inscripto el ${d.fecha}. ` +
+            'Cargamos tu inscripción: podés agregar, quitar o corregir familiares y después tocá <b>Guardar cambios</b>.');
+        document.getElementById('txt-enviar').textContent = 'Guardar cambios';
+        actualizar();
+    }
 
     // Evito doble envio y valido celular
     document.getElementById('form-inscripcion').addEventListener('submit', e => {
@@ -427,7 +524,7 @@ body.escribiendo .ev-container { padding-bottom: 60vh; }
         }
         celCompleto.value = numero;
         const b = e.target.querySelector('.btn-enviar');
-        setTimeout(() => { b.disabled = true; b.textContent = 'Enviando...'; }, 0);
+        setTimeout(() => { b.disabled = true; b.textContent = 'Guardando...'; }, 0);
     });
 })();
 </script>

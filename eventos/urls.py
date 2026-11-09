@@ -18,4 +18,5 @@ urlpatterns = [
     path('<slug:slug>/', views.inscripcion_form, name='inscripcion'),
     path('<slug:slug>/listo/', views.inscripcion_exito, name='exito'),
     path('<slug:slug>/buscar/', views.buscar_personas, name='buscar'),
+    path('<slug:slug>/mi-inscripcion/', views.inscripcion_previa, name='inscripcion_previa'),
 ]

@@ -61,6 +61,11 @@ class InscripcionTests(TestCase):
 
         r = self.client.get(reverse('eventos:exito', args=['fin-2026']))
         self.assertContains(r, '25.000')
+        # Botones de WhatsApp para coordinar el pago (con el 9 agregado para Argentina)
+        self.assertContains(r, 'https://wa.me/5493813419795?text=')
+        self.assertContains(r, 'https://wa.me/5493816621117?text=')
+        self.assertContains(r, 'Mi%20importe%20a%20pagar%20es%20%2425.000')
+        self.assertContains(r, 'Santy o Paula')
 
     def test_vinculo_descartado_si_nombre_no_coincide(self):
         self.post([{'apellido': 'Otro', 'nombre': 'Nombre', 'edad': 40, 'hermano_id': self.hermano.pk}])
@@ -96,6 +101,72 @@ class InscripcionTests(TestCase):
         self.assertIsNotNone(normalizar_celular('351123')[1])
         self.assertEqual(normalizar_celular('+595981123456'), ('+595981123456', None))
 
+    def test_reinscripcion_carga_la_previa_y_actualiza(self):
+        familia = [{'apellido': 'Pérez', 'nombre': 'Juan', 'edad': 45, 'hermano_id': self.hermano.pk},
+                   {'apellido': 'Pérez', 'nombre': 'Sofía', 'parentesco': 'hijo', 'edad': 7, 'alumno_id': self.alumno.pk}]
+        self.post(familia, observaciones='Sin TACC')
+        primera = Inscripcion.objects.get()
+
+        # Se vuelve a inscribir (mismo responsable y celular) agregando a la esposa, sin saber que ya estaba
+        nueva = [{'apellido': 'Perez', 'nombre': 'Juan', 'edad': 45},
+                 {'apellido': 'Gómez', 'nombre': 'Ana', 'parentesco': 'conyuge', 'edad': 40}]
+        r = self.post(nueva, celular='351 1234567')
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'Ya te habías inscripto')
+        nombres = [f['nombre'] for f in r.context['filas_previas']]
+        self.assertEqual(nombres, ['Juan', 'Sofía', 'Ana'])  # sus familiares anteriores + lo que agrego
+        self.assertContains(r, 'Sin TACC')
+        self.assertEqual(r.context['editar'], str(primera.pk))
+        self.assertEqual(Inscripcion.objects.count(), 1)
+
+        # Confirma los cambios: se actualiza la misma inscripcion
+        r = self.post(familia + [nueva[1]], editar=primera.pk)
+        self.assertRedirects(r, reverse('eventos:exito', args=['fin-2026']))
+        self.assertEqual(Inscripcion.objects.count(), 1)
+        self.assertEqual(primera.personas.count(), 3)
+        self.assertContains(self.client.get(reverse('eventos:exito', args=['fin-2026'])), 'Inscripción actualizada')
+
+    def test_reinscripcion_con_otro_celular_no_muestra_ni_duplica(self):
+        self.post([{'apellido': 'Pérez', 'nombre': 'Juan', 'edad': 45},
+                   {'apellido': 'Pérez', 'nombre': 'Sofía', 'parentesco': 'hijo', 'edad': 7}])
+        r = self.post([{'apellido': 'Perez', 'nombre': 'Juan', 'edad': 45}], celular='351 9999999')
+        self.assertContains(r, 'con otro celular')
+        self.assertNotIn('Sofía', [f['nombre'] for f in r.context['filas_previas']])
+        self.assertEqual(Inscripcion.objects.count(), 1)
+
+    def test_reinscripcion_pagada_no_se_modifica(self):
+        self.post([{'apellido': 'Pérez', 'nombre': 'Juan', 'edad': 45}])
+        Inscripcion.objects.update(pagado=True)
+        insc = Inscripcion.objects.get()
+        r = self.post([{'apellido': 'Pérez', 'nombre': 'Juan', 'edad': 45},
+                       {'apellido': 'Gómez', 'nombre': 'Ana', 'parentesco': 'conyuge', 'edad': 40}], editar=insc.pk)
+        self.assertContains(r, 'figura como pagada')
+        self.assertEqual(insc.personas.count(), 1)
+
+    def test_editar_con_cupo_lleno_libera_sus_lugares(self):
+        self.evento.cupo = 2
+        self.evento.save()
+        self.post([{'apellido': 'Pérez', 'nombre': 'Juan', 'edad': 45},
+                   {'apellido': 'Pérez', 'nombre': 'Sofía', 'parentesco': 'hijo', 'edad': 7}])
+        insc = Inscripcion.objects.get()
+        r = self.post([{'apellido': 'Pérez', 'nombre': 'Juan', 'edad': 45},
+                       {'apellido': 'Pérez', 'nombre': 'Sofía', 'parentesco': 'hijo', 'edad': 8}], editar=insc.pk)
+        self.assertEqual(r.status_code, 302)
+        self.assertEqual(insc.personas.get(nombre='Sofía').edad, 8)
+
+    def test_endpoint_inscripcion_previa(self):
+        self.post([{'apellido': 'Pérez', 'nombre': 'Juan', 'edad': 45},
+                   {'apellido': 'Pérez', 'nombre': 'Sofía', 'parentesco': 'hijo', 'edad': 7}])
+        Inscripcion.objects.update(celular='3511234567')  # formato viejo, sin +54
+        url = reverse('eventos:inscripcion_previa', args=['fin-2026'])
+        d = self.client.post(url, {'apellido': 'perez', 'nombre': 'JUAN', 'celular': '+54 9 3511234567'}).json()
+        self.assertTrue(d['encontrada'])
+        self.assertEqual([f['nombre'] for f in d['filas']], ['Juan', 'Sofía'])
+        d = self.client.post(url, {'apellido': 'perez', 'nombre': 'juan', 'celular': '+54 9 3519999999'}).json()
+        self.assertEqual(d, {'encontrada': True, 'otro_celular': True})
+        d = self.client.post(url, {'apellido': 'Otro', 'nombre': 'Nombre', 'celular': '+54 9 3511234567'}).json()
+        self.assertFalse(d['encontrada'])
+
     def test_celular_obligatorio(self):
         r = self.post([{'apellido': 'Perez', 'nombre': 'Juan', 'edad': 40}], celular='12')
         self.assertContains(r, 'celular')
@@ -111,6 +182,10 @@ class InscripcionTests(TestCase):
         self.assertEqual(Inscripto.objects.count(), 2)
         r = self.client.get(self.url)
         self.assertContains(r, 'Se completó el cupo')
+        # Con el cupo lleno no entra una inscripcion nueva
+        r = self.post([{'apellido': 'Nuevo', 'nombre': 'Señor', 'edad': 50}], celular='351 7777777')
+        self.assertContains(r, 'Se completó el cupo')
+        self.assertEqual(Inscripcion.objects.count(), 1)
 
     def test_fecha_cierre(self):
         self.evento.fecha_cierre = timezone.now() - timedelta(hours=1)

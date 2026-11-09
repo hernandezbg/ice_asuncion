@@ -141,6 +141,51 @@ def normalizar_celular(valor):
     return None, MSJ_CELULAR_AR
 
 
+def _mismo_celular(a, b):
+    """Comparo celulares normalizados (acepta formatos viejos sin +54)"""
+    na, _ = normalizar_celular(a)
+    nb, _ = normalizar_celular(b)
+    if na and nb:
+        return na == nb
+    da = ''.join(c for c in (a or '') if c.isdigit())[-10:]
+    db = ''.join(c for c in (b or '') if c.isdigit())[-10:]
+    return len(da) >= 8 and da == db
+
+
+def _buscar_inscripcion_previa(evento, apellido, nombre, hermano_id=None):
+    """Inscripcion del evento cuyo responsable es la misma persona (mismo hermano o mismo nombre)"""
+    ap, no = _norm(apellido), _norm(nombre)
+    responsables = Inscripto.objects.filter(
+        inscripcion__evento=evento, parentesco=Inscripto.RESPONSABLE,
+    ).select_related('inscripcion').order_by('inscripcion__fecha')
+    for r in responsables:
+        if (hermano_id and r.hermano_id == hermano_id) or (_norm(r.apellido) == ap and _norm(r.nombre) == no):
+            return r.inscripcion
+    return None
+
+
+def _filas_de_inscripcion(inscripcion):
+    """Personas de una inscripcion en el formato de filas del formulario (responsable primero)"""
+    personas = sorted(inscripcion.personas.all(), key=lambda p: (p.parentesco != Inscripto.RESPONSABLE, p.id))
+    return [{
+        'apellido': p.apellido, 'nombre': p.nombre, 'parentesco': p.parentesco,
+        'edad': '' if p.edad is None else str(p.edad),
+        'hermano_id': str(p.hermano_id or ''), 'alumno_id': str(p.alumno_id or ''),
+    } for p in personas]
+
+
+def _combinar_filas(existentes, nuevas):
+    """Filas de la inscripcion previa + las familiares nuevas que no esten repetidas"""
+    vistos = {(_norm(f['apellido']), _norm(f['nombre'])) for f in existentes}
+    resultado = list(existentes)
+    for f in nuevas[1:]:
+        clave = (_norm(f.get('apellido')), _norm(f.get('nombre')))
+        if clave[0] and clave[1] and clave not in vistos:
+            resultado.append(f)
+            vistos.add(clave)
+    return resultado[:MAX_PERSONAS + 1]
+
+
 def _filas_previas(request):
     """Filas enviadas, para volver a mostrarlas si hubo errores"""
     if request.method != 'POST':
@@ -153,12 +198,17 @@ def _filas_previas(request):
 
 def inscripcion_form(request, slug):
     evento = get_object_or_404(Evento, slug=slug)
-    motivo_cerrado = evento.motivo_cerrado()
+    # Con el cupo lleno el formulario sigue abierto para modificar inscripciones existentes
+    motivo_cerrado = evento.motivo_cerrado(ignorar_cupo=True)
     errores = []
+    filas = _filas_previas(request)
+    editar = request.POST.get('editar', '').strip() if request.method == 'POST' else ''
+    previa_cargada = None  # inscripcion previa que se cargo en el formulario para revisar
+    observaciones = request.POST.get('observaciones', '') if request.method == 'POST' else ''
 
     if request.method == 'POST' and not motivo_cerrado:
         celular = request.POST.get('celular', '').strip()
-        observaciones = request.POST.get('observaciones', '').strip()[:1000]
+        observaciones = observaciones.strip()[:1000]
 
         if settings.RECAPTCHA_SITE_KEY and not verificar_recaptcha(request.POST.get('g-recaptcha-response', '')):
             errores.append('Por favor, completá la verificación de seguridad.')
@@ -170,23 +220,54 @@ def inscripcion_form(request, slug):
         if error_celular:
             errores.append(error_celular)
 
+        # ¿El responsable ya tiene una inscripcion en este evento?
+        previa = None
         if not errores:
+            resp = personas[0]
+            previa = _buscar_inscripcion_previa(
+                evento, resp['apellido'], resp['nombre'], resp['hermano'].pk if resp['hermano'] else None)
+            if previa and not _mismo_celular(previa.celular, celular_ok):
+                errores.append(
+                    f'Ya hay una inscripción a nombre de {resp["apellido"]}, {resp["nombre"]} con otro celular. '
+                    'Para modificarla ingresá el mismo celular con el que te inscribiste, o comunicate con la iglesia.')
+            elif previa and previa.pagado:
+                errores.append('Tu inscripción ya figura como pagada. Para hacer cambios comunicate con la iglesia.')
+            elif previa and str(previa.pk) != editar:
+                # No sabia que ya estaba inscripto: le cargo su inscripcion (mas lo que agrego) para que revise
+                previa_cargada = previa
+                filas = _combinar_filas(_filas_de_inscripcion(previa), filas)
+                filas[0]['edad'] = filas[0]['edad'] or str(personas[0]['edad'])
+                editar = str(previa.pk)
+                observaciones = observaciones or previa.observaciones
+
+        if not errores and not previa_cargada:
             with transaction.atomic():
                 ev = Evento.objects.select_for_update().get(pk=evento.pk)
-                motivo_cerrado = ev.motivo_cerrado()
+                motivo_cerrado = ev.motivo_cerrado(ignorar_cupo=True)
                 disponible = ev.cupo_disponible()
+                if disponible is not None and previa:
+                    disponible += previa.personas.count()  # sus lugares se liberan al reemplazarla
                 if motivo_cerrado:
                     errores.append(motivo_cerrado)
                 elif disponible is not None and len(personas) > disponible:
-                    errores.append(f'Solo quedan {disponible} lugares disponibles.')
+                    errores.append('Se completó el cupo del evento.' if disponible <= 0 and not previa
+                                   else f'Solo quedan {disponible} lugares disponibles.')
                 else:
-                    inscripcion = Inscripcion.objects.create(
-                        evento=ev, celular=celular_ok[:30], observaciones=observaciones,
-                    )
+                    if previa:
+                        inscripcion = Inscripcion.objects.select_for_update().get(pk=previa.pk)
+                        inscripcion.personas.all().delete()
+                        inscripcion.celular = celular_ok[:30]
+                        inscripcion.observaciones = observaciones
+                        inscripcion.save()
+                    else:
+                        inscripcion = Inscripcion.objects.create(
+                            evento=ev, celular=celular_ok[:30], observaciones=observaciones,
+                        )
                     Inscripto.objects.bulk_create(
                         [Inscripto(inscripcion=inscripcion, **p) for p in personas]
                     )
                     request.session[f'evento_insc_{ev.pk}'] = inscripcion.pk
+                    request.session[f'evento_insc_actualizada_{ev.pk}'] = bool(previa)
                     return redirect('eventos:exito', slug=ev.slug)
 
     context = {
@@ -195,10 +276,13 @@ def inscripcion_form(request, slug):
         'errores': errores,
         'parentescos': [p for p in Inscripto.PARENTESCO_CHOICES if p[0] != Inscripto.RESPONSABLE],
         'cupo_disponible': evento.cupo_disponible(),
+        'cupo_lleno': evento.cupo_lleno(),
         'recaptcha_site_key': settings.RECAPTCHA_SITE_KEY,
-        'filas_previas': _filas_previas(request),
+        'filas_previas': filas,
         'celular': request.POST.get('celular', '') if request.method == 'POST' else '',
-        'observaciones': request.POST.get('observaciones', '') if request.method == 'POST' else '',
+        'observaciones': observaciones,
+        'editar': editar,
+        'previa_cargada': previa_cargada,
     }
     return render(request, 'eventos/inscripcion.html', context)
 
@@ -209,10 +293,49 @@ def inscripcion_exito(request, slug):
     inscripcion = Inscripcion.objects.filter(pk=insc_id, evento=evento).first() if insc_id else None
     if not inscripcion:
         return redirect('eventos:inscripcion', slug=slug)
+    from urllib.parse import quote
+    from .templatetags.eventos_tags import pesos
+    resp = inscripcion.responsable()
+    contactos = []
+    for nombre, numero in evento.lista_contactos_pago():
+        texto = (f'Hola {nombre}, terminé de hacer la inscripción a {evento.nombre} '
+                 f'a nombre de {resp.apellido}, {resp.nombre} y me gustaría coordinar el pago. '
+                 f'Mi importe a pagar es ${pesos(inscripcion.total())}.')
+        contactos.append({'nombre': nombre, 'url': f'https://wa.me/{numero}?text={quote(texto)}'})
     return render(request, 'eventos/exito.html', {
         'evento': evento,
         'inscripcion': inscripcion,
+        'contactos_pago': contactos,
+        'actualizada': request.session.get(f'evento_insc_actualizada_{evento.pk}', False),
         'personas': inscripcion.personas.all(),
+    })
+
+
+@require_POST
+def inscripcion_previa(request, slug):
+    """
+    Si el responsable ya se inscribio y el celular coincide, devuelvo su inscripcion
+    para cargarla en el formulario y poder modificarla.
+    """
+    evento = get_object_or_404(Evento, slug=slug)
+    if evento.motivo_cerrado(ignorar_cupo=True):
+        return JsonResponse({'encontrada': False})
+    hid = request.POST.get('hermano_id', '')
+    previa = _buscar_inscripcion_previa(
+        evento, request.POST.get('apellido', ''), request.POST.get('nombre', ''),
+        int(hid) if hid.isdigit() else None)
+    if not previa:
+        return JsonResponse({'encontrada': False})
+    if not _mismo_celular(previa.celular, request.POST.get('celular', '')):
+        return JsonResponse({'encontrada': True, 'otro_celular': True})
+    if previa.pagado:
+        return JsonResponse({'encontrada': True, 'pagada': True})
+    return JsonResponse({
+        'encontrada': True,
+        'id': previa.pk,
+        'fecha': timezone.localtime(previa.fecha).strftime('%d/%m'),
+        'observaciones': previa.observaciones,
+        'filas': _filas_de_inscripcion(previa),
     })
 
 
@@ -226,7 +349,7 @@ def buscar_personas(request, slug):
     - Ordeno por mejor coincidencia; para familiares priorizo alumnos.
     """
     evento = get_object_or_404(Evento, slug=slug)
-    if evento.motivo_cerrado():
+    if evento.motivo_cerrado(ignorar_cupo=True):
         return JsonResponse({'resultados': []})
 
     apellido = request.GET.get('apellido')

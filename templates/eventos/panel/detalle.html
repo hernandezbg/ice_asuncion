@@ -112,7 +112,7 @@
                     {% endif %}
                 </form>
             </td>
-            <td class="small text-muted text-nowrap">{{ insc.fecha|date:"d/m H:i" }}</td>
+            <td class="small text-muted text-nowrap">{{ insc.fecha|date:"d/m H:i" }}{% if insc.fue_modificada %}<br><span title="Última modificación">editada {{ insc.fecha_modificacion|date:"d/m H:i" }}</span>{% endif %}</td>
             <td class="text-nowrap">
                 {% if user.is_superuser %}
                 <a href="{% url 'admin:eventos_inscripcion_change' insc.pk %}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>

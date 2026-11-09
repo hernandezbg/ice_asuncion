@@ -8,7 +8,7 @@ class EventoForm(forms.ModelForm):
         fields = [
             'nombre', 'slug', 'fecha', 'lugar', 'informacion',
             'precio_adulto', 'precio_nino', 'edad_max_nino', 'edad_min_paga',
-            'fecha_cierre', 'cupo', 'activo',
+            'fecha_cierre', 'cupo', 'activo', 'contactos_pago',
         ]
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Cena de fin de año 2026'}),
@@ -24,6 +24,8 @@ class EventoForm(forms.ModelForm):
                                                 format='%Y-%m-%dT%H:%M'),
             'cupo': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'contactos_pago': forms.Textarea(attrs={'class': 'form-control', 'rows': 3,
+                                                    'placeholder': 'Santy, 543813419795\nPaula, 543816621117'}),
         }
 
     def clean(self):

@@ -16,6 +16,17 @@ CATEGORIA_LABELS = {
 }
 
 
+CONTACTOS_PAGO_DEFAULT = 'Santy, 543813419795\nPaula, 543816621117'
+
+
+def numero_whatsapp(numero):
+    """Numero para wa.me: solo digitos; en celulares de Argentina agrego el 9 despues del 54"""
+    digitos = ''.join(c for c in numero if c.isdigit())
+    if digitos.startswith('54') and not digitos.startswith('549') and len(digitos) == 12:
+        digitos = '549' + digitos[2:]
+    return digitos
+
+
 class Evento(models.Model):
     """
     Evento con inscripcion publica (ej: cena de fin de año)
@@ -41,6 +52,9 @@ class Evento(models.Model):
     cupo = models.PositiveIntegerField(null=True, blank=True, verbose_name='Cupo (personas)',
                                        help_text='Vacío = sin límite. Cuenta todas las personas inscriptas')
     activo = models.BooleanField(default=True, verbose_name='Inscripción habilitada')
+    contactos_pago = models.TextField(
+        blank=True, default=CONTACTOS_PAGO_DEFAULT, verbose_name='Contactos para el pago',
+        help_text='Uno por línea: Nombre, número de WhatsApp. Ej: Santy, 543813419795')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -74,6 +88,18 @@ class Evento(models.Model):
             CATEGORIA_GRATIS: 0,
         }[categoria]
 
+    def lista_contactos_pago(self):
+        """[(nombre, numero_para_whatsapp), ...] a partir del texto 'Nombre, numero' por linea"""
+        contactos = []
+        for linea in (self.contactos_pago or '').splitlines():
+            if ',' not in linea:
+                continue
+            nombre, numero = linea.rsplit(',', 1)
+            numero = numero_whatsapp(numero)
+            if nombre.strip() and len(numero) >= 8:
+                contactos.append((nombre.strip(), numero))
+        return contactos
+
     # --- Cupo y cierre ---
 
     def personas_inscriptas(self):
@@ -84,15 +110,21 @@ class Evento(models.Model):
             return None
         return max(self.cupo - self.personas_inscriptas(), 0)
 
-    def motivo_cerrado(self):
-        """Devuelvo None si la inscripcion esta abierta, o el motivo si esta cerrada"""
+    def motivo_cerrado(self, ignorar_cupo=False):
+        """
+        Devuelvo None si la inscripcion esta abierta, o el motivo si esta cerrada.
+        ignorar_cupo: con el cupo lleno igual se pueden modificar inscripciones existentes.
+        """
         if not self.activo:
             return 'La inscripción no está habilitada.'
         if self.fecha_cierre and timezone.now() > self.fecha_cierre:
             return 'La inscripción ya cerró.'
-        if self.cupo is not None and self.cupo_disponible() <= 0:
+        if not ignorar_cupo and self.cupo_lleno():
             return 'Se completó el cupo del evento.'
         return None
+
+    def cupo_lleno(self):
+        return self.cupo is not None and self.cupo_disponible() <= 0
 
 
 class Inscripcion(models.Model):
@@ -103,6 +135,7 @@ class Inscripcion(models.Model):
     celular = models.CharField(max_length=30, verbose_name='Celular')
     observaciones = models.TextField(blank=True, verbose_name='Observaciones')
     fecha = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de inscripción')
+    fecha_modificacion = models.DateTimeField(auto_now=True, null=True, verbose_name='Última modificación')
     pagado = models.BooleanField(default=False, verbose_name='Pagado')
     fecha_pago = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de pago')
 
@@ -124,6 +157,10 @@ class Inscripcion(models.Model):
 
     def total(self):
         return sum(p.precio() for p in self.personas.all())
+
+    def fue_modificada(self):
+        from datetime import timedelta
+        return bool(self.fecha_modificacion and self.fecha_modificacion - self.fecha > timedelta(minutes=1))
 
     def cantidad(self, categoria):
         return sum(1 for p in self.personas.all() if p.categoria() == categoria)
