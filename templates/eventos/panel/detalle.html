@@ -23,19 +23,51 @@
     .btn-pago.pendiente { background: #fff; color: #64748b; border: 1px dashed #94a3b8; }
     .btn-pago.pendiente:hover { border-color: #2e7d32; color: #2e7d32; }
     .btn-pago.sugerido { border-style: solid; border-color: #2e7d32; color: #2e7d32; }
-    .tabla tr.pagado > td { background: #f0fdf4; }
     .qr-card { background: #fff; border-radius: 12px; padding: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,.06); text-align: center; max-width: 230px; }
     .qr-card img { width: 150px; height: 150px; }
     .qr-card input { font-size: .72rem; }
-    .tabla { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.06); overflow-x: auto; }
-    .tabla table { margin: 0; }
-    .tabla tr.revisar > td { background: #fffbeb; }
-    .persona-linea { font-size: .88rem; white-space: nowrap; }
+    .buscador { position: relative; margin-bottom: 1rem; max-width: 420px; }
+    .buscador i { position: absolute; left: .85rem; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+    .buscador input { padding-left: 2.3rem; border-radius: 10px; }
+    .insc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); gap: .9rem; }
+    .insc { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.06); border-left: 5px solid #cbd5e1; display: flex; flex-direction: column; }
+    .insc.pagado { border-left-color: #22c55e; }
+    .insc.revisar { border-left-color: #f59e0b; }
+    .insc-head { display: flex; justify-content: space-between; gap: .75rem; padding: .85rem 1rem .5rem; }
+    .insc-head .nro { color: #94a3b8; font-size: .8rem; }
+    .insc-head .resp { font-weight: 700; color: #0f172a; line-height: 1.25; }
+    .insc-head .total { text-align: right; white-space: nowrap; }
+    .insc-head .total .m { font-weight: 700; font-size: 1.1rem; color: #0f172a; }
+    .personas { list-style: none; margin: 0; padding: 0 1rem; }
+    .personas li { padding: .4rem 0; border-top: 1px solid #f1f5f9; font-size: .9rem; }
+    .personas .meta { color: #64748b; font-size: .8rem; }
+    .obs { margin: .4rem 1rem 0; background: #f8fafc; border-radius: 8px; padding: .45rem .65rem; font-size: .82rem; color: #475569; }
+    .insc-pie { margin-top: auto; padding: .75rem 1rem .85rem; border-top: 1px solid #f1f5f9; display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; justify-content: space-between; }
+    .contacto { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; font-size: .85rem; }
+    .btn-wa { background: #25d366; color: #fff; border-radius: 8px; padding: .25rem .55rem; font-size: .8rem; font-weight: 600; text-decoration: none; }
+    .btn-wa:hover { background: #1da851; color: #fff; }
+    .fechas { font-size: .75rem; color: #94a3b8; width: 100%; }
+    .pago-acc { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+    .pago-acc form { display: flex; gap: .4rem; flex-wrap: wrap; }
+    .vacio { background: #fff; border-radius: 12px; padding: 2rem; text-align: center; color: #94a3b8; }
     .tag { font-size: .7rem; padding: .1rem .4rem; border-radius: 6px; font-weight: 600; }
     .tag-nobase { background: #fef3c7; color: #92400e; }
     .tag-dup { background: #fee2e2; color: #991b1b; }
     .tag-base { background: #dcfce7; color: #166534; }
-    @media (max-width: 768px) { .top { grid-template-columns: 1fr; } .qr-card { max-width: none; } }
+    @media (max-width: 768px) {
+        .top { grid-template-columns: 1fr; }
+        .qr-card { max-width: none; }
+        .stats { grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+        .stat { padding: .6rem .65rem; border-radius: 10px; }
+        .stat .n { font-size: 1.05rem; }
+        .stat .l { font-size: .72rem; line-height: 1.2; }
+        .qr-card { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; text-align: left; padding: .75rem; }
+        .qr-card img { width: 64px; height: 64px; }
+        .qr-card .qr-datos { flex: 1; min-width: 0; }
+        .qr-card input { margin-top: 0 !important; }
+        .acciones a { flex: 1 1 auto; justify-content: center; }
+        .btn-pago { font-size: .85rem; padding: .45rem .7rem; }
+    }
 </style>
 {% endblock %}
 
@@ -77,70 +109,101 @@
     </div>
     <div class="qr-card">
         <img src="data:image/png;base64,{{ qr_b64 }}" alt="QR del formulario">
-        <input class="form-control form-control-sm mt-2" value="{{ url_publica }}" readonly onclick="this.select()">
-        <a href="{% url 'eventos:panel_qr' evento.pk %}" class="small d-inline-block mt-1">Descargar QR (para imprimir)</a>
+        <div class="qr-datos">
+            <input class="form-control form-control-sm mt-2" value="{{ url_publica }}" readonly onclick="this.select()">
+            <a href="{% url 'eventos:panel_qr' evento.pk %}" class="small d-inline-block mt-1">Descargar QR (para imprimir)</a>
+        </div>
     </div>
 </div>
 
-<div class="tabla">
-    <table class="table table-hover align-middle">
-        <thead class="table-light">
-            <tr><th>#</th><th>Responsable / Personas</th><th>Celular</th><th class="text-end">Total</th><th>Pago</th><th>Fecha</th><th></th></tr>
-        </thead>
-        <tbody>
-        {% for insc in inscripciones %}
-        <tr id="insc-{{ insc.pk }}" class="{% if insc.revisar %}revisar{% elif insc.pagado %}pagado{% endif %}">
-            <td class="text-muted">{{ forloop.counter }}</td>
-            <td>
-                {% for p in insc.personas.all %}
-                <div class="persona-linea">
-                    {% if forloop.first %}<strong>{% endif %}{{ p.apellido }}, {{ p.nombre }}{% if forloop.first %}</strong>{% endif %}
-                    <span class="text-muted">· {{ p.get_parentesco_display }} ·{% if p.edad is not None %} {{ p.edad }} años ·{% endif %} {{ p.categoria_label }}</span>
+<div class="buscador">
+    <i class="bi bi-search"></i>
+    <input type="search" id="buscar-insc" class="form-control" placeholder="Buscar por nombre o celular..." autocomplete="off">
+</div>
+
+<div class="insc-grid" id="lista-insc">
+{% for insc in inscripciones %}
+    <div class="insc {% if insc.revisar %}revisar{% elif insc.pagado %}pagado{% endif %}" id="insc-{{ insc.pk }}"
+         data-buscar="{% for p in insc.personas.all %}{{ p.apellido }} {{ p.nombre }} {% endfor %}{{ insc.celular }}">
+        <div class="insc-head">
+            <div>
+                <div class="nro">#{{ forloop.counter }} · {{ insc.personas.all|length }} persona{{ insc.personas.all|length|pluralize }}</div>
+                {% with r=insc.responsable %}<div class="resp">{{ r.apellido }}, {{ r.nombre }}</div>{% endwith %}
+                {% if insc.revisar %}<span class="tag tag-nobase mt-1 d-inline-block"><i class="bi bi-exclamation-triangle me-1"></i>Para revisar</span>{% endif %}
+            </div>
+            <div class="total">
+                <div class="m">${{ insc.total|pesos }}</div>
+                {% if evento.tiene_descuento and insc.total_descuento != insc.total %}<div class="small text-success">c/desc. ${{ insc.total_descuento|pesos }}</div>{% endif %}
+            </div>
+        </div>
+
+        <ul class="personas">
+            {% for p in insc.personas.all %}
+            <li>
+                <div>{{ p.apellido }}, {{ p.nombre }}
                     {% if p.en_base %}<span class="tag tag-base">{{ p.origen }}</span>{% else %}<span class="tag tag-nobase">No está en la base</span>{% endif %}
                     {% if p.duplicado %}<span class="tag tag-dup">Posible duplicado</span>{% endif %}
                 </div>
-                {% endfor %}
-                {% if insc.observaciones %}<div class="small text-muted mt-1"><i class="bi bi-chat-left-text me-1"></i>{{ insc.observaciones }}</div>{% endif %}
-            </td>
-            <td class="text-nowrap">{{ insc.celular }}</td>
-            <td class="text-end text-nowrap">
-                <span class="fw-semibold">${{ insc.total|pesos }}</span>
-                {% if evento.tiene_descuento and insc.total_descuento != insc.total %}<br><span class="small text-success">c/desc. ${{ insc.total_descuento|pesos }}</span>{% endif %}
-            </td>
-            <td>
-                <form method="post" action="{% url 'eventos:panel_inscripcion_pagado' insc.pk %}" class="d-inline"
+                <div class="meta">{{ p.get_parentesco_display }}{% if p.edad is not None %} · {{ p.edad }} años{% endif %} · {{ p.categoria_label }}{% if p.precio %} · ${{ p.precio|pesos }}{% endif %}</div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% if insc.observaciones %}<div class="obs"><i class="bi bi-chat-left-text me-1"></i>{{ insc.observaciones }}</div>{% endif %}
+
+        <div class="insc-pie">
+            <div class="contacto">
+                <i class="bi bi-phone text-muted"></i><span>{{ insc.celular }}</span>
+                <a class="btn-wa" href="https://wa.me/{{ insc.celular|whatsapp }}" target="_blank" rel="noopener" title="Abrir WhatsApp"><i class="bi bi-whatsapp"></i></a>
+            </div>
+            <div class="pago-acc">
+                <form method="post" action="{% url 'eventos:panel_inscripcion_pagado' insc.pk %}"
                       {% if insc.pagado %}onsubmit="return confirm('¿Desmarcar el pago de esta inscripción?')"{% endif %}>
                     {% csrf_token %}
                     <input type="hidden" name="filtros" value="{{ request.GET.urlencode }}">
                     {% if insc.pagado %}
                     <button class="btn-pago pagado" title="Pagado el {{ insc.fecha_pago|date:'d/m/Y H:i' }}"><i class="bi bi-check-circle-fill me-1"></i>Pagado ${{ insc.total_pagado|pesos }}{% if insc.con_descuento %} c/desc.{% endif %}</button>
                     {% elif evento.tiene_descuento and insc.total_descuento != insc.total %}
-                    <div class="small text-muted mb-1">Marcar pagado:</div>
-                    <div class="d-flex flex-column gap-1">
-                        <button name="descuento" value="1" class="btn-pago pendiente{% if descuento_hoy %} sugerido{% endif %}"><i class="bi bi-circle me-1"></i>Con desc. ${{ insc.total_descuento|pesos }}</button>
-                        <button name="descuento" value="0" class="btn-pago pendiente{% if not descuento_hoy %} sugerido{% endif %}"><i class="bi bi-circle me-1"></i>Sin desc. ${{ insc.total|pesos }}</button>
-                    </div>
+                    <button name="descuento" value="1" class="btn-pago pendiente{% if descuento_hoy %} sugerido{% endif %}"><i class="bi bi-circle me-1"></i>Pagó c/desc. ${{ insc.total_descuento|pesos }}</button>
+                    <button name="descuento" value="0" class="btn-pago pendiente{% if not descuento_hoy %} sugerido{% endif %}"><i class="bi bi-circle me-1"></i>Pagó ${{ insc.total|pesos }}</button>
                     {% else %}
                     <button class="btn-pago pendiente"><i class="bi bi-circle me-1"></i>Marcar pagado</button>
                     {% endif %}
                 </form>
-            </td>
-            <td class="small text-muted text-nowrap">{{ insc.fecha|date:"d/m H:i" }}{% if insc.fue_modificada %}<br><span title="Última modificación">editada {{ insc.fecha_modificacion|date:"d/m H:i" }}</span>{% endif %}</td>
-            <td class="text-nowrap">
                 {% if user.is_superuser %}
                 <a href="{% url 'admin:eventos_inscripcion_change' insc.pk %}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
                 {% endif %}
-                <form method="post" action="{% url 'eventos:panel_inscripcion_eliminar' insc.pk %}" class="d-inline"
+                <form method="post" action="{% url 'eventos:panel_inscripcion_eliminar' insc.pk %}"
                       onsubmit="return confirm('¿Eliminar esta inscripción completa?')">
                     {% csrf_token %}
                     <button class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></button>
                 </form>
-            </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="7" class="text-center text-muted py-4">{% if solo_revisar or filtro_pago %}No hay inscripciones con ese filtro.{% else %}Todavía no hay inscripciones.{% endif %}</td></tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            </div>
+            <div class="fechas">Inscripta {{ insc.fecha|date:"d/m H:i" }}{% if insc.fue_modificada %} · editada {{ insc.fecha_modificacion|date:"d/m H:i" }}{% endif %}{% if insc.pagado and insc.fecha_pago %} · pagó {{ insc.fecha_pago|date:"d/m" }}{% endif %}</div>
+        </div>
+    </div>
+{% empty %}
+    <div class="vacio">{% if solo_revisar or filtro_pago %}No hay inscripciones con ese filtro.{% else %}Todavía no hay inscripciones.{% endif %}</div>
+{% endfor %}
 </div>
+<div class="vacio d-none mt-2" id="sin-resultados">No hay inscripciones que coincidan con la búsqueda.</div>
+
+<script>
+(function () {
+    var input = document.getElementById('buscar-insc');
+    var tarjetas = Array.prototype.slice.call(document.querySelectorAll('#lista-insc .insc'));
+    var sinRes = document.getElementById('sin-resultados');
+    function norm(t) { return (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+    tarjetas.forEach(function (t) { t._txt = norm(t.dataset.buscar) + ' ' + t.dataset.buscar.replace(/\D/g, ''); });
+    input.addEventListener('input', function () {
+        var palabras = norm(input.value).split(/\s+/).filter(Boolean);
+        var visibles = 0;
+        tarjetas.forEach(function (t) {
+            var ok = palabras.every(function (w) { return t._txt.indexOf(w) !== -1; });
+            t.style.display = ok ? '' : 'none';
+            if (ok) visibles++;
+        });
+        sinRes.classList.toggle('d-none', visibles > 0 || !tarjetas.length);
+    });
+})();
+</script>
 {% endblock %}
