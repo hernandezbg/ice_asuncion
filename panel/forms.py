@@ -196,3 +196,101 @@ class DatosIceForm(forms.ModelForm):
             'codigo_acceso_miembros': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: ICE2024'}),
             'chat_habilitado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
+
+# ========== USUARIOS DEL PANEL ==========
+from django.contrib.auth.models import User, Group
+from .permisos import GRUPO_EVENTOS, ROL_STAFF, ROL_EVENTOS, ROL_LABELS, rol_usuario
+
+
+class UsuarioForm(forms.ModelForm):
+    """
+    Alta/edición de usuarios del panel (solo superusuarios).
+    Roles: Solo Eventos (grupo Eventos) o Staff. Los administradores no se cambian de rol desde acá.
+    """
+    rol = forms.ChoiceField(
+        label='Acceso',
+        choices=[(ROL_EVENTOS, 'Solo Eventos — inscripciones, pagos y edición de eventos'),
+                 (ROL_STAFF, 'Staff — todo el panel (hermanos, escuela, noticias, eventos...)')],
+        widget=forms.RadioSelect,
+        initial=ROL_EVENTOS,
+    )
+    password = forms.CharField(
+        label='Contraseña', required=False, strip=False,
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'autocomplete': 'new-password'}),
+        help_text='Mínimo 8 caracteres.',
+    )
+
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email', 'is_active']
+        labels = {
+            'username': 'Usuario',
+            'first_name': 'Nombre',
+            'last_name': 'Apellido',
+            'email': 'Email',
+            'is_active': 'Activo (puede ingresar)',
+        }
+        help_texts = {
+            'username': 'Con el que ingresa al panel. En minúsculas, sin espacios.',
+            'is_active': 'Desactivalo cuando ya no necesite acceso.',
+        }
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'off'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def __init__(self, *args, editor=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.editor = editor
+        self.es_nuevo = not self.instance.pk
+        self.es_admin = bool(self.instance.pk and self.instance.is_superuser)
+        if self.es_nuevo:
+            self.fields['password'].required = True
+        else:
+            self.fields['password'].label = 'Nueva contraseña'
+            self.fields['password'].help_text = 'Dejalo vacío para no cambiarla. Mínimo 8 caracteres.'
+            rol = rol_usuario(self.instance)
+            if rol in (ROL_STAFF, ROL_EVENTOS):
+                self.fields['rol'].initial = rol
+        if self.es_admin:
+            # Los administradores conservan su rol
+            del self.fields['rol']
+        if self.instance.pk and editor and self.instance.pk == editor.pk:
+            # Nadie se desactiva a sí mismo
+            self.fields['is_active'].disabled = True
+
+    def clean_username(self):
+        username = (self.cleaned_data.get('username') or '').strip().lower()
+        if ' ' in username:
+            raise forms.ValidationError('El usuario no puede tener espacios.')
+        existe = User.objects.filter(username__iexact=username).exclude(pk=self.instance.pk)
+        if existe.exists():
+            raise forms.ValidationError('Ya existe un usuario con ese nombre.')
+        return username
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password') or ''
+        if password and len(password) < 8:
+            raise forms.ValidationError('La contraseña debe tener al menos 8 caracteres.')
+        return password
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        password = self.cleaned_data.get('password')
+        if password:
+            user.set_password(password)
+        rol = self.cleaned_data.get('rol')
+        if rol and not user.is_superuser:
+            user.is_staff = (rol == ROL_STAFF)
+        user.save()
+        if rol and not user.is_superuser:
+            grupo, _ = Group.objects.get_or_create(name=GRUPO_EVENTOS)
+            if rol == ROL_EVENTOS:
+                user.groups.add(grupo)
+            else:
+                user.groups.remove(grupo)
+        return user

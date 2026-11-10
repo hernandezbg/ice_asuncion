@@ -1,0 +1,51 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Usuarios - Panel ICE{% endblock %}
+{% block page_title %}Usuarios{% endblock %}
+{% block page_subtitle %}Quién puede ingresar al panel y qué secciones ve{% endblock %}
+
+{% block extra_css %}
+<style>
+    .btn-nuevo { background: #2e7d32; color: #fff; border-radius: 8px; padding: .6rem 1.2rem; font-weight: 600; text-decoration: none; display: inline-flex; gap: .5rem; align-items: center; }
+    .btn-nuevo:hover { background: #1b5e20; color: #fff; }
+    .tabla-card { background: #fff; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.06); margin-top: 1.5rem; overflow: hidden; }
+    .tabla-card table { margin: 0; }
+    .tabla-card th { font-size: .8rem; text-transform: uppercase; color: #64748b; background: #f8fafc; }
+    .rol-admin { background: #7c3aed; }
+    .rol-staff { background: #1565c0; }
+    .rol-eventos { background: #2e7d32; }
+    .ayuda { background: #f1f5f9; border-radius: 10px; padding: 1rem 1.25rem; font-size: .9rem; color: #475569; margin-top: 1rem; }
+    tr.inactivo td { opacity: .55; }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'panel:usuario_crear' %}" class="btn-nuevo"><i class="bi bi-person-plus"></i>Nuevo usuario</a>
+
+<div class="ayuda">
+    <strong>Solo Eventos:</strong> ve únicamente la sección Eventos (crear y editar eventos, inscriptos, pagos, Excel y QR).<br>
+    <strong>Staff:</strong> todo el panel (hermanos, escuela, noticias, mensajes, eventos...).<br>
+    <strong>Administrador:</strong> además contenido web, configuración y usuarios.
+</div>
+
+<div class="tabla-card">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr><th>Usuario</th><th>Nombre</th><th>Acceso</th><th>Estado</th><th>Último ingreso</th><th></th></tr>
+            </thead>
+            <tbody>
+            {% for u in usuarios %}
+                <tr class="{% if not u.is_active %}inactivo{% endif %}">
+                    <td><strong>{{ u.username }}</strong>{% if u.pk == user.pk %} <span class="text-muted small">(vos)</span>{% endif %}</td>
+                    <td>{{ u.get_full_name|default:"—" }}</td>
+                    <td><span class="badge rol-{{ u.rol }}">{{ u.rol_label }}</span></td>
+                    <td>{% if u.is_active %}<span class="text-success">Activo</span>{% else %}<span class="text-muted">Desactivado</span>{% endif %}</td>
+                    <td class="small text-muted">{{ u.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</td>
+                    <td class="text-end"><a href="{% url 'panel:usuario_editar' u.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -644,6 +644,7 @@
         </div>
 
         <nav class="sidebar-nav">
+            {% if panel_es_staff %}
             <div class="nav-section-title">Principal</div>
             <a href="{% url 'panel:dashboard' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                 <i class="bi bi-speedometer2"></i>
@@ -685,10 +686,15 @@
                 <i class="bi bi-projector-fill"></i>
                 <span>Proyeccion</span>
             </a>
+            {% else %}
+            <div class="nav-section-title">Gestión</div>
+            {% endif %}
+            {% if panel_puede_eventos %}
             <a href="{% url 'eventos:panel_lista' %}" class="sidebar-nav-item {% if '/eventos/' in request.path %}active{% endif %}">
                 <i class="bi bi-calendar-event-fill"></i>
                 <span>Eventos</span>
             </a>
+            {% endif %}
 
             {% if user.is_superuser %}
             <div class="nav-section-title">Contenido Web</div>
@@ -710,6 +716,10 @@
                 <i class="bi bi-gear-fill"></i>
                 <span>Configuración</span>
             </a>
+            <a href="{% url 'panel:usuarios_lista' %}" class="sidebar-nav-item {% if '/usuarios/' in request.path %}active{% endif %}">
+                <i class="bi bi-person-gear"></i>
+                <span>Usuarios</span>
+            </a>
             {% endif %}
         </nav>
 
@@ -720,7 +730,7 @@
                 </div>
                 <div class="user-details">
                     <h6>{{ user.username }}</h6>
-                    <p>{% if user.is_superuser %}Administrador{% else %}Staff{% endif %}</p>
+                    <p>{{ panel_rol_label|default:"Staff" }}</p>
                 </div>
             </div>
             <a href="{% url 'panel:cambiar_password' %}" class="btn-password">
@@ -749,6 +759,7 @@
             </button>
         </div>
         <div class="fab-menu-grid">
+            {% if panel_es_staff %}
             <a href="{% url 'panel:dashboard' %}" class="fab-menu-item">
                 <div class="fab-menu-icon home">
                     <i class="bi bi-speedometer2"></i>
@@ -799,6 +810,15 @@
                 </div>
                 <span class="fab-menu-label">Páginas</span>
             </a>
+            {% endif %}
+            {% if panel_puede_eventos %}
+            <a href="{% url 'eventos:panel_lista' %}" class="fab-menu-item">
+                <div class="fab-menu-icon" style="background: #1565c0;">
+                    <i class="bi bi-calendar-event-fill"></i>
+                </div>
+                <span class="fab-menu-label">Eventos</span>
+            </a>
+            {% endif %}
             {% if user.is_superuser %}
             <a href="{% url 'panel:secciones_lista' %}" class="fab-menu-item">
                 <div class="fab-menu-icon secciones">
@@ -823,6 +843,12 @@
                     <i class="bi bi-gear-fill"></i>
                 </div>
                 <span class="fab-menu-label">Configuración</span>
+            </a>
+            <a href="{% url 'panel:usuarios_lista' %}" class="fab-menu-item">
+                <div class="fab-menu-icon" style="background: #7c3aed;">
+                    <i class="bi bi-person-gear"></i>
+                </div>
+                <span class="fab-menu-label">Usuarios</span>
             </a>
             {% endif %}
         </div>

@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.views import redirect_to_login
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout, update_session_auth_hash
 from django.contrib import messages
 from django.db.models import Count, Q
@@ -8,11 +9,13 @@ from datetime import timedelta
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .models import Visita
 from .forms import HermanoForm, NoticiaForm, MensajeForm, PaginaForm, SeccionForm, SliderForm, OfrendaForm, DatosIceForm
 from contenido.models import Noticia, Mensaje, Pagina, Galeria, Slider, DatosIce, Seccion, Ofrenda
 from miembros.models import Hermano, Provincia, EstadoCivil, Clase, Grupo, Don
+from .permisos import puede_entrar_panel, inicio_panel
 from escuela.models import ClaseEscuela, Alumno, Asistencia, DomingoExcluido, Presentacion, EstadoProyeccion
 
 
@@ -27,9 +30,13 @@ def es_superuser(user):
 
 
 @login_required
-@user_passes_test(es_staff)
 def dashboard(request):
     """Dashboard principal con estadísticas"""
+    if not request.user.is_staff:
+        # Los usuarios de "Solo Eventos" van directo a su sección
+        if puede_entrar_panel(request.user):
+            return redirect(inicio_panel(request.user))
+        return redirect_to_login(request.get_full_path())
     hoy = timezone.now()
     hace_30_dias = hoy - timedelta(days=30)
     hace_7_dias = hoy - timedelta(days=7)
@@ -1048,8 +1055,8 @@ def datosice_editar(request):
 # ========== AUTENTICACION ==========
 def panel_login(request):
     """Vista de login para el panel"""
-    if request.user.is_authenticated:
-        return redirect('panel:dashboard')
+    if request.user.is_authenticated and puede_entrar_panel(request.user):
+        return redirect(inicio_panel(request.user))
 
     if request.method == 'POST':
         username = request.POST.get('username', '').lower().strip()
@@ -1057,9 +1064,12 @@ def panel_login(request):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            if user.is_staff:
+            if puede_entrar_panel(user):
                 auth_login(request, user)
-                next_url = request.GET.get('next', 'panel:dashboard')
+                next_url = request.GET.get('next')
+                if not next_url or not url_has_allowed_host_and_scheme(
+                        next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+                    next_url = inicio_panel(user)
                 return redirect(next_url)
             else:
                 messages.error(request, 'No tienes permisos para acceder al panel.')
@@ -1098,7 +1108,7 @@ def cambiar_password(request):
             # Mantener la sesión activa
             update_session_auth_hash(request, request.user)
             messages.success(request, 'Tu contraseña ha sido actualizada correctamente.')
-            return redirect('panel:dashboard')
+            return redirect(inicio_panel(request.user))
 
     return render(request, 'panel/cambiar_password.html')
 
@@ -1757,3 +1767,33 @@ def proyeccion_eliminar(request, pk):
     pres.delete()
     messages.success(request, f'Presentacion "{titulo}" eliminada.')
     return redirect('panel:proyeccion_lista')
+
+
+# ========== USUARIOS (solo administradores) ==========
+@login_required
+@user_passes_test(es_superuser)
+def usuarios_lista(request):
+    from django.contrib.auth.models import User
+    from .permisos import rol_usuario, ROL_LABELS, GRUPO_EVENTOS
+    usuarios = (User.objects.filter(Q(is_staff=True) | Q(is_superuser=True) | Q(groups__name=GRUPO_EVENTOS))
+                .distinct().prefetch_related('groups').order_by('-is_active', 'username'))
+    for u in usuarios:
+        u.rol = rol_usuario(u)
+        u.rol_label = ROL_LABELS.get(u.rol, '')
+    return render(request, 'panel/usuarios_lista.html', {'usuarios': usuarios})
+
+
+@login_required
+@user_passes_test(es_superuser)
+def usuario_form(request, pk=None):
+    from django.contrib.auth.models import User
+    from .forms import UsuarioForm
+    usuario = get_object_or_404(User, pk=pk) if pk else None
+    form = UsuarioForm(request.POST or None, instance=usuario, editor=request.user)
+    if request.method == 'POST' and form.is_valid():
+        guardado = form.save()
+        if guardado.pk == request.user.pk and form.cleaned_data.get('password'):
+            update_session_auth_hash(request, guardado)
+        messages.success(request, f'Usuario "{guardado.username}" guardado.')
+        return redirect('panel:usuarios_lista')
+    return render(request, 'panel/usuario_form.html', {'form': form, 'usuario': usuario})

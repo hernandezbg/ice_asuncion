@@ -27,8 +27,7 @@ MAX_PERSONAS = 20
 MAX_SUGERENCIAS = 8
 
 
-def es_staff(user):
-    return user.is_staff
+from panel.permisos import puede_eventos
 
 
 def _norm(texto):
@@ -551,7 +550,7 @@ def _datos_evento(evento):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(puede_eventos)
 def panel_lista(request):
     eventos = Evento.objects.all()
     for e in eventos:
@@ -562,7 +561,7 @@ def panel_lista(request):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(puede_eventos)
 def panel_form(request, pk=None):
     evento = get_object_or_404(Evento, pk=pk) if pk else None
     form = EventoForm(request.POST or None, instance=evento)
@@ -574,7 +573,7 @@ def panel_form(request, pk=None):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(puede_eventos)
 def panel_detalle(request, pk):
     evento = get_object_or_404(Evento, pk=pk)
     inscripciones, totales = _datos_evento(evento)
@@ -601,7 +600,7 @@ def panel_detalle(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(puede_eventos)
 def panel_qr(request, pk):
     evento = get_object_or_404(Evento, pk=pk)
     response = HttpResponse(_qr_png_grande(_url_publica(request, evento), evento.nombre), content_type='image/png')
@@ -610,7 +609,7 @@ def panel_qr(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(puede_eventos)
 @require_POST
 def panel_inscripcion_eliminar(request, pk):
     inscripcion = get_object_or_404(Inscripcion, pk=pk)
@@ -621,7 +620,7 @@ def panel_inscripcion_eliminar(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(puede_eventos)
 @require_POST
 def panel_inscripcion_pagado(request, pk):
     inscripcion = get_object_or_404(Inscripcion.objects.select_related('evento'), pk=pk)
@@ -643,7 +642,7 @@ def panel_inscripcion_pagado(request, pk):
 
 
 @login_required
-@user_passes_test(es_staff)
+@user_passes_test(puede_eventos)
 def panel_exportar(request, pk):
     import openpyxl
     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side

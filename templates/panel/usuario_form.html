@@ -1,0 +1,63 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}{% if usuario %}Editar{% else %}Nuevo{% endif %} usuario - Panel ICE{% endblock %}
+{% block page_title %}{% if usuario %}Editar usuario{% else %}Nuevo usuario{% endif %}{% endblock %}
+{% block page_subtitle %}Acceso al panel{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card { background: #fff; border-radius: 14px; padding: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,.06); max-width: 720px; margin: 0 auto; }
+    .form-label { font-weight: 600; color: #475569; font-size: .9rem; }
+    .sec { font-weight: 700; color: #1565c0; margin: 1.5rem 0 .75rem; border-bottom: 1px solid #e2e8f0; padding-bottom: .35rem; }
+    .btn-guardar { background: #2e7d32; color: #fff; border: none; border-radius: 8px; padding: .7rem 2rem; font-weight: 600; }
+    .btn-guardar:hover { background: #1b5e20; }
+    .roles label { display: block; border: 1px solid #e2e8f0; border-radius: 10px; padding: .75rem 1rem; margin-bottom: .5rem; cursor: pointer; }
+    .roles input { margin-right: .5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <a href="{% url 'panel:usuarios_lista' %}" class="btn btn-outline-secondary btn-sm mb-3">
+        <i class="bi bi-arrow-left me-1"></i>Volver
+    </a>
+
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+
+    <form method="post" autocomplete="off">
+        {% csrf_token %}
+        <div class="sec">Datos</div>
+        <div class="row g-3">
+            {% include "eventos/panel/_campo.html" with f=form.username col="col-md-6" %}
+            {% include "eventos/panel/_campo.html" with f=form.email col="col-md-6" %}
+            {% include "eventos/panel/_campo.html" with f=form.first_name col="col-md-6" %}
+            {% include "eventos/panel/_campo.html" with f=form.last_name col="col-md-6" %}
+        </div>
+
+        <div class="sec">Acceso</div>
+        {% if form.rol %}
+        <div class="roles">
+            {% for r in form.rol %}{{ r }}{% endfor %}
+            {% for e in form.rol.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted">Es <strong>Administrador</strong>: tiene acceso a todo. Su rol no se cambia desde acá.</p>
+        {% endif %}
+
+        <div class="form-check mt-3">
+            {{ form.is_active }}
+            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
+            <div class="form-text">{% if form.is_active.field.disabled %}No podés desactivar tu propio usuario.{% else %}{{ form.is_active.help_text }}{% endif %}</div>
+        </div>
+
+        <div class="sec">Contraseña</div>
+        <div class="row g-3">
+            {% include "eventos/panel/_campo.html" with f=form.password col="col-md-6" %}
+        </div>
+        <div class="form-text mt-2">Pasale la contraseña por privado; después la puede cambiar desde "Cambiar contraseña".</div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn-guardar"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -68,6 +68,11 @@ urlpatterns = [
     path('ofrendas/<int:pk>/eliminar/', views.ofrenda_eliminar, name='ofrenda_eliminar'),
     path('ofrendas/<int:pk>/toggle/', views.ofrenda_toggle_activo, name='ofrenda_toggle_activo'),
 
+    # Usuarios del panel
+    path('usuarios/', views.usuarios_lista, name='usuarios_lista'),
+    path('usuarios/nuevo/', views.usuario_form, name='usuario_crear'),
+    path('usuarios/<int:pk>/editar/', views.usuario_form, name='usuario_editar'),
+
     # Configuración (DatosICE)
     path('configuracion/', views.datosice_editar, name='datosice_editar'),
 

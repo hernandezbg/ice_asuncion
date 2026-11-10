@@ -68,6 +68,7 @@ TEMPLATES = [
                 'django.template.context_processors.media',  # Para acceder a MEDIA_URL en templates
                 'contenido.context_processors.datos_ice',  # Datos de ICE disponibles en todos los templates
                 'contenido.context_processors.paginas_menu',  # Páginas para el menú de navegación
+                'panel.context_processors.permisos_panel',  # Qué secciones del panel ve cada usuario
             ],
         },
     },
